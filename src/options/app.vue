@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { useAppStore } from '@/stores/app.store'
 
+import { openDB } from 'idb';
+
 // const store = useAppStore()
 
 const COLORS = {
@@ -9,11 +11,11 @@ const COLORS = {
 }
 const stores = ref([
   {
-    id: '709693',
+    sid: '709693',
     name: 'A brick per day...'
   },
   {
-    id: '3112575',
+    sid: '3112575',
     name: 'Bricks Austria'
   }
 ])
@@ -61,12 +63,17 @@ const storePrices = ref({})
       "credentials": "include"
     })
     const json = await response.json()
+    const db = await getDbConnection()
     json.result.groups.forEach(group => {
       group.items.forEach(item => {
         if (!storePrices.value[storeId][item.itemID]) {
           storePrices.value[storeId][item.itemID] = []
         }
         storePrices.value[storeId][item.itemID].push(item)
+        db.add('items', {
+          sid: storeId,
+          ...item
+        })
       })
     })
   }
@@ -75,7 +82,16 @@ function stopFetching() {
   stopFetch = true
 }
 let fetchPricesInterval: NodeJS.Timeout
-function startFetching() {
+async function storeStores() {
+  const db = await getDbConnection()
+  stores.value.forEach((store) => {
+    db.add('stores', {
+      sid: store.sid,
+      name: store.name
+    })
+  })
+}
+async function startFetching() {
   stopFetch = false
   let i = 0
   const storeId = stores.value[0].id
@@ -95,10 +111,10 @@ const storePricesArray = computed(() => {
     const price = storePrices.value[key]
     const priceKeys = Object.keys(price)
     return {
-      id: key,
+      sid: key,
       price,
       priceKeys,
-      name: stores.value.find(store => store.id === key)?.name,
+      name: stores.value.find(store => store.sid === key)?.name,
       items: priceKeys.map((priceKey) => {
         return {
           id: priceKey,
@@ -117,13 +133,47 @@ const storePricesArray = computed(() => {
     }
   })
 })
+
+async function getDbConnection() {
+  return await openDB('brickbuddy', 1, {
+    upgrade(db) {
+      db.createObjectStore('stores', {
+        keyPath: 'sid',
+        autoIncrement: false
+      })
+      db.createObjectStore('items', {
+        keyPath: ['sid', 'invID'],
+        autoIncrement: false
+      })
+    },
+  })
+}
+const newStoreId = ref('')
+const newStoreName = ref('')
+async function addNewStore() {
+  const db = await getDbConnection()
+  const newStore = {
+    sid: newStoreId.value,
+    name: newStoreName.value
+  }
+  db.add('stores', newStore)
+  stores.value.push(newStore)
+}
 </script>
 
 <template>
   <h4>Stores</h4>
-  <div v-for="store in stores" :key="store.id">
+  <div v-for="store in stores" :key="store.sid">
     {{ store.name }}
   </div>
+  <div>Id:<input v-model="newStoreId" type="text"></div>
+  <div>Name:<input v-model="newStoreName" type="text"></div>
+  <button @click="addNewStore">
+    Add new
+  </button>
+  <button @click="storeStores">
+    Store
+  </button>
   <h4>Pieces</h4>
   <div v-for="piece in pieces" :key="piece.partNumber">
     {{ piece.quantity }}x {{ piece.name }} - {{ piece.maxPrice }}
@@ -136,7 +186,7 @@ const storePricesArray = computed(() => {
     Stop fetching
   </button>
   <h4>Prices</h4>
-  <div v-for="store in storePricesArray" :key="store.id">
+  <div v-for="store in storePricesArray" :key="store.sid">
     <h5>{{ store.name }}</h5>
     <div v-for="item in store.items" :key="item.itemID">
       <div>{{ item.name }}</div>
