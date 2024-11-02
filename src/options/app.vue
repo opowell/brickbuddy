@@ -1,78 +1,78 @@
 <script setup lang="ts">
-import type { IDBPDatabase} from 'idb';
+import type { IDBPDatabase, IDBPTransaction} from 'idb';
 import { openDB } from 'idb';
+
+import STORES from './stores'
 // import { useAppStore } from '@/stores/app.store'
 // const store = useAppStore()
 
-const COLORS = {
-  WHITE: 1,
-  GREEN: 6,
-}
+const DB_NAME = 'brickbuddy'
+
 const storePrices = ref({})
 
-  async function getPrices(storeId: string, i: number) {
-    console.log('get prices', storeId, i)
-    const response = await fetch(`https://store.bricklink.com/ajax/clone/store/searchitems.ajax?sort=6&pgSize=100&pg=${  i  }&showHomeItems=0&sid=${  storeId}`, {
-      "headers": {
-        "accept": "application/json, text/javascript, */*; q=0.01",
-        "accept-language": "en,de;q=0.9,es;q=0.8,en-US;q=0.7",
-        "cache-control": "no-cache",
-        "pragma": "no-cache",
-        "priority": "u=1, i",
-        "sec-ch-ua": "\"Chromium\";v=\"130\", \"Google Chrome\";v=\"130\", \"Not?A_Brand\";v=\"99\"",
-        "sec-ch-ua-mobile": "?0",
-        "sec-ch-ua-platform": "\"macOS\"",
-        "sec-fetch-dest": "empty",
-        "sec-fetch-mode": "cors",
-        "sec-fetch-site": "same-origin",
-        "x-requested-with": "XMLHttpRequest"
-      },
-      "referrer": "https://store.bricklink.com/stefxan",
-      "referrerPolicy": "no-referrer-when-downgrade",
-      "body": null,
-      "method": "GET",
-      "mode": "cors",
-      "credentials": "include"
+async function getPrices(store: UiStore, i: number) {
+  console.log('get prices', store, i)
+  const response = await fetch(`https://store.bricklink.com/ajax/clone/store/searchitems.ajax?sort=6&pgSize=100&pg=${  i  }&showHomeItems=0&sid=${  storeId}`, {
+    "headers": {
+      "accept": "application/json, text/javascript, */*; q=0.01",
+      "accept-language": "en,de;q=0.9,es;q=0.8,en-US;q=0.7",
+      "cache-control": "no-cache",
+      "pragma": "no-cache",
+      "priority": "u=1, i",
+      "sec-ch-ua": "\"Chromium\";v=\"130\", \"Google Chrome\";v=\"130\", \"Not?A_Brand\";v=\"99\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"macOS\"",
+      "sec-fetch-dest": "empty",
+      "sec-fetch-mode": "cors",
+      "sec-fetch-site": "same-origin",
+      "x-requested-with": "XMLHttpRequest"
+    },
+    "referrer": "https://store.bricklink.com/stefxan",
+    "referrerPolicy": "no-referrer-when-downgrade",
+    "body": null,
+    "method": "GET",
+    "mode": "cors",
+    "credentials": "include"
+  })
+  const json = await response.json()
+  const db = await getDbConnection()
+  json.result.groups.forEach(group => {
+    group.items.forEach(item => {
+      if (!storePrices.value[store.sId][item.itemId]) {
+        storePrices.value[store.sId][item.itemId] = []
+      }
+      storePrices.value[store.sId][item.itemId].push(item)
+      console.log(item)
+      addInvItem(db, store, item.colorID, item.condition, item.quantity, item.price, item.itemID)
     })
-    const json = await response.json()
-    const db = await getDbConnection()
-    json.result.groups.forEach(group => {
-      group.items.forEach(item => {
-        if (!storePrices.value[storeId][item.itemID]) {
-          storePrices.value[storeId][item.itemID] = []
-        }
-        storePrices.value[storeId][item.itemID].push(item)
-        db.add('items', {
-          sid: storeId,
-          ...item
-        })
-      })
-    })
-  }
+  })
+}
 let stopFetch: boolean = false
 function stopFetching() {
   stopFetch = true
 }
+const stores = ref<UiStore[]>([])
 let fetchPricesInterval: NodeJS.Timeout
 async function startFetching() {
   stopFetch = false
   let i = 0
-  const storeId = stores.value[0].id
-  storePrices.value[storeId] = {}
+  const store = stores.value[0]
   fetchPricesInterval = setInterval(() => {
     if (stopFetch && fetchPricesInterval) {
       clearInterval(fetchPricesInterval)
       return
     }
-    getPrices(storeId, i)
+    getPrices(store, i)
     i++
   }, 5000)
 }
 interface Store {
-  sid: string
+  sId: string
   name: string
 }
-const stores = ref<Store[]>([])
+interface UiStore extends Store {
+  items: number
+}
 
 const storePricesArray = computed(() => {
   const keys = Object.keys(storePrices.value)
@@ -80,10 +80,10 @@ const storePricesArray = computed(() => {
     const price = storePrices.value[key]
     const priceKeys = Object.keys(price)
     return {
-      sid: key,
+      sId: key,
       price,
       priceKeys,
-      name: stores.value.find(store => store.sid === key)?.name,
+      name: stores.value.find(store => store.sId === key)?.name,
       items: priceKeys.map((priceKey) => {
         return {
           id: priceKey,
@@ -102,21 +102,18 @@ const storePricesArray = computed(() => {
     }
   })
 })
-
-const OBJECT_STORES = {
-  COLORS: 'colors',
-  STORES: 'stores',
-  INVENTORY_ITEMS: 'inventoryItems',
-  ITEMS: 'items',
-  PIECES: 'pieces'
-}
+const shopLists = ref<UiShopList[]>([])
 
 async function createInitialData(db: IDBPDatabase) {
-  await addStore("Die Steinschleuder", "1832236", db)
+  console.log('createInitialData')
+  const store1 = await addStore("Die Steinschleuder", "1832236", db)
   await addStore("Bricks Austria", "3112575", db)
   await addStore("A brick per day...", "709693", db)
   
-  await addPiece("87580", 'New', 10, 100, 20, 'red', db)
+  await addShopList("Board games 2024", db)
+  
+  await addInvItem(db, 123456, store1, 1, 'New', 243, 53, 86789)
+  await addShopListItem(1, "87580", 'New', 10, 100, 20, 'red', db)
 
   await addItem(
     "27",
@@ -134,12 +131,14 @@ async function createInitialData(db: IDBPDatabase) {
     "//img.bricklink.com/ItemImage/PT/11/87580.t1.png",
     db
   )
+  stores.value = []
+  shopLists.value = []
 }
 
 interface Item {
   categoryString: string
-  colorID: number
-  itemID: number
+  colorId: number
+  itemId: number
   itemName: string
   itemNo: string
   itemSeq: number
@@ -155,8 +154,8 @@ const items = ref<Item[]>([])
 
 async function addItem(
   categoryString: string,
-  colorID: number,
-  itemID: number,
+  colorId: number,
+  itemId: number,
   itemName: string,
   itemNo: string,
   itemSeq: number,
@@ -171,8 +170,8 @@ async function addItem(
 ) {
   const newItem: Item = {
     categoryString,
-    colorID,
-    itemID,
+    colorId,
+    itemId,
     itemName,
     itemNo,
     itemSeq,
@@ -184,39 +183,29 @@ async function addItem(
     newThumb2Img,
     smallImg,
   }
-  db.add(OBJECT_STORES.ITEMS, newItem)
+  db.add(STORES.ITEMS.name, newItem)
   items.value.push(newItem)
 }
 
 async function getDbConnection() {
+  // console.log('getDbConnection')
   let createData = false
-  const db = await openDB('brickbuddy', 1, {
-    async upgrade(db) {
-      db.createObjectStore(OBJECT_STORES.STORES, {
-        keyPath: 'sid',
-        autoIncrement: false
+  const db = await openDB(DB_NAME, 1, {
+    async upgrade(db, oldVersion, newVersion, transaction) {
+      Object.keys(STORES).forEach((key) => {
+        const store = STORES[key]
+        db.createObjectStore(store.name, {
+          keyPath: store.keyPath,
+          autoIncrement: store.autoIncrement === true
+        })
       })
-      db.createObjectStore(OBJECT_STORES.INVENTORY_ITEMS, {
-        keyPath: ['sid', 'invID'],
-        autoIncrement: false
-      })
-      db.createObjectStore(OBJECT_STORES.ITEMS, {
-        keyPath: ['itemID'],
-        autoIncrement: false
-      })
-      db.createObjectStore(OBJECT_STORES.PIECES, {
-        keyPath: 'id',
-        autoIncrement: true
-      })
-      db.createObjectStore(OBJECT_STORES.COLORS, {
-        keyPath: 'colorID',
-        autoIncrement: true
-      })
+      const store = transaction.objectStore(STORES.INVENTORY_ITEMS.name)
+      store.createIndex('storeId', 'storeId')
       createData = true
     }
   })
   if (createData) {
-    createInitialData(db)
+    await createInitialData(db)
   }
   return db
 }
@@ -228,18 +217,23 @@ async function addNewStore() {
   await addStore(newStoreName.value, newStoreId.value, db)
 }
 
-async function addStore(name: string, sid: string, db: IDBPDatabase) {
+async function addStore(name: string, sId: string, db: IDBPDatabase) {
   const newStore = {
-    sid,
+    sId,
     name 
   }
-  db.add(OBJECT_STORES.STORES, newStore)
-  stores.value.push(newStore)
+  db.add(STORES.STORES.name, newStore)
+  const newUiStore: UiStore = {
+    ...newStore,
+    items: 0
+  }
+  stores.value.push(newUiStore)
+  return newUiStore
 }
 
-interface Piece {
-  id?: number
-  itemID: string
+interface ShopListItem {
+  shopListId: number
+  itemId: string
   condition: string,
   minQuantity: number,
   maxQuantity: number,
@@ -247,60 +241,154 @@ interface Piece {
   colors: string[]
 }
 
-const pieces = ref<Piece[]>([])
+const shopListItems = ref<ShopListItem[]>([])
 
-async function addPiece(itemID: string, condition: string, minQuantity: number, maxQuantity: number, maxPrice: number, colors: string, db: IDBPDatabase) {
-  const newPiece = {
-    itemID,
+async function addShopListItem(shopListId: number, itemId: string, condition: string, minQuantity: number, maxQuantity: number, maxPrice: number, colors: string, db: IDBPDatabase) {
+  const item: ShopListItem = {
+    shopListId,
+    itemId,
     condition,
     minQuantity,
     maxQuantity,
     maxPrice,
-    colors: colors.split(',')
+    colorIds: colors.split(',')
   }
-  db.add(OBJECT_STORES.PIECES, newPiece)
-  pieces.value.push(newPiece)
+  db.add(STORES.SHOP_LIST_ITEMS.name, item)
+  shopListItems.value.push(item)
+}
+interface ShopList {
+  id?: number
+  name: string
+}
+interface UiShopList extends ShopList {
+  items: number
+}
+async function addShopList(name: string, db: IDBPDatabase) {
+  const list: ShopList = {
+    name,
+  }
+  db.add(STORES.SHOP_LISTS.name, list)
+  const uiList: UiShopList = {
+    name: list.name,
+    items: 15
+  }
+  shopLists.value.push(uiList)
 }
 
-const newPieceItemID = ref('')
-const newPieceCondition = ref('')
-const newPieceMinQuantity = ref<number>(0)
-const newPieceMaxQuantity = ref<number>(0)
-const newPieceMaxPrice = ref<number>(0)
-const newPieceColors = ref<string>('')
+const newShopListItemListId = ref<number>(-1)
+const newShopListItemItemId = ref('')
+const newShopListItemCondition = ref('')
+const newShopListItemMinQuantity = ref<number>(0)
+const newShopListItemMaxQuantity = ref<number>(0)
+const newShopListItemMaxPrice = ref<number>(0)
+const newShopListItemColors = ref<string>('')
 
-async function addNewPiece() {
+interface InvItem {
+  invId: number
+  storeId: string
+  itemId: number
+  condition: string
+  quantity: number
+  price: number
+  color: number
+}
+async function addInvItem(
+  db: IDBPDatabase,
+  invId: number,
+  store: UiStore,
+  color: number,
+  condition: string,
+  quantity: number,
+  price: number,
+  itemId: number
+) {
+  const item: InvItem = {
+    storeId: store.sId,
+    invId,
+    itemId,
+    condition,
+    quantity,
+    price,
+    color
+  }
+  db.add(STORES.INVENTORY_ITEMS.name, item)
+  store.items++
+}
+
+async function addNewShopListItem() {
   const db = await getDbConnection()
-  await addPiece(
-    newPieceItemID.value,
-    newPieceCondition.value,
-    newPieceMinQuantity.value,
-    newPieceMaxQuantity.value,
-    newPieceMaxPrice.value,
-    newPieceColors.value,
+  await addShopListItem(
+    newShopListItemListId.value,
+    newShopListItemItemId.value,
+    newShopListItemCondition.value,
+    newShopListItemMinQuantity.value,
+    newShopListItemMaxQuantity.value,
+    newShopListItemMaxPrice.value,
+    newShopListItemColors.value,
     db
   )
 }
 
-async function loadPieces() {
+async function loadShopListItems() {
   const db = await getDbConnection()
-  const x = await db.getAll(OBJECT_STORES.PIECES)
-  pieces.value.push(...x)
+  const x = await db.getAll(STORES.SHOP_LIST_ITEMS.name)
+  shopListItems.value.push(...x)
 }
-async function loadStores() {
+async function getNumStoreItems(storeId: string) {
   const db = await getDbConnection()
-  const x = await db.getAll(OBJECT_STORES.STORES)
-  stores.value.push(...x)
+  const tx = db.transaction(db.objectStoreNames, 'readonly')
+  const objStore = tx.objectStore(STORES.INVENTORY_ITEMS.name)
+  const index = objStore.index('storeId')
+  if (!index) {
+    return -1
+  }
+  try {
+    const out = await index.count(storeId)
+    return out
+  } catch (e) {
+    console.log('error getting numResults', e, storeId)
+  }
+
+  return -1
 }
 
-onMounted(() => {
-  loadPieces()
-  loadStores()
+async function loadStores() {
+  const db = await getDbConnection()
+  const x = await db.getAll(STORES.STORES.name)
+  for (let i = 0; i < x.length; i++) {
+    const store = x[i]
+    const numItems = await getNumStoreItems(store.sId)
+    stores.value.push({
+      name: store.name,
+      sId: store.sId,
+      items: numItems
+    })
+  }
+}
+
+async function loadShopLists() {
+  const db = await getDbConnection()
+  const x = await db.getAll(STORES.SHOP_LISTS.name)
+  const y = x.map(list => {
+    return {
+      name: list.name,
+      items: 25
+    }
+  })
+  shopLists.value.push(...y)
+}
+
+onMounted(async () => {
+  // console.log('onMounted')
+  await loadShopListItems()
+  await loadStores()
+  await loadShopLists()
 })
 
 function analyse() {
   console.log('analyse')
 }
+
 </script>
 
 <template>
@@ -312,27 +400,58 @@ function analyse() {
     <thead>
       <tr>
         <th />
-        <th v-for="store in stores" :key="store.sid">
+        <th v-for="store in stores" :key="store.sId">
           {{ store.name }}
         </th>
       </tr>
     </thead>
     <tbody>
-      <tr v-for="piece in pieces" :key="piece.id">
+      <tr v-for="item in shopListItems" :key="`${item.shopListId }-${ item.itemId}`">
         <td>
-          {{ piece.minQuantity }}-{{ piece.maxQuantity }}x {{ piece.itemID }} / {{ piece.condition }} / {{ piece.colors }} - EURc {{ piece.maxPrice }}
-        </td>
-        <td v-for="store in stores" :key="`${piece.id }-${ store.sid}`">
-          -
+          {{ item.minQuantity }}-{{ item.maxQuantity }}x {{ item.itemId }} / {{ item.condition }} / {{ item.colors }} - EURc {{ item.maxPrice }}
         </td>
       </tr>
     </tbody>
   </table>
   <h4>Stores</h4>
-  <div v-for="store in stores" :key="store.sid">
-    {{ store.name }}
-  </div>
-  <h4>Pieces</h4>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Inventory</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr v-for="store in stores" :key="store.sId">
+        <td>
+          {{ store.name }}
+        </td>
+        <td>
+          {{ store.items }}
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <h4>Shopping Lists</h4>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Items</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr v-for="list in shopLists" :key="list.id">
+        <td>
+          {{ list.name }}
+        </td>
+        <td>
+          {{ list.items }}
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <h4>ShopList Items</h4>
   <table>
     <thead>
       <tr>
@@ -345,13 +464,13 @@ function analyse() {
       </tr>
     </thead>
     <tbody>
-      <tr v-for="piece in pieces" :key="piece.id">
-        <td>{{ piece.itemID }}</td>
-        <td>{{ piece.condition }}</td>
-        <td>{{ piece.minQuantity }}</td>
-        <td>{{ piece.maxQuantity }}</td>
-        <td>{{ piece.maxPrice }}</td>
-        <td>{{ piece.colors }}</td>
+      <tr v-for="item in shopListItems" :key="`${item.shopListId }-${ item.itemId }-${ item.condition }-${ item.colors}`">
+        <td>{{ item.itemId }}</td>
+        <td>{{ item.condition }}</td>
+        <td>{{ item.minQuantity }}</td>
+        <td>{{ item.maxQuantity }}</td>
+        <td>{{ item.maxPrice }}</td>
+        <td>{{ item.colors }}</td>
       </tr>
     </tbody>
   </table>
@@ -359,13 +478,13 @@ function analyse() {
   <table>
     <thead>
       <tr>
-        <th>Image</th>
+        <th>Images</th>
         <th>Category</th>
         <th>Name</th>
       </tr>
     </thead>
     <tbody>
-      <tr v-for="item in items" :key="item.itemID">
+      <tr v-for="item in items" :key="item.itemId">
         <td><img :src="item.newThumb1Img"></td>
         <td>{{ item.categoryString }}</td>
         <td>{{ item.itemName }}</td>
@@ -380,9 +499,9 @@ function analyse() {
     Stop fetching
   </button>
   <h4>Prices</h4>
-  <div v-for="store in storePricesArray" :key="store.sid">
+  <div v-for="store in storePricesArray" :key="store.sId">
     <h5>{{ store.name }}</h5>
-    <div v-for="item in store.items" :key="item.itemID">
+    <div v-for="item in store.items" :key="item.itemId">
       <div>{{ item.name }}</div>
       <div v-for="lot in item.lots" :key="lot.id">
         <span>{{ lot.colorName }}</span>
@@ -392,10 +511,10 @@ function analyse() {
       </div>
     </div>
   </div>
-  <h4>Add piece</h4>
-  <div>Item ID:<input v-model="newPieceItemID" type="text"></div>
+  <h4>Add shop list item</h4>
+  <div>Item Id:<input v-model="newShopListItemItemId" type="text"></div>
   <div>
-    Condition:<select v-model="newPieceCondition">
+    Condition:<select v-model="newShopListItemCondition">
       <option value="New">
         New
       </option>
@@ -404,11 +523,11 @@ function analyse() {
       </option>
     </select>
   </div>
-  <div>Min quantity:<input v-model="newPieceMinQuantity" type="number"></div>
-  <div>Max quantity:<input v-model="newPieceMaxQuantity" type="number"></div>
-  <div>Max price:<input v-model="newPieceMaxPrice" type="number"></div>
-  <div>Colors:<input v-model="newPieceColors" type="text"></div>
-  <button @click="addNewPiece">
+  <div>Min quantity:<input v-model="newShopListItemMinQuantity" type="number"></div>
+  <div>Max quantity:<input v-model="newShopListItemMaxQuantity" type="number"></div>
+  <div>Max price:<input v-model="newShopListItemMaxPrice" type="number"></div>
+  <div>Colors:<input v-model="newShopListItemColors" type="text"></div>
+  <button @click="addNewShopListItem">
     Add
   </button>
   <h4>Add store</h4>
