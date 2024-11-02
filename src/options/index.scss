@@ -1,6 +1,9 @@
 body {
-  font-size: 125%;
+  font-size: 20px;
   margin: 1rem;
+}
+button {
+  font-size: 20px;
 }
 
 @import '/node_modules/vite-plugin-vue-devtools/src//overlay/devtools-overlay.css';
