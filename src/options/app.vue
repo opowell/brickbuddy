@@ -12,28 +12,13 @@ import StorePage from './pages/StorePage.vue'
 import ShoppingListsPage from './pages/ShoppingListsPage.vue'
 import ShoppingListPage from './pages/ShoppingListPage.vue'
 import SearchesPage from './pages/SearchesPage.vue'
-import type { Color, InvItem, Item, ItemVariant, Search, ShopList, ShopListItem, Store, UiInvItem, UiItem, UiShopList, UiStore } from './constants'
+import type { Color, InvItem, Item, ItemVariant, Search, ShopList, ShopListItem, Store, UiInvItem, UiItem, UiItemVariant, UiShopList, UiStore } from './constants'
 import { DB_NAME } from './constants'
 const storePrices = ref({})
 const openShopList = ref<UiShopList | null>(null)
 async function  getPrices(store: UiStore, i: number) {
   console.log('get prices', store, i)
   const response = await fetch(`https://store.bricklink.com/ajax/clone/store/searchitems.ajax?sort=6&pgSize=100&pg=${i}&showHomeItems=0&sid=${store.sId}`, {
-    "headers": {
-      "accept": "application/json, text/javascript, */*; q=0.01",
-      "accept-language": "en,de;q=0.9,es;q=0.8,en-US;q=0.7",
-      "cache-control": "no-cache",
-      "pragma": "no-cache",
-      "priority": "u=1, i",
-      "sec-ch-ua": "\"Chromium\";v=\"130\", \"Google Chrome\";v=\"130\", \"Not?A_Brand\";v=\"99\"",
-      "sec-ch-ua-mobile": "?0",
-      "sec-ch-ua-platform": "\"macOS\"",
-      "sec-fetch-dest": "empty",
-      "sec-fetch-mode": "cors",
-      "sec-fetch-site": "same-origin",
-      "x-requested-with": "XMLHttpRequest"
-    },
-    "referrer": "https://store.bricklink.com/stefxan",
     "referrerPolicy": "no-referrer-when-downgrade",
     "body": null,
     "method": "GET",
@@ -44,10 +29,8 @@ async function  getPrices(store: UiStore, i: number) {
   const db = await getDbConnection()
   for (let i = 0; i < json.result.groups.length; i++) {
     const group = json.result.groups[i]
-    // for (let j = 0; j < 1; j++) {
     for (let j = 0; j < group.items.length; j++) {
       const invItem = group.items[j]
-      console.log(invItem)
       try {
         await addColor(db, invItem.colorID, invItem.colorName)
         const item = await addItem(
@@ -189,9 +172,13 @@ async function addItem(
     smallImg,
   }
   db.put(STORES.ITEM_IMAGES.name, variant)
+  const uiVariant: UiItemVariant = {
+    ...variant,
+    color: colors.value[variant.colorId]
+  }
   const uiItem = {
     ...newItem,
-    variants: [variant]
+    variants: [uiVariant]
   }
   items.value.push(uiItem)
   return uiItem
