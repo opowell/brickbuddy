@@ -53,7 +53,7 @@ const stores: {
   },
   SHOP_LIST_ITEMS: {
     name: 'shopListItems',
-    keyPath: ['shopListId', 'itemId', 'colorIds']
+    keyPath: ['shopListId', 'itemId', 'colors']
   },
   STORES: {
     name: 'stores',

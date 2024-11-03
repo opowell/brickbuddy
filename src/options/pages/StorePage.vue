@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { UiInvItem } from '../constants';
 defineProps({
+  fetching: Boolean,
   store: Object
 })
 defineEmits(['goHome', 'goStores', 'goItem', 'startFetching', 'stopFetching'])
@@ -23,14 +24,20 @@ function getImageSrc(invItem: UiInvItem) {
       Stores
     </button>
     <h4>{{ store.name }}</h4>
-    <h4>Inventory</h4>
-    <button @click="$emit('startFetching')">
-      Start fetching
+    <h4>Fetch inventory</h4>
+    <button
+      :disabled="fetching"
+      @click="$emit('startFetching')"
+    >
+      Start
     </button>
-    <button @click="$emit('stopFetching')">
-      Stop fetching
+    <button
+      :disabled="!fetching"
+      @click="$emit('stopFetching')"
+    >
+      Stop
     </button>
-    <h4>InvItems</h4>
+    <h4>InvItems ({{ store.items.length }})</h4>
     <table>
       <thead>
         <tr>

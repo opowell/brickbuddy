@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import type { UiShopList } from '../constants'
+import type { UiShopList, UiShopListItem } from '../constants'
 defineProps({
   list: Object
 })
-const emits = defineEmits(['goHome', 'open', 'addItem'])
+const emits = defineEmits(['goHome', 'open', 'addItem', 'goItem'])
 const newShopListItemListId = ref<number>(-1)
 const newShopListItemItemId = ref('')
 const newShopListItemCondition = ref('')
@@ -23,7 +23,12 @@ function addNewShopListItem() {
     colors: newShopListItemColors.value,
   })
 }
-
+function getColorNames(item: UiShopListItem) {
+  if (!item || !item.colorNames) {
+    return item.colors
+  }
+  return item.colorNames.map(colorObj => colorObj.name).join(',')
+}
 </script>
 
 <template>
@@ -32,30 +37,11 @@ function addNewShopListItem() {
       Home
     </button>
     <h4>{{ list.name }}</h4>
-    <!-- <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Items</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="list in lists" :key="list.id">
-          <td>
-            <button @click="$emit('open', list)">
-              {{ list.name }}
-            </button>
-          </td>
-          <td>
-            {{ list.items }}
-          </td>
-        </tr>
-      </tbody>
-    </table> -->
-    <!-- <h4>ShopList Items</h4>
+    <h4>ShopList Items ({{ list.items.length }})</h4>
     <table>
       <thead>
         <tr>
+          <th>Image</th>
           <th>Item</th>
           <th>Condition</th>
           <th>MinQ</th>
@@ -65,22 +51,30 @@ function addNewShopListItem() {
         </tr>
       </thead>
       <tbody>
-        <tr v-for="item in shopListItems" :key="`${item.shopListId }-${ item.itemId }-${ item.condition }-${ item.colors}`">
+        <tr v-for="item in list.items" :key="`${ item.itemId }-${ item.condition }-${ item.colors}`">
           <td>{{ item.itemId }}</td>
+          <td>
+            <button @click="$emit('goItem', item.item)">
+              {{ item.item?.itemName }}
+            </button>
+          </td>
           <td>{{ item.condition }}</td>
           <td>{{ item.minQuantity }}</td>
           <td>{{ item.maxQuantity }}</td>
           <td>{{ item.maxPrice }}</td>
-          <td>{{ item.colors }}</td>
+          <td>{{ getColorNames(item) }}</td>
         </tr>
       </tbody>
-    </table> -->
+    </table>
     <h4>Add shop list item</h4>
     <div>Item Id:<input v-model="newShopListItemItemId" type="text"></div>
     <div>
       Condition:<select v-model="newShopListItemCondition">
         <option value="New">
           New
+        </option>
+        <option value="Any">
+          Any
         </option>
         <option value="Used">
           Used

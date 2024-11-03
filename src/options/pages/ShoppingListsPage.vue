@@ -3,7 +3,8 @@ import type { UiShopList } from '../constants'
 defineProps({
   lists: Array<UiShopList>
 })
-defineEmits(['goHome', 'open'])
+defineEmits(['goHome', 'open', 'add'])
+const newListName = ref('')
 </script>
 
 <template>
@@ -27,10 +28,15 @@ defineEmits(['goHome', 'open'])
             </button>
           </td>
           <td>
-            {{ list.items }}
+            {{ list.items.length }}
           </td>
         </tr>
       </tbody>
     </table>
+    <h4>Add</h4>
+    <div>Name:<input v-model="newListName" type="text"></div>
+    <button @click="$emit('add', newListName)">
+      Add
+    </button>
   </div>
 </template>
