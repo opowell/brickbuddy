@@ -2,7 +2,7 @@
 const { colors } = defineProps({
   colors: Object
 })
-const emits = defineEmits(['goHome', 'add'])
+const emits = defineEmits(['goHome', 'add', 'goColor'])
 const newColorId = ref('')
 const newColorName = ref('')
 
@@ -40,7 +40,9 @@ const colorsArray = computed(() => {
             {{ color.id }}
           </td>
           <td>
-            {{ color.name }}
+            <button @click="$emit('goColor', color)">
+              {{ color.name }}
+            </button>
           </td>
         </tr>
       </tbody>

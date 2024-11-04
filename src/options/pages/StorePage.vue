@@ -4,14 +4,17 @@ defineProps({
   fetching: Boolean,
   store: Object
 })
-defineEmits(['goHome', 'goStores', 'goItem', 'startFetching', 'stopFetching'])
+defineEmits(['goHome', 'goStores', 'goItem', 'startFetching', 'stopFetching', 'goVariant'])
 
 function getImageSrc(invItem: UiInvItem) {
-  const variant = invItem.item.variants.find(v => v.colorId === invItem.color)
+  const variant = getVariant(invItem)
   if (!variant) {
     return
   }
   return `https:${variant.newThumb1Img}`
+}
+function getVariant(invItem: UiInvItem) {
+  return invItem.item.variants.find(v => v.colorId === invItem.color)
 }
 </script>
 
@@ -37,7 +40,7 @@ function getImageSrc(invItem: UiInvItem) {
     >
       Stop
     </button>
-    <h4>InvItems ({{ store.items.length }})</h4>
+    <h4>Inventory ({{ store.items.length }})</h4>
     <table>
       <thead>
         <tr>
@@ -50,7 +53,10 @@ function getImageSrc(invItem: UiInvItem) {
       </thead>
       <tbody>
         <tr v-for="item in store.items" :key="item.invId">
-          <td><img :src="getImageSrc(item)"></td>
+          <td><img
+            :src="getImageSrc(item)"
+            @click="$emit('goVariant', getVariant(item))"
+          ></td>
           <td>
             <button
               @click="$emit('goItem', item.item)"

@@ -39,13 +39,14 @@ export default antfu(
       'no-alert': 'warn',
       'no-console': 'warn',
       'no-restricted-globals': 'warn',
-      'perfectionist/sort-imports': 'off',
+      'perfectionist/sort-imports': 'on',
       'import/order': 'warn',
       '@typescript-eslint/ban-ts-comment': 'warn',
       '@typescript-eslint/explicit-function-return-type': 'off',
       'vue/multi-word-component-names': 'warn',
       '@eslint-community/eslint-comments/no-unlimited-disable': 'off',
       'ts/explicit-function-return-type': 'off',
+      "@html-eslint/attrs-newline": "error",
     },
   }
 )

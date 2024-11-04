@@ -2,7 +2,7 @@
 defineProps({
   item: Object
 })
-defineEmits(['goHome', 'goItems', 'goVariant'])
+defineEmits(['goHome', 'goItems', 'goVariant', 'goColor'])
 </script>
 
 <template>
@@ -15,10 +15,11 @@ defineEmits(['goHome', 'goItems', 'goVariant'])
     </button>
     <h4>{{ item.itemName }}</h4>
     <div>Category: {{ item.categoryString }}</div>
-    <div>Variants</div>
+    <h4>Variants</h4>
     <table>
       <thead>
         <tr>
+          <th>Name</th>
           <th>Color</th>
           <th>New Thumb1 Img</th>
         </tr>
@@ -27,6 +28,11 @@ defineEmits(['goHome', 'goItems', 'goVariant'])
         <tr v-for="(variant, index) in item.variants" :key="index">
           <td>
             <button @click="$emit('goVariant', variant)">
+              {{ item.itemName + ', ' + variant.color.name }}
+            </button>
+          </td>
+          <td>
+            <button @click="$emit('goColor', variant.color)">
               {{ variant.color.name }}
             </button>
           </td>

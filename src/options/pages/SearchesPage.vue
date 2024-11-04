@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import type { UiShopList } from '../constants'
+import type { UiSearch } from '../constants'
 defineProps({
-  lists: Array<UiShopList>
+  searches: Array<UiSearch>
 })
-defineEmits(['goHome'])
+defineEmits(['goHome', 'add', 'goSearch'])
+const newName = ref<string>('')
 </script>
 
 <template>
@@ -16,19 +17,26 @@ defineEmits(['goHome'])
       <thead>
         <tr>
           <th>Name</th>
-          <th>Items</th>
+          <th>Shop List</th>
         </tr>
       </thead>
       <tbody>
-        <tr v-for="list in lists" :key="list.id">
+        <tr v-for="search in searches" :key="search.id">
           <td>
-            {{ list.name }}
+            <button @click="$emit('goSearch', search)">
+              {{ search.name }}
+            </button>
           </td>
           <td>
-            {{ list.items }}
+            {{ search.shoppingList?.name }}
           </td>
         </tr>
       </tbody>
     </table>
+    <h4>Add</h4>
+    <div>Name:<input v-model="newName" type="text"></div>
+    <button @click="$emit('add', newName)">
+      Add
+    </button>
   </div>
 </template>

@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import type { UiShopList } from '../constants';
+import type { UiShopList } from '../constants'
 
 const { lists, variant } = defineProps({
   variant: Object,
   lists: Array<UiShopList>
 })
-defineEmits(['goHome', 'goItems', 'goItem', 'goStore', 'addToList'])
+defineEmits(['goHome', 'goItems', 'goItem', 'goStore', 'addToList', 'goShopList'])
 const addToListId = ref<number | undefined>()
 const addToListCondition = ref<string>('New')
 const addToListMinQ = ref<number>(1)
@@ -82,7 +82,7 @@ watch(() => lists, () => {
     <button @click="$emit('addToList', addToListItem)">
       Add
     </button>
-    <div>Store items</div>
+    <h4>Store items</h4>
     <table>
       <thead>
         <tr>
@@ -100,6 +100,29 @@ watch(() => lists, () => {
           </td>
           <td>{{ invItem.price }}</td>
           <td>{{ invItem.quantity }}</td>
+        </tr>
+      </tbody>
+    </table>
+    <h4>Shopping lists</h4>
+    <table>
+      <thead>
+        <tr>
+          <th>List</th>
+          <th>MaxP</th>
+          <th>MinQ</th>
+          <th>MaxQ</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="(shopListItem, index) in variant.shopListItems" :key="index">
+          <td>
+            <button @click="$emit('goShopList', shopListItem.shopList)">
+              {{ shopListItem.shopList.name }}
+            </button>
+          </td>
+          <td>{{ shopListItem.maxP }}</td>
+          <td>{{ shopListItem.minQ }}</td>
+          <td>{{ shopListItem.maxQ }}</td>
         </tr>
       </tbody>
     </table>

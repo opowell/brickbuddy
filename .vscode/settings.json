@@ -9,7 +9,7 @@
   "markdown.validate.ignoredLinks": ["./src/setup/pages/index.ts"],
   "typescript.tsdk": "node_modules\\typescript\\lib",
   "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": true
+    "source.fixAll.eslint": "explicit"
   },
   "eslint.validate": ["javascript"]
 }

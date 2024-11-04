@@ -5,15 +5,15 @@ export interface Store {
 
 export interface Item {
   categoryString: string
-  itemId: number
+  itemId: string
   itemName: string
-  itemNo: string
-  itemSeq: number
-  itemStatus: string
-  itemType: string
+  itemNo?: string
+  itemSeq?: number
+  itemStatus?: string
+  itemType?: string
 }
 export interface ItemVariant {
-  itemId: number
+  itemId: string
   colorId: number
   largeImg: string
   newItemImg: string
@@ -24,6 +24,7 @@ export interface ItemVariant {
 export interface UiItemVariant extends ItemVariant {
   color: Color
   invItems: UiInvItem[]
+  item: UiItem
 }
 export interface UiItem extends Item {
   variants: UiItemVariant[]
@@ -31,7 +32,7 @@ export interface UiItem extends Item {
 export interface InvItem {
   invId: number
   storeId: string
-  itemId: number
+  itemId: string
   condition: string
   quantity: number
   price: number
@@ -53,25 +54,31 @@ export interface ShopList {
 export interface ShopListItem {
   id?: number
   shopListId: number
-  itemId: number
-  condition: string,
-  minQuantity: number,
-  maxQuantity: number,
-  maxPrice: number,
+  itemId: string
+  condition: string
+  minQuantity: number
+  maxQuantity: number
+  maxPrice: number
   colors: string[]
+}
+export interface Search {
+  id?: number
+  name: string
+  shoppingListId?: number
+  storeIds: string[]
+}
+export interface UiSearch extends Search {
+  shoppingList?: UiShopList
+  stores?: UiStore[]
 }
 export interface UiShopListItem extends ShopListItem {
   item?: UiItem
   colorNames?: Color[]
+  shopList?: UiShopList
 }
 export const DB_NAME = 'brickbuddy'
 
 export interface Color {
-  id: number
-  name: string
-}
-
-export interface Search {
   id: number
   name: string
 }

@@ -41,7 +41,7 @@ function add() {
         </tr>
       </tbody>
     </table>
-    <h4>Add store</h4>
+    <h4>Add</h4>
     <div>Id:<input v-model="newStoreId" type="text"></div>
     <div>Name:<input v-model="newStoreName" type="text"></div>
     <button @click="add">
