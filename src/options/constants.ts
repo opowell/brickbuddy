@@ -15,11 +15,7 @@ export interface Item {
 export interface ItemVariant {
   itemId: string
   colorId: number
-  largeImg: string
-  newItemImg: string
-  newThumb1Img: string
-  newThumb2Img: string
-  smallImg: string
+  image: string
 }
 export interface UiItemVariant extends ItemVariant {
   color: Color

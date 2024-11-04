@@ -49,11 +49,7 @@ async function getPrices(store: UiStore, i: number) {
           invItem.itemSeq,
           invItem.itemStatus,
           invItem.itemType,
-          invItem.largeImg,
-          invItem.newItemImg,
           invItem.newThumb1Img,
-          invItem.newThumb2Img,
-          invItem.smallImg,
           db
         )
         await addInvItem(
@@ -160,7 +156,7 @@ async function addItemNoVariant(
     itemStatus,
     itemType,
   }
-  await db.put(STORES.ITEMS.name, newItem)
+  await db.put(STORES.PARTS.name, newItem)
   return newItem
 }
 async function addItem(
@@ -172,11 +168,7 @@ async function addItem(
   itemSeq: number,
   itemStatus: string,
   itemType: string,
-  largeImg: string,
-  newItemImg: string,
   newThumb1Img: string,
-  newThumb2Img: string,
-  smallImg: string,
   db: IDBPDatabase
 ) {
   const newItem = await addItemNoVariant(
@@ -189,31 +181,28 @@ async function addItem(
     itemStatus,
     itemType,
   )
-  const image = await fetch("https://img.bricklink.com/ItemImage/PT/104/18853.t1.png", {
-    "headers": {
-      "accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
-    },
-    "referrerPolicy": "strict-origin-when-cross-origin",
-    "body": null,
-    "method": "GET",
-    "mode": "cors",
-    "credentials": "include"
+async function toDataURL(url: string): Promise<string> {
+  return new Promise(resolve => {
+    var xhr = new XMLHttpRequest()
+    xhr.onload = function() {
+      var reader = new FileReader()
+      reader.onloadend = function() {
+        resolve(reader.result)
+      }
+      reader.readAsDataURL(xhr.response);
+    };
+    xhr.open('GET', url);
+    xhr.responseType = 'blob';
+    xhr.send();
   })
-  // const json = await image.json()
-  const text = await image.text()
-  console.log(text)
-  // const blob = await image.blob()
-  // const buf = await image.arrayBuffer()
+}
+const image: string = await toDataURL('https:' + newThumb1Img)
   const variant: ItemVariant = {
     itemId,
     colorId,
-    largeImg,
-    newItemImg,
-    newThumb1Img,
-    newThumb2Img,
-    smallImg,
+    image
   }
-  await db.put(STORES.ITEM_IMAGES.name, variant)
+  await db.put(STORES.PART_VARIANTS.name, variant)
   let uiItem = items.value.find(item => item.itemId === itemId)
   if (!uiItem) {
     console.log('create uiItem', newItem)
@@ -249,7 +238,7 @@ async function getDbConnection() {
       const invItemsStore = transaction.objectStore(STORES.INVENTORY_ITEMS.name)
       invItemsStore.createIndex('storeId', 'storeId')
       invItemsStore.createIndex('itemId_color', ['itemId', 'color'])
-      const itemVariantsStore = transaction.objectStore(STORES.ITEM_IMAGES.name)
+      const itemVariantsStore = transaction.objectStore(STORES.PART_VARIANTS.name)
       itemVariantsStore.createIndex('itemId', 'itemId')
       const shopListItemsStore = transaction.objectStore(STORES.SHOP_LIST_ITEMS.name)
       shopListItemsStore.createIndex('shopListId', 'shopListId')
@@ -444,7 +433,7 @@ async function loadStores() {
 }
 async function loadItemVariants(db: IDBPDatabase, item: Item) {
   const tx = db.transaction(db.objectStoreNames, 'readonly')
-  const objStore = tx.objectStore(STORES.ITEM_IMAGES.name)
+  const objStore = tx.objectStore(STORES.PART_VARIANTS.name)
   const index = objStore.index('itemId')
   if (!index) {
     return []
@@ -487,7 +476,7 @@ async function loadShopListItems(db: IDBPDatabase, shopListId: string) {
 
 async function loadItems() {
   const db = await getDbConnection()
-  const x = await db.getAll(STORES.ITEMS.name)
+  const x = await db.getAll(STORES.PARTS.name)
   for (let i = 0; i < x.length; i++) {
     const item = x[i]
     item.variants = await loadItemVariants(db, item)

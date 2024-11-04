@@ -11,7 +11,7 @@ function getImageSrc(invItem: UiInvItem) {
   if (!variant) {
     return
   }
-  return `https:${variant.newThumb1Img}`
+  return variant.image
 }
 function getVariant(invItem: UiInvItem) {
   return invItem.item.variants.find(v => v.colorId === invItem.color)

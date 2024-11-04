@@ -10,8 +10,8 @@ const stores: {
   CATEGORIES: StoreDefinition
   COLORS: StoreDefinition
   INVENTORY_ITEMS: StoreDefinition
-  ITEM_IMAGES: StoreDefinition
-  ITEMS: StoreDefinition
+  PART_VARIANTS: StoreDefinition
+  PARTS: StoreDefinition
   SEARCHES: StoreDefinition
   SHOP_LISTS: StoreDefinition
   SHOP_LIST_ITEMS: StoreDefinition
@@ -33,12 +33,12 @@ const stores: {
       STORE_ID: 'storeId'
     }
   },
-  ITEM_IMAGES: {
-    name: 'itemImages',
+  PART_VARIANTS: {
+    name: 'partVariants',
     keyPath: ['itemId', 'colorId']
   },
-  ITEMS: {
-    name: 'items',
+  PARTS: {
+    name: 'parts',
     keyPath: 'itemId'
   },
   SEARCHES: {

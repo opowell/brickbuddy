@@ -7,7 +7,7 @@ defineEmits(['goHome', 'goItem'])
 </script>
 
 <template>
-  <div>
+  <div v-if="items">
     <button @click="$emit('goHome')">
       Home
     </button>
@@ -24,7 +24,7 @@ defineEmits(['goHome', 'goItem'])
       </thead>
       <tbody>
         <tr v-for="item in items" :key="item.itemId">
-          <td><img v-if="item.variants.length" :src="`https:${item.variants[0].newThumb1Img}`"></td>
+          <td><img v-if="item.variants.length" :src="item.variants[0].image"></td>
           <td>{{ item.itemId }}</td>
           <td>
             <button @click="$emit('goItem', item)">
