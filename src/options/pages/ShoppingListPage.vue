@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import type { UiShopList, UiShopListItem } from '../constants'
-defineProps({
-  list: Object
+import type { UiItem, UiShopListItem } from '../types'
+const { parts } = defineProps({
+  list: Object,
+  parts: Array<UiItem>
 })
 const emits = defineEmits(['goHome', 'open', 'addItem', 'goItem', 'goShopLists'])
 const newShopListItemListId = ref<number>(-1)
@@ -29,10 +30,26 @@ function getColorNames(item: UiShopListItem) {
   }
   return item.colorNames.map(colorObj => colorObj.name).join(',')
 }
+const sortedParts = computed(() => {
+  if (!parts) {
+    return []
+  }
+  return parts.sort((a, b) => {
+    return a.itemName > b.itemName ? 1 : -1
+  })
+})
+const filterString = ref('')
+const filteredParts = computed(() => {
+  if (filterString.value === '') {
+    return sortedParts.value
+  }
+  const lowCaseFilter = filterString.value.toLowerCase()
+  return sortedParts.value.filter(a => a.itemName.toLowerCase().includes(lowCaseFilter))
+})
 </script>
 
 <template>
-  <div>
+  <div v-if="list">
     <button @click="$emit('goHome')">
       Home
     </button>
@@ -70,6 +87,7 @@ function getColorNames(item: UiShopListItem) {
       </tbody>
     </table>
     <h4>Add shop list item</h4>
+    <div>Item name:<input v-model="filterString"></div>
     <div>Item Id:<input v-model="newShopListItemItemId" type="text"></div>
     <div>
       Condition:<select v-model="newShopListItemCondition">
@@ -91,5 +109,29 @@ function getColorNames(item: UiShopListItem) {
     <button @click="addNewShopListItem">
       Add
     </button>
+    <table>
+      <thead>
+        <tr>
+          <th>Image</th>
+          <th>Id</th>
+          <th>Name</th>
+          <th>Category</th>
+          <th>Colors</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="item in filteredParts" :key="item.itemId">
+          <td><img v-if="item.variants.length" :src="item.variants[0].image"></td>
+          <td>{{ item.itemId }}</td>
+          <td>
+            <button @click="$emit('goItem', item)">
+              {{ item.itemName }}
+            </button>
+          </td>
+          <td>{{ item.categoryString }}</td>
+          <td>{{ item.variants.length }}</td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 </template>

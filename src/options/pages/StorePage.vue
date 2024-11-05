@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { UiInvItem } from '../constants';
+import type { UiInvItem } from '../types';
 defineProps({
   fetching: Boolean,
   store: Object

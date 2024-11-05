@@ -61,11 +61,13 @@ export interface Search {
   id?: number
   name: string
   shoppingListId?: number
+  shopListItemIds?: number[]
   storeIds: string[]
 }
 export interface UiSearch extends Search {
   shoppingList?: UiShopList
   stores?: UiStore[]
+  shopListItems?: UiShopListItem[]
 }
 export interface UiShopListItem extends ShopListItem {
   item?: UiItem

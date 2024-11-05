@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { UiItem } from '../constants';
+import type { UiItem } from '../types';
 defineProps({
   items: Array<UiItem>
 })
@@ -11,7 +11,7 @@ defineEmits(['goHome', 'goItem'])
     <button @click="$emit('goHome')">
       Home
     </button>
-    <h4>Items ({{ items.length }})</h4>
+    <h4>Parts ({{ items.length }})</h4>
     <table>
       <thead>
         <tr>
@@ -19,7 +19,7 @@ defineEmits(['goHome', 'goItem'])
           <th>Id</th>
           <th>Name</th>
           <th>Category</th>
-          <th>Variants</th>
+          <th>Colors</th>
         </tr>
       </thead>
       <tbody>

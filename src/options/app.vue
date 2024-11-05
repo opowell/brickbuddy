@@ -124,6 +124,7 @@ const openColor = ref<Color | null>(null)
   <ShoppingListPage
     v-else-if="page === PAGES.SHOP_LIST && openShopList"
     :list="openShopList"
+    :parts="items"
     @go-home="page = PAGES.HOME"
     @add-item="addNewShopListItem"
     @go-shop-lists="page = PAGES.SHOP_LISTS"

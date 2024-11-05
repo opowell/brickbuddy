@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { UiSearch } from '../constants'
+import type { UiSearch } from '../types'
 defineProps({
   searches: Array<UiSearch>
 })

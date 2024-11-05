@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { UiStore } from '../constants';
+import type { UiStore } from '../types';
 defineProps({
   stores: Array<UiStore>
 })

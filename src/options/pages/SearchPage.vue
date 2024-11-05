@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { UiShopList, UiStore } from '../constants'
+import type { UiShopList, UiStore } from '../types'
 const { search, shopLists, stores } = defineProps({
   search: Object,
   shopLists: Array<UiShopList>,

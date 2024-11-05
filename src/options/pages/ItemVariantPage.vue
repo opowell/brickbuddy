@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { UiShopList } from '../constants'
+import type { UiShopList } from '../types'
 
 const { lists, variant } = defineProps({
   variant: Object,
