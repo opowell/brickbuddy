@@ -3,13 +3,13 @@ const { colors } = defineProps({
   colors: Object
 })
 const emits = defineEmits(['goHome', 'add', 'goColor'])
-const newColorId = ref('')
-const newColorName = ref('')
+const newId = ref('')
+const newName = ref('')
 
 function add() {
   emits('add', {
-    id: newColorId.value,
-    name: newColorName.value
+    id: newId.value,
+    name: newName.value
   })
 }
 
@@ -48,8 +48,8 @@ const colorsArray = computed(() => {
       </tbody>
     </table>
     <h4>Add</h4>
-    <div>Id:<input v-model="newColorId" type="text"></div>
-    <div>Name:<input v-model="newColorName" type="text"></div>
+    <div>Id:<input v-model="newId" type="text"></div>
+    <div>Name:<input v-model="newName" type="text"></div>
     <button @click="add">
       Add new
     </button>

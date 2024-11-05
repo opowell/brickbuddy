@@ -1,9 +1,4 @@
 <script setup lang="ts">
-import type { IDBPDatabase } from 'idb';
-import { openDB } from 'idb';
-
-import * as math from 'mathjs'
-import STORES from './stores'
 import HomePage from './pages/HomePage.vue'
 import StoresPage from './pages/StoresPage.vue'
 import ColorsPage from './pages/ColorsPage.vue'
@@ -16,705 +11,140 @@ import ShoppingListsPage from './pages/ShoppingListsPage.vue'
 import ShoppingListPage from './pages/ShoppingListPage.vue'
 import SearchesPage from './pages/SearchesPage.vue'
 import SearchPage from './pages/SearchPage.vue'
-import type { Color, InvItem, Item, ItemVariant, Search, ShopListItem, Store, UiInvItem, UiItem, UiItemVariant, UiSearch, UiShopList, UiStore } from './constants'
-import { DB_NAME } from './constants'
+import type { Color, UiItem, UiItemVariant, UiSearch, UiShopList, UiStore } from './types'
+import { fetchingStoreInventory, searchRemoveStore, searches, setSearchShopList, addNewSearch, stopFetching, addShopList, addSearchStore, startFetching, addNewShopListItem, addNewStore, colors, items, shopLists, itemVariantPageAddToList, loadModels, openSearch, openStore, stores } from './idb';
+import { PAGES } from './constants'
 
-const openShopList = ref<UiShopList | null>(null)
-const openItemVariant = ref<UiItemVariant | null>(null)
-const openSearch = ref<UiSearch | null>(null)
-const searches = ref<UiSearch[]>([])
-
-async function getPrices(store: UiStore, i: number) {
-  const response = await fetch(`https://store.bricklink.com/ajax/clone/store/searchitems.ajax?sort=6&pgSize=100&pg=${i}&showHomeItems=0&sid=${store.sId}`, {
-    "referrerPolicy": "no-referrer-when-downgrade",
-    "body": null,
-    "method": "GET",
-    "mode": "cors",
-    "credentials": "include"
-  })
-  const json = await response.json()
-  const db = await getDbConnection()
-  for (let i = 0; i < json.result.groups.length; i++) {
-    const group = json.result.groups[i]
-    for (let j = 0; j < group.items.length; j++) {
-      const invItem = group.items[j]
-      try {
-        await addColor(db, invItem.colorID, invItem.colorName)
-        const uiVariant = await addItem(
-          invItem.categoryString,
-          invItem.colorID,
-          invItem.itemID,
-          invItem.itemName,
-          invItem.itemNo,
-          invItem.itemSeq,
-          invItem.itemStatus,
-          invItem.itemType,
-          invItem.newThumb1Img,
-          db
-        )
-        await addInvItem(
-          db,
-          invItem.invID,
-          store,
-          invItem.colorID,
-          invItem.invNew,
-          invItem.invQty,
-          math.number(math.multiply(math.bignumber(100), math.bignumber(invItem.rawConvertedPrice))),
-          invItem.itemID,
-          uiVariant
-        )
-      } catch (e) {
-        console.log('error adding item', invItem, e)
-      }
-    }
-  }
-}
-let stopFetch: boolean = false
-const fetchingStoreInventory = ref(false)
-function stopFetching() {
-  fetchingStoreInventory.value = false
-  stopFetch = true
-}
-const stores = ref<UiStore[]>([])
-let fetchPricesInterval: NodeJS.Timeout
-const openStore = ref<UiStore | null>(null)
-
-async function startFetching() {
-  if (fetchingStoreInventory.value) {
-    return
-  }
-  stopFetch = false
-  let i = 0
-  const store = openStore.value
-  if (!store) {
-    return
-  }
-  fetchingStoreInventory.value = true
-  getPrices(store, i)
-  i++
-  fetchPricesInterval = setInterval(() => {
-    if (stopFetch && fetchPricesInterval) {
-      clearInterval(fetchPricesInterval)
-      return
-    }
-    getPrices(store, i)
-    i++
-  }, 5000)
-}
-const shopLists = ref<UiShopList[]>([])
-
-async function createInitialData(db: IDBPDatabase) {
-  await addStore("Die Steinschleuder", "1832236", db)
-  await addStore("Bricks Austria", "3112575", db)
-  await addStore("A brick per day...", "709693", db)
-  
-  await addShopListDb("Board games 2024", db)
-  
-  stores.value = []
-  shopLists.value = []
-}
-
-const items = ref<UiItem[]>([])
-
-async function getVariantInvItems(db: IDBPDatabase, variant: ItemVariant, item: Item) {
-  const tx = db.transaction(db.objectStoreNames, 'readonly')
-  const objStore = tx.objectStore(STORES.INVENTORY_ITEMS.name)
-  const index = objStore.index('itemId_color')
-  if (!index) {
-    return []
-  }
-  try {
-    const storeItems = await index.getAll([item.itemId, variant.colorId])
-    for (let i = 0; i < storeItems.length; i++) {
-      const storeItem = storeItems[i]
-      storeItem.item = item
-      storeItem.colorName = colors.value[variant.colorId].name
-    }
-    return storeItems
-  } catch (e) {
-    console.log('error getting store items', e, storeId)
-  }
-
-  return []
-}
-async function addItemNoVariant(
-  db: IDBPDatabase,
-  categoryString: string,
-  itemId: string,
-  itemName: string,
-  itemNo?: string,
-  itemSeq?: number,
-  itemStatus?: string,
-  itemType?: string,
-) {
-    const newItem: Item = {
-    categoryString,
-    itemId,
-    itemName,
-    itemNo,
-    itemSeq,
-    itemStatus,
-    itemType,
-  }
-  await db.put(STORES.PARTS.name, newItem)
-  return newItem
-}
-async function addItem(
-  categoryString: string,
-  colorId: number,
-  itemId: string,
-  itemName: string,
-  itemNo: string,
-  itemSeq: number,
-  itemStatus: string,
-  itemType: string,
-  newThumb1Img: string,
-  db: IDBPDatabase
-) {
-  const newItem = await addItemNoVariant(
-    db,
-    categoryString,
-    itemId,
-    itemName,
-    itemNo,
-    itemSeq,
-    itemStatus,
-    itemType,
-  )
-async function toDataURL(url: string): Promise<string> {
-  return new Promise(resolve => {
-    var xhr = new XMLHttpRequest()
-    xhr.onload = function() {
-      var reader = new FileReader()
-      reader.onloadend = function() {
-        resolve(reader.result)
-      }
-      reader.readAsDataURL(xhr.response);
-    };
-    xhr.open('GET', url);
-    xhr.responseType = 'blob';
-    xhr.send();
-  })
-}
-const image: string = await toDataURL('https:' + newThumb1Img)
-  const variant: ItemVariant = {
-    itemId,
-    colorId,
-    image
-  }
-  await db.put(STORES.PART_VARIANTS.name, variant)
-  let uiItem = items.value.find(item => item.itemId === itemId)
-  if (!uiItem) {
-    console.log('create uiItem', newItem)
-    uiItem = {
-      ...newItem,
-      variants: []
-    }
-    items.value.push(uiItem)
-  }
-  const uiVariant: UiItemVariant = {
-    ...variant,
-    color: colors.value[variant.colorId],
-    invItems: await getVariantInvItems(db, variant, newItem),
-    item: uiItem
-  }
-  if (uiItem.variants.every(variant => variant.colorId !== variant.colorId)) {
-    uiItem.variants.push(uiVariant)
-  }
-  return uiVariant
-}
-
-async function getDbConnection() {
-  let createData = false
-  const db = await openDB(DB_NAME, 1, {
-    async upgrade(db, oldVersion, newVersion, transaction) {
-      Object.keys(STORES).forEach((key) => {
-        const store = STORES[key]
-        db.createObjectStore(store.name, {
-          keyPath: store.keyPath,
-          autoIncrement: store.autoIncrement === true
-        })
-      })
-      const invItemsStore = transaction.objectStore(STORES.INVENTORY_ITEMS.name)
-      invItemsStore.createIndex('storeId', 'storeId')
-      invItemsStore.createIndex('itemId_color', ['itemId', 'color'])
-      const itemVariantsStore = transaction.objectStore(STORES.PART_VARIANTS.name)
-      itemVariantsStore.createIndex('itemId', 'itemId')
-      const shopListItemsStore = transaction.objectStore(STORES.SHOP_LIST_ITEMS.name)
-      shopListItemsStore.createIndex('shopListId', 'shopListId')
-      createData = true
-    }
-  })
-  if (createData) {
-    await createInitialData(db)
-  }
-  return db
-}
-async function addNewStore(store: Store) {
-  const db = await getDbConnection()
-  await addStore(store.name, store.sId, db)
-}
-async function addNewSearch(name: string) {
-  const db = await getDbConnection()
-  await addSearch(name, db)
-}
-
-async function addStore(name: string, sId: string, db: IDBPDatabase) {
-  const newStore = {
-    sId,
-    name 
-  }
-  db.put(STORES.STORES.name, newStore)
-  const newUiStore: UiStore = {
-    ...newStore,
-    items: []
-  }
-  stores.value.push(newUiStore)
-  return newUiStore
-}
-
-async function addSearch(name: string, db: IDBPDatabase) {
-  const newSearch = {
-    name,
-    storeIds: []
-  }
-  db.put(STORES.SEARCHES.name, newSearch)
-  const newUiSearch: UiSearch = {
-    ...newSearch,
-    stores: []
-  }
-  searches.value.push(newUiSearch)
-  return newUiSearch
-}
-
-async function itemVariantPageAddToList(item: object) {
-  console.log('itemVariantPageAddToList', item)
-  const db = await getDbConnection()
-  return await addShopListItem(
-    item.listId,
-    item.itemId,
-    item.condition,
-    item.minQ,
-    item.maxQ,
-    item.maxP,
-    item.color,
-    db
-  )
-}
-
-async function addShopListItem(
-  shopListId: number,
-  itemId: string,
-  condition: string,
-  minQuantity: number,
-  maxQuantity: number,
-  maxPrice: number,
-  colors: string,
-  db: IDBPDatabase
-) {
-  const shopList = shopLists.value.find(list => list.id === shopListId)
-  if (!shopList) {
-    return
-  }
-  const item: ShopListItem = {
-    shopListId,
-    itemId,
-    condition,
-    minQuantity,
-    maxQuantity,
-    maxPrice,
-    colors: colors.toString().split(',')
-  }
-  await db.put(STORES.SHOP_LIST_ITEMS.name, item)
-  shopList.items.push(item)
-}
-async function addInvItem(
-  db: IDBPDatabase,
-  invId: number,
-  store: UiStore,
-  color: number,
-  condition: string,
-  quantity: number,
-  price: number,
-  itemId: string,
-  variant: UiItemVariant
-) {
-  const invItem: InvItem = {
-    storeId: store.sId,
-    invId,
-    itemId,
-    condition,
-    quantity,
-    price,
-    color
-  }
-  await db.put(STORES.INVENTORY_ITEMS.name, invItem)
-  const uiInvItem: UiInvItem = {
-    item: variant.item,
-    store,
-    ...invItem
-  }
-  variant.invItems.push(uiInvItem)
-  store.items.push(uiInvItem)
-}
-
-async function addColor(
-  db: IDBPDatabase,
-  id: number,
-  name: string,
-) {
-  const color: Color = {
-    id,
-    name
-  }
-  await db.put(STORES.COLORS.name, color)
-  colors.value[id] = color
-}
-
-async function addNewShopListItem(item) {
-  const db = await getDbConnection()
-  await addShopListItem(
-    item.listId,
-    item.itemId,
-    item.condition,
-    item.minQ,
-    item.maxQ,
-    item.maxP,
-    item.colors,
-    db
-  )
-}
-
-async function getStoreItems(storeId: string) {
-  const db = await getDbConnection()
-  const tx = db.transaction(db.objectStoreNames, 'readonly')
-  const objStore = tx.objectStore(STORES.INVENTORY_ITEMS.name)
-  const index = objStore.index('storeId')
-  if (!index) {
-    return []
-  }
-  try {
-    const storeItems = await index.getAll(storeId)
-    for (let i = 0; i < storeItems.length; i++) {
-      const storeItem = storeItems[i]
-      storeItem.item = items.value.find(item => item.itemId === storeItem.itemId)
-      storeItem.colorName = colors.value[storeItem.color].name
-    }
-    return storeItems
-  } catch (e) {
-    console.log('error getting store items', e, storeId)
-  }
-
-  return []
-}
-
-async function loadStores() {
-  const db = await getDbConnection()
-  const x = await db.getAll(STORES.STORES.name)
-  for (let i = 0; i < x.length; i++) {
-    const store = x[i]
-    const items = await getStoreItems(store.sId)
-    stores.value.push({
-      name: store.name,
-      sId: store.sId,
-      items
-    })
-  }
-  for (let i = 0; i < items.value.length; i++) {
-    const item = items.value[i]
-    for (let j = 0; j < item.variants.length; j++) {
-      const variant = item.variants[j]
-      for (let k = 0; k < variant.invItems.length; k++) {
-        const invItem = variant.invItems[k]
-        invItem.store = stores.value.find(store => store.sId === invItem.storeId)
-      }
-    }
-  }
-}
-async function loadItemVariants(db: IDBPDatabase, item: Item) {
-  const tx = db.transaction(db.objectStoreNames, 'readonly')
-  const objStore = tx.objectStore(STORES.PART_VARIANTS.name)
-  const index = objStore.index('itemId')
-  if (!index) {
-    return []
-  }
-  try {
-    const variants = await index.getAll(item.itemId)
-    for (let i = 0; i < variants.length; i++) {
-      const variant = variants[i]
-      variant.item = item
-      variant.color = colors.value[variant.colorId]
-      variant.invItems = await getVariantInvItems(db, variant, item)
-    }
-    return variants
-  } catch (e) {
-    console.log('error getting store items', e, item.itemId)
-  }
-  return []
-}
-
-async function loadShopListItems(db: IDBPDatabase, shopListId: string) {
-  const tx = db.transaction(db.objectStoreNames, 'readonly')
-  const objStore = tx.objectStore(STORES.SHOP_LIST_ITEMS.name)
-  const index = objStore.index('shopListId')
-  if (!index) {
-    return []
-  }
-  try {
-    const shopListItems = await index.getAll(shopListId)
-    for (let i = 0; i < shopListItems.length; i++) {
-      const shopListItem = shopListItems[i]
-      shopListItem.item = items.value.find(item => item.itemId === shopListItem.itemId)
-      shopListItem.colorNames = shopListItem.colors.map(colorId => colors.value[colorId])
-    }
-    return shopListItems
-  } catch (e) {
-    console.log('error getting shop list items', e, shopListId)
-  }
-  return []
-}
-
-async function loadItems() {
-  const db = await getDbConnection()
-  const x = await db.getAll(STORES.PARTS.name)
-  for (let i = 0; i < x.length; i++) {
-    const item = x[i]
-    item.variants = await loadItemVariants(db, item)
-    items.value.push(item)
-  }
-}
-
-const colors = ref({})
-async function loadColors() {
-  const db = await getDbConnection()
-  const x = await db.getAll(STORES.COLORS.name)
-  for (let i = 0; i < x.length; i++) {
-    colors.value[x[i].id] = x[i]
-  }
-}
-
-async function loadSearches() {
-  const db = await getDbConnection()
-  const x = await db.getAll(STORES.SEARCHES.name)
-  for (let i = 0; i < x.length; i++) {
-    const search = x[i]
-    const uiSearch = {
-      ...search,
-      stores: []
-    }
-    if (search.shoppingListId) {
-      uiSearch.shoppingList = shopLists.value.find(list => list.id === search.shoppingListId)
-    }
-    for (let j = 0; j < search.storeIds.length; j++) {
-      const storeId = search.storeIds[j]
-      uiSearch.stores.push(stores.value.find(store => store.sId === storeId))
-    }
-    searches.value.push(uiSearch)
-  }
-}
-
-async function loadShopLists() {
-  const db = await getDbConnection()
-  const x = await db.getAll(STORES.SHOP_LISTS.name)
-  for (let i = 0; i < x.length; i++) {
-    const list = x[i]
-    list.items = await loadShopListItems(db, list.id)
-    shopLists.value.push(list)
-  }
-}
-
-onMounted(async () => {
-  await loadColors()
-  await loadItems()
-  await loadStores()
-  await loadShopLists()
-  await loadSearches()
+onMounted(() => {
+  loadModels()
 })
 
-const page = ref('home')
+const openItemVariant = ref<UiItemVariant | null>(null)
+const openShopList = ref<UiShopList | null>(null)
+
+const page = ref(PAGES.HOME)
+
 watch(page, () => {
   window.scrollTo(0, 0)
 })
 function goStore(store: UiStore) {
   openStore.value = store
-  page.value = 'store'
+  page.value = PAGES.STORE
 }
 function goShopList(shopList: UiShopList) {
   openShopList.value = shopList
-  page.value = 'shopList'
-}
-async function addShopList(name: string) {
-  const db = await getDbConnection()
-  return await addShopListDb(name, db)
-}
-async function addSearchStore(storeId: string) {
-  if (!openSearch.value) {
-    return
-  }
-  const store = stores.value.find(store => store.sId === storeId)
-  if (!store) {
-    return
-  }
-  openSearch.value.storeIds.push(storeId)
-  openSearch.value.stores?.push(store)
-  const db = await getDbConnection()
-  const search: Search = {
-    id: openSearch.value.id,
-    name: openSearch.value.name,
-    shoppingListId: openSearch.value.shoppingListId,
-    storeIds: [...openSearch.value.storeIds]
-  }
-  await db.put(STORES.SEARCHES.name, search)
-}
-  
-async function searchRemoveStore(store: UiStore) {
-  if (!openSearch.value) {
-    return
-  }
-  openSearch.value.storeIds.filter(id => id !== store.sId)
-  const db = await getDbConnection()
-  const search: Search = {
-    id: openSearch.value.id,
-    name: openSearch.value.name,
-    shoppingListId: openSearch.value.shoppingListId,
-    storeIds: [...openSearch.value.storeIds]
-  }
-  await db.put(STORES.SEARCHES.name, search)
-}
-async function setSearchShopList(listId: number) {
-  if (!openSearch.value) {
-    return
-  }
-  openSearch.value.shoppingList = shopLists.value?.find(list => list.id === listId)
-  openSearch.value.shoppingListId = listId
-  const db = await getDbConnection()
-  const search: Search = {
-    id: openSearch.value.id,
-    name: openSearch.value.name,
-    shoppingListId: openSearch.value.shoppingListId,
-    storeIds: [...openSearch.value.storeIds]
-  }
-  await db.put(STORES.SEARCHES.name, search)
-}
-async function addShopListDb(name: string, db: IDBPDatabase) {
-  const id = await db.put(STORES.SHOP_LISTS.name, { name })
-  if (!id) {
-    return
-  }
-  const list: UiShopList = {
-    id: Number(id),
-    name,
-    items: []
-  }
-  shopLists.value.push(list)
+  page.value = PAGES.SHOP_LIST
 }
 const openItem = ref<UiItem | null>(null)
 function goItem(item: UiItem) {
   openItem.value = item
-  page.value = 'item'
+  page.value = PAGES.PART
 }
 function goColor(color: Color) {
   openColor.value = color
-  page.value = 'color'
+  page.value = PAGES.COLOR
 }
 function goSearch(search: UiSearch) {
   openSearch.value = search
-  page.value = 'search'
+  page.value = PAGES.SEARCH
 }
 function goVariant(variant: UiItemVariant) {
   openItemVariant.value = variant
-  page.value = 'variant'
+  page.value = PAGES.PART_VARIANT
 }
-const openColor = ref<Color | null>(null)
+const openColor = ref<Color | null>(null)
 </script>
 <template>
-  <HomePage v-if="page === 'home'" v-model="page" />
+  <HomePage
+    v-if="page === PAGES.HOME"
+    v-model="page"
+  />
   <StoresPage
-    v-else-if="page === 'stores'"
+    v-else-if="page === PAGES.STORES"
     :stores="stores"
-    @go-home="page = 'home'"
+    @go-home="page = PAGES.HOME"
     @go-store="goStore"
     @add="addNewStore"
   />
   <ColorsPage
-    v-else-if="page === 'colors'"
+    v-else-if="page === PAGES.COLORS"
     :colors="colors"
-    @go-home="page = 'home'"
+    @go-home="page = PAGES.HOME"
     @go-color="goColor"
   />
   <ColorPage
-    v-else-if="page === 'color' && openColor"
+    v-else-if="page === PAGES.COLOR && openColor"
     :color="openColor"
-    @go-home="page = 'home'"
-    @go-colors="page = 'colors'"
+    @go-home="page = PAGES.HOME"
+    @go-colors="page = PAGES.COLORS"
   />
   <ItemsPage
-    v-else-if="page === 'items'"
+    v-else-if="page === PAGES.PARTS"
     :items="items"
-    @go-home="page = 'home'"
+    @go-home="page = PAGES.HOME"
     @go-item="goItem"
   />
   <ItemPage
-    v-else-if="page === 'item' && openItem"
+    v-else-if="page === PAGES.PART && openItem"
     :item="openItem"
-    @go-home="page = 'home'"
-    @go-items="page = 'items'"
+    @go-home="page = PAGES.HOME"
+    @go-items="page = PAGES.PARTS"
     @go-variant="goVariant"
     @go-color="goColor"
   />
   <ItemVariantPage
-    v-else-if="page === 'variant' && openItemVariant"
+    v-else-if="page === PAGES.PART_VARIANT && openItemVariant"
     :lists="shopLists"
     :variant="openItemVariant"
-    @go-home="page = 'home'"
-    @go-items="page = 'items'"
-    @go-item="page = 'item'"
+    @go-home="page = PAGES.HOME"
+    @go-items="page = PAGES.PARTS"
+    @go-item="page = PAGES.PART"
     @go-store="goStore"
     @add-to-list="itemVariantPageAddToList"
   />
   <StorePage
-    v-else-if="page === 'store'"
+    v-else-if="page === PAGES.STORE && openStore"
     :fetching="fetchingStoreInventory"
     :store="openStore"
-    @go-home="page = 'home'"
-    @go-stores="page = 'stores'"
+    @go-home="page = PAGES.HOME"
+    @go-stores="page = PAGES.STORES"
     @go-item="goItem"
     @go-variant="goVariant"
     @start-fetching="startFetching"
     @stop-fetching="stopFetching"
+    @go-color="goColor"
   />
   <ShoppingListsPage
-    v-else-if="page === 'shopLists'"
+    v-else-if="page === PAGES.SHOP_LISTS"
     :lists="shopLists"
-    @go-home="page = 'home'"
+    @go-home="page = PAGES.HOME"
     @open="goShopList"
     @add="addShopList"
   />
   <ShoppingListPage
-    v-else-if="page === 'shopList' && openShopList"
+    v-else-if="page === PAGES.SHOP_LIST && openShopList"
     :list="openShopList"
-    @go-home="page = 'home'"
+    @go-home="page = PAGES.HOME"
     @add-item="addNewShopListItem"
+    @go-shop-lists="page = PAGES.SHOP_LISTS"
     @go-item="goItem"
   />
   <SearchesPage
-    v-else-if="page === 'searches'"
+    v-else-if="page === PAGES.SEARCHES"
     :searches="searches"
     @add="addNewSearch"
-    @go-home="page = 'home'"
+    @go-home="page = PAGES.HOME"
     @go-search="goSearch"
   />
   <SearchPage
-    v-else-if="page === 'search' && openSearch"
+    v-else-if="page === PAGES.SEARCH && openSearch"
     :search="openSearch"
     :shop-lists="shopLists"
     :stores="stores"
-    @go-home="page = 'home'"
+    @go-home="page = PAGES.HOME"
     @go-store="goStore"
     @set-list="setSearchShopList"
     @add-store="addSearchStore"
     @remove-store="searchRemoveStore"
   />
 </template>
-
-<style scoped></style>

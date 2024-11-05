@@ -49,8 +49,8 @@ watch(() => lists, () => {
     <button @click="$emit('goItem')">
       {{ variant.item.itemName }}
     </button>
-    <h4>{{ variant.color.name }}</h4>
-    <img :src="`https:${variant.newThumb1Img}`">
+    <h4>{{ variant.item.itemName }}, {{ variant.color.name }}</h4>
+    <img :src="variant.image">
     <h4>Add to shopping list</h4>
     <div>
       List:<select v-model="addToListId">

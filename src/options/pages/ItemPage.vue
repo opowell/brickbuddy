@@ -36,7 +36,7 @@ defineEmits(['goHome', 'goItems', 'goVariant', 'goColor'])
               {{ variant.color.name }}
             </button>
           </td>
-          <td><img :src="`https:${variant.newThumb1Img}`"></td>
+          <td><img :src="variant.image"></td>
         </tr>
       </tbody>
     </table>

@@ -4,7 +4,7 @@ defineProps({
   fetching: Boolean,
   store: Object
 })
-defineEmits(['goHome', 'goStores', 'goItem', 'startFetching', 'stopFetching', 'goVariant'])
+defineEmits(['goHome', 'goStores', 'goItem', 'startFetching', 'stopFetching', 'goVariant', 'goColor'])
 
 function getImageSrc(invItem: UiInvItem) {
   const variant = getVariant(invItem)
@@ -64,7 +64,7 @@ function getVariant(invItem: UiInvItem) {
               {{ item.item.itemName }}
             </button>
           </td>
-          <td>{{ item.colorName }}</td>
+          <td><button @click="$emit('goColor', { id: item.color, name: item.colorName })">{{ item.colorName }}</button></td>
           <td>{{ item.quantity }}</td>
           <td>{{ item.price }}</td>
         </tr>

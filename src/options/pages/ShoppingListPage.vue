@@ -3,7 +3,7 @@ import type { UiShopList, UiShopListItem } from '../constants'
 defineProps({
   list: Object
 })
-const emits = defineEmits(['goHome', 'open', 'addItem', 'goItem'])
+const emits = defineEmits(['goHome', 'open', 'addItem', 'goItem', 'goShopLists'])
 const newShopListItemListId = ref<number>(-1)
 const newShopListItemItemId = ref('')
 const newShopListItemCondition = ref('')
@@ -35,6 +35,9 @@ function getColorNames(item: UiShopListItem) {
   <div>
     <button @click="$emit('goHome')">
       Home
+    </button>
+    <button @click="$emit('goShopLists')">
+      Shopping Lists
     </button>
     <h4>{{ list.name }}</h4>
     <h4>ShopList Items ({{ list.items.length }})</h4>
