@@ -17,6 +17,7 @@ import { PAGES } from './constants'
 
 onMounted(() => {
   loadModels()
+  setScraping(true)
 })
 
 const openItemVariant = ref<UiItemVariant | null>(null)
@@ -25,6 +26,9 @@ const openShopList = ref<UiShopList | null>(null)
 const page = ref(PAGES.HOME)
 
 watch(page, () => {
+  if (page.value !== PAGES.STORE) {
+    openStore.value = null
+  }
   window.scrollTo(0, 0)
 })
 function goStore(store: UiStore) {
@@ -53,6 +57,15 @@ function goVariant(variant: UiItemVariant) {
   page.value = PAGES.PART_VARIANT
 }
 const openColor = ref<Color | null>(null)
+const scrapingOn = ref(true)
+function setScraping(value: boolean) {
+  if (value) {
+    startFetching()
+  } else {
+    stopFetching()
+  }
+  scrapingOn.value = value
+}
 </script>
 <template>
   <HomePage
@@ -61,8 +74,10 @@ const openColor = ref<Color | null>(null)
   />
   <StoresPage
     v-else-if="page === PAGES.STORES"
+    :scraping-on="scrapingOn"
     :stores="stores"
     @go-home="page = PAGES.HOME"
+    @set-scraping="setScraping"
     @go-store="goStore"
     @add="addNewStore"
   />

@@ -16,7 +16,13 @@ function getImageSrc(invItem: UiInvItem) {
 function getVariant(invItem: UiInvItem) {
   return invItem.item.variants.find(v => v.colorId === invItem.color)
 }
+// URL for shipping terms:
+// https://store.bricklink.com/ajax/clone/store/policy.ajax?sid=2066952
+
+// URL for cart, includes weights:
+// https://store.bricklink.com/ajax/clone/cart/list.ajax?sid=2066952&sum=0&_=1730928837742
 </script>
+
 
 <template>
   <div v-if="store">
@@ -27,6 +33,7 @@ function getVariant(invItem: UiInvItem) {
       Stores
     </button>
     <h4>{{ store.name }}</h4>
+    <div>Fetch index: {{ store.fetchPageIndex }} / {{ store.fetchMaxPageIndex }}</div>
     <h4>Fetch inventory</h4>
     <button
       :disabled="fetching"

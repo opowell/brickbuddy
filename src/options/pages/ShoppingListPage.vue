@@ -11,7 +11,7 @@ const newShopListItemCondition = ref('')
 const newShopListItemMinQuantity = ref<number>(0)
 const newShopListItemMaxQuantity = ref<number>(0)
 const newShopListItemMaxPrice = ref<number>(0)
-const newShopListItemColors = ref<string>('')
+const newShopListItemColors = ref<number | null>(null)
 
 function addNewShopListItem() {
   emits('addItem', {
@@ -40,12 +40,16 @@ const sortedParts = computed(() => {
 })
 const filterString = ref('')
 const filteredParts = computed(() => {
-  if (filterString.value === '') {
-    return sortedParts.value
-  }
   const lowCaseFilter = filterString.value.toLowerCase()
-  return sortedParts.value.filter(a => a.itemName.toLowerCase().includes(lowCaseFilter))
+  const lowCaseIdFilter = String(newShopListItemItemId.value).toLowerCase()
+  return sortedParts.value.filter(a => {
+    return (
+      a.itemName.toLowerCase().includes(lowCaseFilter)
+      && String(a.itemId).toLowerCase().includes(lowCaseIdFilter)
+    )
+  })
 })
+const partsView = ref('images')
 </script>
 
 <template>
@@ -57,7 +61,7 @@ const filteredParts = computed(() => {
       Shopping Lists
     </button>
     <h4>{{ list.name }}</h4>
-    <h4>ShopList Items ({{ list.items.length }})</h4>
+    <h4>Parts ({{ list.items.length }})</h4>
     <table>
       <thead>
         <tr>
@@ -86,7 +90,12 @@ const filteredParts = computed(() => {
         </tr>
       </tbody>
     </table>
-    <h4>Add shop list item</h4>
+    <h4>Add</h4>
+    <div>
+      View parts:
+      <button @click="partsView = 'images'" :disabled="partsView === 'images'">Images</button>
+      <button @click="partsView = 'table'" :disabled="partsView === 'table'">Table</button>
+    </div>
     <div>Item name:<input v-model="filterString"></div>
     <div>Item Id:<input v-model="newShopListItemItemId" type="text"></div>
     <div>
@@ -105,11 +114,29 @@ const filteredParts = computed(() => {
     <div>Min quantity:<input v-model="newShopListItemMinQuantity" type="number"></div>
     <div>Max quantity:<input v-model="newShopListItemMaxQuantity" type="number"></div>
     <div>Max price:<input v-model="newShopListItemMaxPrice" type="number"></div>
-    <div>Colors:<input v-model="newShopListItemColors" type="text"></div>
+    <div>Colors:<input v-model="newShopListItemColors" type="number"></div>
     <button @click="addNewShopListItem">
       Add
     </button>
-    <table>
+    <div v-if="partsView === 'images'" class="parts">
+      <template v-if="filteredParts.length === 1">
+        <div v-for="variant in filteredParts[0].variants" :key="variant.colorId" class="part">
+          <img @click="newShopListItemColors = variant.colorId" :src="variant.image" :title="variant.color.name + ' (' + variant.colorId + ')'">
+          <span>{{ variant.colorId }}</span>
+        </div>
+      </template>
+      <div
+        v-else
+        v-for="item in filteredParts"
+        :key="item.itemId"
+        class="part"
+      >
+        <img @click="newShopListItemItemId = item.itemId" v-if="item.variants.length" :src="item.variants[0].image" :title="item.itemName + ' (' + item.itemId + ')'">
+        <span>{{ item.itemId }}</span>
+        <span>{{ item.itemName }}</span>
+      </div>
+    </div>
+    <table v-if="partsView === 'table'">
       <thead>
         <tr>
           <th>Image</th>
@@ -135,3 +162,15 @@ const filteredParts = computed(() => {
     </table>
   </div>
 </template>
+<style lang="css">
+.parts {
+  display: flex;
+  flex-wrap: wrap;
+}
+.part {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 100px;
+  font-size: 0px;
+}
+</style>

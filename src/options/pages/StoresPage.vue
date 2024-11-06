@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import type { UiStore } from '../types';
 defineProps({
-  stores: Array<UiStore>
+  stores: Array<UiStore>,
+  scrapingOn: Boolean
 })
-const emits = defineEmits(['goHome', 'goStore', 'add'])
+const emits = defineEmits(['setScraping', 'goHome', 'goStore', 'add'])
 const newStoreId = ref('')
 const newStoreName = ref('')
 
@@ -13,6 +14,11 @@ function add() {
     name: newStoreName.value
   })
 }
+const stores2 = ref<UiStore[]>()
+onMounted(async () => {
+  // stores2.value = await fetchStores(search.value)
+})
+const search = ref('')
 </script>
 
 <template>
@@ -21,11 +27,18 @@ function add() {
       Home
     </button>
     <h4>Stores</h4>
+    <h4>Scraping: {{ scrapingOn ? 'On' : 'Off' }}</h4>
+    <div>
+      <button @click="$emit('setScraping', true)" :disabled="scrapingOn">Start</button>
+      <button @click="$emit('setScraping', false)" :disabled="!scrapingOn">Stop</button>
+    </div>
+    <div>Search:<input v-model="search"></div>
     <table>
       <thead>
         <tr>
           <th>Name</th>
           <th>Inventory</th>
+          <th>Fetch Index</th>
         </tr>
       </thead>
       <tbody>
@@ -37,6 +50,9 @@ function add() {
           </td>
           <td>
             {{ store.items.length }}
+          </td>
+          <td>
+            {{ store.fetchPageIndex }} / {{ store.fetchMaxPageIndex }}
           </td>
         </tr>
       </tbody>

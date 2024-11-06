@@ -19,13 +19,14 @@ defineEmits(['goHome', 'goItems', 'goVariant', 'goColor'])
     <table>
       <thead>
         <tr>
+          <th>Image</th>
           <th>Name</th>
           <th>Color</th>
-          <th>New Thumb1 Img</th>
         </tr>
       </thead>
       <tbody>
         <tr v-for="(variant, index) in item.variants" :key="index">
+          <td><img :src="variant.image"></td>
           <td>
             <button @click="$emit('goVariant', variant)">
               {{ item.itemName + ', ' + variant.color.name }}
@@ -36,7 +37,6 @@ defineEmits(['goHome', 'goItems', 'goVariant', 'goColor'])
               {{ variant.color.name }}
             </button>
           </td>
-          <td><img :src="variant.image"></td>
         </tr>
       </tbody>
     </table>

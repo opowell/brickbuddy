@@ -1,7 +1,9 @@
 import { IDBPDatabase, openDB } from "idb";
 import STORES from './stores'
-import { Color, InvItem, Item, ItemVariant, Search, ShopListItem, Store, UiInvItem, UiItem, UiItemVariant, UiSearch, UiShopList, UiStore } from "./types";
+import { Color, InvItem, Item, ItemVariant, Search, ShippingCost, ShopListItem, Store, UiInvItem, UiItem, UiItemVariant, UiSearch, UiShopList, UiStore } from "./types";
 import { DB_NAME } from "./constants";
+import { toDataURL } from "./utils";
+import * as math from 'mathjs'
 
 export const colors = ref({})
 export const searches = ref<UiSearch[]>([])
@@ -12,16 +14,26 @@ export const items = ref<UiItem[]>([])
 export const openSearch = ref<UiSearch | null>(null)
 export const openStore = ref<UiStore | null>(null)
 
-async function getPrices(store: UiStore, i: number) {
-  const response = await fetch(`https://store.bricklink.com/ajax/clone/store/searchitems.ajax?sort=6&pgSize=100&pg=${i}&showHomeItems=0&sid=${store.sId}`, {
+async function getPrices() {
+  const store = getFetchStore()
+  if (!store) {
+    return
+  }
+  const response = await fetch(`https://store.bricklink.com/ajax/clone/store/searchitems.ajax?sort=6&pgSize=100&pg=${store.fetchPageIndex}&showHomeItems=0&sid=${store.sId}`, {
     "referrerPolicy": "no-referrer-when-downgrade",
     "body": null,
     "method": "GET",
     "mode": "cors",
     "credentials": "include"
   })
-  const json = await response.json()
+  store.fetchPageIndex++
+  if (store.fetchPageIndex >= store.fetchMaxPageIndex) {
+    store.fetchPageIndex = 1
+  }
   const db = await getDbConnection()
+  const json = await response.json()
+  store.fetchMaxPageIndex = Math.ceil(json.result.totalLotCnt / 100) + 1
+  updateStore(db, store)
   for (let i = 0; i < json.result.groups.length; i++) {
     const group = json.result.groups[i]
     for (let j = 0; j < group.items.length; j++) {
@@ -65,33 +77,89 @@ export function stopFetching() {
 }
 let fetchPricesInterval: NodeJS.Timeout
 
+let fetchingStoreIndex = 0
 export async function startFetching() {
   if (fetchingStoreInventory.value) {
     return
   }
   stopFetch = false
-  let i = 0
-  const store = openStore.value
-  if (!store) {
-    return
-  }
   fetchingStoreInventory.value = true
-  getPrices(store, i)
-  i++
+  getPrices()
   fetchPricesInterval = setInterval(() => {
     if (stopFetch && fetchPricesInterval) {
       clearInterval(fetchPricesInterval)
       return
     }
-    getPrices(store, i)
-    i++
-  }, 2000)
+    getPrices()
+  }, 15000)
 }
 
+function getFetchStore() {
+  let store = openStore.value
+  if (!store) {
+    store = stores.value[fetchingStoreIndex]
+    fetchingStoreIndex++
+    if (fetchingStoreIndex >= stores.value.length) {
+      fetchingStoreIndex = 0
+    }
+  }
+  return store
+}
+
+async function fetchStores(search: string) {
+  const db = await getDbConnection()
+  return stores
+}
 async function createInitialData(db: IDBPDatabase) {
-  await addStore("Die Steinschleuder", "1832236", db)
-  await addStore("Bricks Austria", "3112575", db)
-  await addStore("A brick per day...", "709693", db)
+  await addStore("Bunte Steinewelt", "1801484", [
+    {
+      region: 'AT',
+      cost: 2380,
+      maxWeight: 26000,
+      maxOrderPrice: 99999
+    },
+  ], 'BunteSteinewelt', 100, db)
+  await addStore("minifigmaestro", "2066952", [
+    {
+      region: 'AT',
+      cost: 495,
+      maxWeight: 2000,
+    },
+  ], 'minifigmaestro', 98, db)
+  await addStore("BricksInClicks", "2624933", [
+    {
+      region: 'AT',
+      cost: 0,
+      minOrderPrice: 6000,
+    },
+  ], 'DDC26', 100, db)
+  await addStore("MoccaBriggs", "1850805", [
+    {
+      region: 'AT',
+      cost: 0,
+      minOrderPrice: 2500,
+      type: 'eco'
+    },
+    {
+      region: 'AT',
+      cost: 0,
+      minOrderPrice: 3000,
+      type: 'priority'
+    },
+  ], 'Mocca Briggs', 100, db)
+  await addStore("Die Steinschleuder", "1832236", [], 'KleinerBandit', 100, db)
+  await addStore("Bricks Austria", "3112575", [
+    {
+      region: 'AT',
+      cost: 490
+    },
+    {
+      region: 'AT',
+      minOrderPrice: 6000,
+      cost: 0
+    },
+  ], 'carinthia_brick', 100, db)
+  await addStore("A brick per day...", "709693", [], 'stefxan', 100, db)
   
   await addShopListDb("Board games 2024", db)
   
@@ -151,8 +219,6 @@ async function addItem(
       colorId,
       image
     }
-  } else {
-    console.log('FOUND variant', variant)
   }
   await db.put(STORES.PART_VARIANTS.name, variant)
   let uiItem = items.value.find(item => item.itemId === itemId)
@@ -203,17 +269,22 @@ export async function getDbConnection() {
 }
 export async function addNewStore(store: Store) {
   const db = await getDbConnection()
-  await addStore(store.name, store.sId, db)
+  await addStore(store.name, store.sId, [], '', 100, db)
 }
 export async function addNewSearch(name: string) {
   const db = await getDbConnection()
   await addSearch(name, db)
 }
 
-async function addStore(name: string, sId: string, db: IDBPDatabase) {
-  const newStore = {
+async function addStore(name: string, sId: string, shippingCosts: ShippingCost[], slug: string, priceAdjustment: number, db: IDBPDatabase) {
+  const newStore: Store = {
     sId,
-    name 
+    name,
+    fetchPageIndex: 1,
+    fetchMaxPageIndex: 10,
+    priceAdjustment,
+    shippingCosts,
+    slug
   }
   db.put(STORES.STORES.name, newStore)
   const newUiStore: UiStore = {
@@ -222,6 +293,23 @@ async function addStore(name: string, sId: string, db: IDBPDatabase) {
   }
   stores.value.push(newUiStore)
   return newUiStore
+}
+async function updateStore(db: IDBPDatabase, store: Store | UiStore) {
+  if (isProxy(store)) {
+    store = toRaw(store)
+  }
+  try {
+    const storeObj: Store = {
+      sId: store.sId,
+      name: store.name,
+      fetchPageIndex: store.fetchPageIndex,
+      fetchMaxPageIndex: store.fetchMaxPageIndex
+    }
+    console.log(storeObj)
+    db.put(STORES.STORES.name, storeObj)
+  } catch (e) {
+    console.log(store, e)
+  }
 }
 
 async function addSearch(name: string, db: IDBPDatabase) {
@@ -375,8 +463,7 @@ async function loadStores() {
     const store = x[i]
     const items = await getStoreItems(store.sId)
     stores.value.push({
-      name: store.name,
-      sId: store.sId,
+      ...store,
       items
     })
   }

@@ -1,6 +1,19 @@
+export interface ShippingCost {
+  region?: string
+  minOrderPrice?: number
+  maxOrderPrice?: number
+  cost: number
+  maxWeight?: number
+  type?: 'eco' | 'priority'
+}
 export interface Store {
   sId: string
   name: string
+  fetchPageIndex: number
+  fetchMaxPageIndex: number
+  shippingCosts: ShippingCost[]
+  slug: string
+  priceAdjustment: number
 }
 
 export interface Item {

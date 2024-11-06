@@ -13,7 +13,9 @@ const addToListMaxQ = ref<number>(100)
 const addToListMaxP = ref<number>(0)
 
 const addToListItem = computed(() => {
-  console.log(variant)
+  if (!variant) {
+    return
+  }
   return {
     listId: addToListId.value,
     itemId: variant.item.itemId,
