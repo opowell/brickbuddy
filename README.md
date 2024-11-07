@@ -1,6 +1,7 @@
 # Brick Buddy
 
 ## TODO
+- routing / back
+- supply curves
 - paging of lists
-- background updating of inventories
 - UI improvements

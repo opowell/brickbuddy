@@ -12,7 +12,7 @@ import ShoppingListPage from './pages/ShoppingListPage.vue'
 import SearchesPage from './pages/SearchesPage.vue'
 import SearchPage from './pages/SearchPage.vue'
 import type { Color, UiItem, UiItemVariant, UiSearch, UiShopList, UiStore } from './types'
-import { fetchingStoreInventory, searchRemoveStore, searches, setSearchShopList, addNewSearch, stopFetching, addShopList, addSearchStore, startFetching, addNewShopListItem, addNewStore, colors, items, shopLists, itemVariantPageAddToList, loadModels, openSearch, openStore, stores } from './idb';
+import { createInitialStores, fetchingStoreInventory, searchRemoveStore, searches, setSearchShopList, addNewSearch, stopFetching, addShopList, addSearchStore, startFetching, addNewShopListItem, addNewStore, colors, items, shopLists, itemVariantPageAddToList, loadModels, openSearch, openStore, stores } from './idb';
 import { PAGES } from './constants'
 
 onMounted(() => {
@@ -80,6 +80,7 @@ function setScraping(value: boolean) {
     @set-scraping="setScraping"
     @go-store="goStore"
     @add="addNewStore"
+    @load-initial="createInitialStores"
   />
   <ColorsPage
     v-else-if="page === PAGES.COLORS"

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { UiShopList } from '../types'
+import type { UiInvItem, UiShopList } from '../types'
 
 const { lists, variant } = defineProps({
   variant: Object,
@@ -38,6 +38,13 @@ watch(() => lists, () => {
   deep: true,
   immediate: true
 })
+
+const sortedInvItems = computed(() => {
+  if (!variant) {
+    return []
+  }
+  return variant.invItems.sort((a: UiInvItem, b: UiInvItem) => a.price - b.price)
+})
 </script>
 
 <template>
@@ -46,7 +53,7 @@ watch(() => lists, () => {
       Home
     </button>
     <button @click="$emit('goItems')">
-      Items
+      Parts
     </button>
     <button @click="$emit('goItem')">
       {{ variant.item.itemName }}
@@ -89,17 +96,19 @@ watch(() => lists, () => {
       <thead>
         <tr>
           <th>Store</th>
+          <th>Condition</th>
           <th>Price</th>
           <th>Quantity</th>
         </tr>
       </thead>
       <tbody>
-        <tr v-for="(invItem, index) in variant.invItems" :key="index">
+        <tr v-for="(invItem, index) in sortedInvItems" :key="index">
           <td>
             <button @click="$emit('goStore', invItem.store)">
               {{ invItem.store.name }}
             </button>
           </td>
+          <td>{{ invItem.condition }}</td>
           <td>{{ invItem.price }}</td>
           <td>{{ invItem.quantity }}</td>
         </tr>

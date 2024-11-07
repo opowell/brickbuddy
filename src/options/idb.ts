@@ -110,7 +110,10 @@ async function fetchStores(search: string) {
   const db = await getDbConnection()
   return stores
 }
-async function createInitialData(db: IDBPDatabase) {
+export async function createInitialStores(db: IDBPDatabase) {
+  if (!db) {
+    db = await getDbConnection()
+  }
   await addStore("Bunte Steinewelt", "1801484", [
     {
       region: 'AT',
@@ -119,6 +122,67 @@ async function createInitialData(db: IDBPDatabase) {
       maxOrderPrice: 99999
     },
   ], 'BunteSteinewelt', 100, db)
+  await addStore("bricksbyaj", "1843556", [
+    {
+      region: 'AT',
+      cost: 490,
+      maxWeight: 2000,
+    },
+    {
+      region: 'AT',
+      cost: 1150,
+      maxWeight: 10000,
+    },
+    {
+      region: 'AT',
+      cost: 1850,
+      maxWeight: 30000,
+    },
+  ], 'bricksbyaj', 100, db)
+  await addStore("Brickturtle", "739435", [
+    {
+      region: 'AT',
+      cost: 430,
+      maxWeight: 2000,
+    },
+    {
+      region: 'AT',
+      cost: 790,
+      maxWeight: 4000,
+    },
+  ], 'neogap', 100, db)
+  await addStore("BRICKMOUSE", "712635", [
+    {
+      region: 'AT',
+      cost: 0,
+      minOrderPrice: 60000,
+    },
+    {
+      region: 'AT',
+      cost: 990,
+      maxWeight: 4000,
+    },
+    {
+      region: 'AT',
+      cost: 790,
+      maxWeight: 2000,
+    },
+    {
+      region: 'AT',
+      cost: 650,
+      maxWeight: 1000,
+    },
+    {
+      region: 'AT',
+      cost: 550,
+      maxWeight: 400,
+    },
+    {
+      region: 'AT',
+      cost: 450,
+      maxWeight: 200,
+    },
+  ], 'brickmouse', 100, db)
   await addStore("minifigmaestro", "2066952", [
     {
       region: 'AT',
@@ -148,6 +212,67 @@ async function createInitialData(db: IDBPDatabase) {
     },
   ], 'Mocca Briggs', 100, db)
   await addStore("Die Steinschleuder", "1832236", [], 'KleinerBandit', 100, db)
+  await addStore("BunteSteinewelt", "1801484", [
+    {
+      cost: 1090,
+      maxWeight: 750,
+      maxOrderPrice: 5000
+    },
+    {
+      cost: 1990,
+      maxWeight: 4000,
+      maxOrderPrice: 99999
+    },
+    {
+      cost: 2380,
+      maxWeight: 26000,
+      maxOrderPrice: 99999
+    }
+  ], 'BunteSteinewelt', 100, db)
+  await addStore("Magic Magnus", "52799", [
+    {
+      cost: 1090,
+      maxWeight: 750,
+      maxOrderPrice: 15000
+    },
+    {
+      cost: 1990,
+      maxWeight: 4000,
+      maxOrderPrice: 99999
+    },
+    {
+      cost: 2380,
+      maxWeight: 26000,
+      maxOrderPrice: 99999
+    }
+  ], 'MagicMagnus', 100, db)
+  await addStore("bricks56218", "996237", [], 'Bricks56218', 100, db)
+  await addStore("Bricks_4_everyone", "1962608", [
+    {
+      minOrderPrice: 500,
+      maxWeight: 500,
+      cost: 380
+    },
+    {
+      minOrderPrice: 500,
+      maxWeight: 3000,
+      cost: 450
+    },
+    {
+      minOrderPrice: 500,
+      maxWeight: 10000,
+      cost: 650
+    },
+    {
+      minOrderPrice: 500,
+      maxWeight: 30000,
+      cost: 950
+    },
+    {
+      minOrderPrice: 5500,
+      cost: 0
+    }
+  ], 'RWR_Brixx', 99, db)
   await addStore("Bricks Austria", "3112575", [
     {
       region: 'AT',
@@ -160,7 +285,9 @@ async function createInitialData(db: IDBPDatabase) {
     },
   ], 'carinthia_brick', 100, db)
   await addStore("A brick per day...", "709693", [], 'stefxan', 100, db)
-  
+}
+async function createInitialData(db: IDBPDatabase) {
+  await createInitialStores(db)  
   await addShopListDb("Board games 2024", db)
   
   stores.value = []
@@ -277,11 +404,12 @@ export async function addNewSearch(name: string) {
 }
 
 async function addStore(name: string, sId: string, shippingCosts: ShippingCost[], slug: string, priceAdjustment: number, db: IDBPDatabase) {
+  const existingStore: Store = await db.get(STORES.STORES.name, sId)
   const newStore: Store = {
     sId,
     name,
-    fetchPageIndex: 1,
-    fetchMaxPageIndex: 10,
+    fetchPageIndex: existingStore?.fetchPageIndex || 1,
+    fetchMaxPageIndex: existingStore?.fetchMaxPageIndex || 10,
     priceAdjustment,
     shippingCosts,
     slug
@@ -352,6 +480,7 @@ async function addShopListItem(
   db: IDBPDatabase
 ) {
   const shopList = shopLists.value.find(list => list.id === shopListId)
+  console.log('addShopListItem', shopList, shopListId)
   if (!shopList) {
     return
   }

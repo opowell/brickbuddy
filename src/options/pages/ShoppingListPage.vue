@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import type { UiItem, UiShopListItem } from '../types'
-const { parts } = defineProps({
+const { list, parts } = defineProps({
   list: Object,
   parts: Array<UiItem>
 })
 const emits = defineEmits(['goHome', 'open', 'addItem', 'goItem', 'goShopLists'])
-const newShopListItemListId = ref<number>(-1)
 const newShopListItemItemId = ref('')
 const newShopListItemCondition = ref('')
 const newShopListItemMinQuantity = ref<number>(0)
@@ -14,8 +13,11 @@ const newShopListItemMaxPrice = ref<number>(0)
 const newShopListItemColors = ref<number | null>(null)
 
 function addNewShopListItem() {
+  if (!list) {
+    return
+  }
   emits('addItem', {
-    listId: newShopListItemListId.value,
+    listId: list.id,
     itemId: newShopListItemItemId.value,
     condition: newShopListItemCondition.value,
     minQ: newShopListItemMinQuantity.value,

@@ -4,7 +4,7 @@ defineProps({
   stores: Array<UiStore>,
   scrapingOn: Boolean
 })
-const emits = defineEmits(['setScraping', 'goHome', 'goStore', 'add'])
+const emits = defineEmits(['loadInitial', 'setScraping', 'goHome', 'goStore', 'add'])
 const newStoreId = ref('')
 const newStoreName = ref('')
 
@@ -27,6 +27,7 @@ const search = ref('')
       Home
     </button>
     <h4>Stores</h4>
+    <button @click="$emit('loadInitial')">Load initial</button>
     <h4>Scraping: {{ scrapingOn ? 'On' : 'Off' }}</h4>
     <div>
       <button @click="$emit('setScraping', true)" :disabled="scrapingOn">Start</button>
