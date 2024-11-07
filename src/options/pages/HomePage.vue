@@ -26,5 +26,8 @@ defineEmits([
     <button @click="$emit('update:modelValue', PAGES.PARTS)">
       Parts
     </button>
+    <button @click="$emit('update:modelValue', PAGES.CATEGORIES)">
+      Categories
+    </button>
   </div>
 </template>

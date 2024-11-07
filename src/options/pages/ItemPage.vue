@@ -10,7 +10,7 @@ const { item } = defineProps({
 defineEmits(['goHome', 'goItems', 'goVariant', 'goColor'])
 const maxPrice = ref(Number.POSITIVE_INFINITY)
 const minQuantity = ref(0)
-const variants = computed(() => {
+const variants = computed<PartVariantWithPriceQuantity[]>(() => {
   if (!item) {
     return
   }
@@ -30,7 +30,8 @@ const variants = computed(() => {
       price,
       quantity
     }
-  }).sort((a: PartVariantWithPriceQuantity, b: PartVariantWithPriceQuantity) => a.price - b.price)
+  }).filter((variant: PartVariantWithPriceQuantity) => variant.price < Number.POSITIVE_INFINITY && variant.quantity > 0)
+    .sort((a: PartVariantWithPriceQuantity, b: PartVariantWithPriceQuantity) => a.price - b.price)
 })
 </script>
 

@@ -2,6 +2,8 @@ export const DB_NAME = 'brickbuddy'
 
 export const PAGES = {
   HOME: 'home',
+  CATEGORIES: 'categories',
+  CATEGORY: 'category',
   COLORS: 'colors',
   SEARCHES: 'searches',
   STORE: 'store',

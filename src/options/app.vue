@@ -2,6 +2,8 @@
 import HomePage from './pages/HomePage.vue'
 import StoresPage from './pages/StoresPage.vue'
 import ColorsPage from './pages/ColorsPage.vue'
+import CategoriesPage from './pages/CategoriesPage.vue'
+import CategoryPage from './pages/CategoryPage.vue'
 import ColorPage from './pages/ColorPage.vue'
 import ItemsPage from './pages/ItemsPage.vue'
 import ItemPage from './pages/ItemPage.vue'
@@ -11,8 +13,8 @@ import ShoppingListsPage from './pages/ShoppingListsPage.vue'
 import ShoppingListPage from './pages/ShoppingListPage.vue'
 import SearchesPage from './pages/SearchesPage.vue'
 import SearchPage from './pages/SearchPage.vue'
-import type { Color, UiItem, UiItemVariant, UiSearch, UiShopList, UiStore } from './types'
-import { createInitialStores, fetchingStoreInventory, searchRemoveStore, searches, setSearchShopList, addNewSearch, stopFetching, addShopList, addSearchStore, startFetching, addNewShopListItem, addNewStore, colors, items, shopLists, itemVariantPageAddToList, loadModels, openSearch, openStore, stores } from './idb';
+import type { Color, UiCategory, UiItem, UiItemVariant, UiSearch, UiShopList, UiStore } from './types'
+import { createInitialStores, fetchingStoreInventory, searchRemoveStore, searches, categories, setSearchShopList, addNewSearch, stopFetching, addShopList, addSearchStore, startFetching, addNewShopListItem, addNewStore, colors, items, shopLists, itemVariantPageAddToList, loadModels, openCategory, openSearch, openStore, stores } from './idb';
 import { PAGES } from './constants'
 
 onMounted(() => {
@@ -56,6 +58,10 @@ function goVariant(variant: UiItemVariant) {
   openItemVariant.value = variant
   page.value = PAGES.PART_VARIANT
 }
+function goCategory(category: UiCategory) {
+  openCategory.value = category
+  page.value = PAGES.CATEGORY
+}
 const openColor = ref<Color | null>(null)
 const scrapingOn = ref(true)
 function setScraping(value: boolean) {
@@ -82,11 +88,23 @@ function setScraping(value: boolean) {
     @add="addNewStore"
     @load-initial="createInitialStores"
   />
+  <CategoriesPage
+    v-else-if="page === PAGES.CATEGORIES"
+    :categories="categories"
+    @go-home="page = PAGES.HOME"
+    @go-category="goCategory"
+  />
   <ColorsPage
     v-else-if="page === PAGES.COLORS"
     :colors="colors"
     @go-home="page = PAGES.HOME"
     @go-color="goColor"
+  />
+  <CategoryPage
+    v-else-if="page === PAGES.CATEGORY && openCategory"
+    :category="openCategory"
+    @go-home="page = PAGES.HOME"
+    @go-categories="page = PAGES.CATEGORIES"
   />
   <ColorPage
     v-else-if="page === PAGES.COLOR && openColor"

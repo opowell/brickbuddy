@@ -20,7 +20,6 @@ const stores: {
   CATEGORIES: {
     name: 'categories',
     keyPath: 'id',
-    autoIncrement: true
   },
   COLORS: {
     name: 'colors',

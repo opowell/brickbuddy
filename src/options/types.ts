@@ -93,6 +93,16 @@ export interface Color {
   name: string
 }
 
+export interface Category {
+  id: string
+  name: string
+}
+
+export interface UiCategory extends Category {
+  parts?: UiItem[]
+  numParts: number
+}
+
 export interface UiShopList extends ShopList {
   items: ShopListItem[]
 }

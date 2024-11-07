@@ -1,16 +1,19 @@
 import { IDBPDatabase, openDB } from "idb";
 import STORES from './stores'
-import { Color, InvItem, Item, ItemVariant, Search, ShippingCost, ShopListItem, Store, UiInvItem, UiItem, UiItemVariant, UiSearch, UiShopList, UiStore } from "./types";
+import INDICES from './indices'
+import { Category, Color, InvItem, Item, ItemVariant, Search, ShippingCost, ShopListItem, Store, UiCategory, UiInvItem, UiItem, UiItemVariant, UiSearch, UiShopList, UiStore } from "./types";
 import { DB_NAME } from "./constants";
 import { toDataURL } from "./utils";
 import * as math from 'mathjs'
 
+export const categories = ref<Map<string, UiCategory>>(new Map<string, UiCategory>())
 export const colors = ref({})
 export const searches = ref<UiSearch[]>([])
 export const stores = ref<UiStore[]>([])
 export const shopLists = ref<UiShopList[]>([])
 export const items = ref<UiItem[]>([])
 
+export const openCategory = ref<UiCategory | null>(null)
 export const openSearch = ref<UiSearch | null>(null)
 export const openStore = ref<UiStore | null>(null)
 
@@ -34,6 +37,16 @@ async function getPrices() {
   const json = await response.json()
   store.fetchMaxPageIndex = Math.ceil(json.result.totalLotCnt / 100) + 1
   updateStore(db, store)
+  for (let i = 0; i < json.result.categories.length; i++) {
+    const category = json.result.categories[i]
+    if (category.type !== 'P') {
+      continue
+    }
+    for (let j = 0; j < category.categories.length; j++) {
+      const cat = category.categories[j]
+      await addCategory(db, cat.catstr, cat.name)
+    }
+  }
   for (let i = 0; i < json.result.groups.length; i++) {
     const group = json.result.groups[i]
     for (let j = 0; j < group.items.length; j++) {
@@ -197,6 +210,12 @@ export async function createInitialStores(db: IDBPDatabase) {
       minOrderPrice: 6000,
     },
   ], 'DDC26', 100, db)
+  await addStore("Unsorted Brick", "2068227", [
+    {
+      region: 'AT',
+      cost: 599,
+    },
+  ], 'UnsortedBrick', 100, db)
   await addStore("MoccaBriggs", "1850805", [
     {
       region: 'AT',
@@ -386,6 +405,8 @@ export async function getDbConnection() {
       itemVariantsStore.createIndex('itemId', 'itemId')
       const shopListItemsStore = transaction.objectStore(STORES.SHOP_LIST_ITEMS.name)
       shopListItemsStore.createIndex('shopListId', 'shopListId')
+      const partsStore = transaction.objectStore(STORES.PARTS.name)
+      partsStore.createIndex(INDICES.PARTS_BY_CATEGORY.name, INDICES.PARTS_BY_CATEGORY.keyPath)
       createData = true
     }
   })
@@ -541,6 +562,32 @@ async function addColor(
   colors.value[id] = color
 }
 
+async function addCategory(
+  db: IDBPDatabase,
+  id: string,
+  name: string,
+) {
+  const category = {
+    id,
+    name
+  }
+  await db.put(STORES.CATEGORIES.name, category)
+  await addUiCategory(db, category)
+}
+
+async function addUiCategory(db: IDBPDatabase, category: Category) {
+  console.log('addUiCategory', category)
+  try {
+    const numParts = await db.countFromIndex(STORES.PARTS.name, INDICES.PARTS_BY_CATEGORY.name, category.id)
+    categories.value.set(category.id, {
+      ...category,
+      numParts
+    })
+  } catch (e) {
+    console.log(e)
+  }
+}
+
 export async function addNewShopListItem(item) {
   const db = await getDbConnection()
   await addShopListItem(
@@ -579,7 +626,9 @@ async function getStoreItems(storeId: string) {
 }
 
 export async function loadModels() {
-  await loadColors()
+  const db = await getDbConnection()
+  await loadCategories(db)
+  await loadColors(db)
   await loadItems()
   await loadStores()
   await loadShopLists()
@@ -658,11 +707,18 @@ export async function loadSearches() {
   }
 }
 
-export async function loadColors() {
-  const db = await getDbConnection()
+export async function loadColors(db: IDBPDatabase) {
   const x = await db.getAll(STORES.COLORS.name)
   for (let i = 0; i < x.length; i++) {
     colors.value[x[i].id] = x[i]
+  }
+}
+
+export async function loadCategories(db: IDBPDatabase) {
+  const x = await db.getAll(STORES.CATEGORIES.name)
+  for (let i = 0; i < x.length; i++) {
+    const category: Category = x[i]
+    addUiCategory(db, category)
   }
 }
 

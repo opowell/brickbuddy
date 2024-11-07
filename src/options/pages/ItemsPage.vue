@@ -23,7 +23,7 @@ const filteredParts = computed(() => {
     <table>
       <thead>
         <tr>
-          <th>Images</th>
+          <th>Image</th>
           <th>Id</th>
           <th>Name</th>
           <th>Category</th>
