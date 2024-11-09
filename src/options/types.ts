@@ -36,7 +36,7 @@ export interface ItemVariant {
 export interface UiItemVariant extends ItemVariant {
   color: Color
   invItems: UiInvItem[]
-  item: UiItem
+  item?: UiItem
 }
 export interface UiItem extends Item {
   variants: UiItemVariant[]

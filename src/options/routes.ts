@@ -8,6 +8,7 @@ import StoresPage from './pages/StoresPage.vue'
 import { LINKS } from './constants'
 import ItemPage from './pages/ItemPage.vue'
 import StorePage from './pages/StorePage.vue'
+import ItemVariantPage from './pages/ItemVariantPage.vue'
 export default [
   {
     name: 'home',
@@ -33,6 +34,11 @@ export default [
     name: 'part',
     path: '/' + LINKS.PART + '/:id',
     component: ItemPage
+  },
+  {
+    name: 'partVariant',
+    path: '/' + LINKS.PART + '/:partId/' + LINKS.PART_VARIANT + '/:colorId',
+    component: ItemVariantPage
   },
   {
     name: 'store',

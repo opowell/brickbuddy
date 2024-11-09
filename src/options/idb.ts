@@ -115,6 +115,24 @@ async function fetchStores(search: string) {
   const db = await getDbConnection()
   return stores
 }
+export async function getColor(db: IDBPDatabase, colorId: number): Promise<Color> {
+  return db.get(STORES.COLORS.name, colorId)
+}
+export async function getUiPartVariant(partId: number, colorId: number): Promise<UiItemVariant> {
+  const db = await getDbConnection()
+  const variant: ItemVariant = await db.get(STORES.PART_VARIANTS.name, [partId, colorId])
+  const uiPartVariant: UiItemVariant = {
+    ...variant,
+    color: await getColor(db, variant.colorId),
+    invItems: await getAllFromIndex(
+      db,
+      INDICES.INV_ITEMS_BY_ITEM_AND_COLOR,
+      [variant.itemId, variant.colorId]
+    ),
+    item: await getUiPart(Number.parseInt(variant.itemId))
+  }
+  return uiPartVariant
+}
 export async function getUiPartVariants(db: IDBPDatabase, id: number): Promise<UiItemVariant[]> {
   const variants: UiItemVariant[] = await getAllFromIndex(db, INDICES.PART_VARIANTS_BY_PART, id)
   for (let i = 0; i < variants.length; i++) {
