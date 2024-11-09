@@ -14,12 +14,6 @@ function setScraping(value: boolean) {
   scrapingOn.value = value
 }
 
-function goHome() {
-
-}
-function goStore(store) {
-
-}
 function add() {
   addNewStore({
     sId: newStoreId.value,

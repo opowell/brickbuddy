@@ -1,7 +1,7 @@
 import { IDBPDatabase, openDB } from "idb";
 import STORES from './stores'
 import INDICES, { IndexDefinition } from './indices'
-import { AddNewStore, Category, Color, InvItem, Item, ItemVariant, Search, ShippingCost, ShopListItem, Store, UiCategory, UiInvItem, UiItem, UiItemVariant, UiSearch, UiShopList, UiStore } from "./types";
+import { AddNewStore, CategoriesPageCategory, Category, Color, ColorPageColor, ColorPageInvItem, InvItem, Item, ItemVariant, Search, ShippingCost, ShopListItem, Store, UiCategory, UiColor, UiInvItem, UiItem, UiItemVariant, UiSearch, UiShopList, UiStore } from "./types";
 import { DB_NAME } from "./constants";
 import { toDataURL } from "./utils";
 import * as math from 'mathjs'
@@ -106,6 +106,14 @@ export async function startFetching() {
   }, 15000)
 }
 
+export async function excludeCategory(category: Category) {
+  excludedCategories.value.push(category)
+}
+
+export const excludedCategories = ref<Category[]>([])
+export async function getExcludedCategories(): Promise<Category[] | undefined> {
+  return excludedCategories.value
+}
 async function getFetchStore(db: IDBPDatabase): Promise<Store> {
   const stores = await getAllFromIndex(db, INDICES.STORES_BY_LAST_SCRAPED, undefined, 1)
   return stores[0]
@@ -116,7 +124,41 @@ async function fetchStores(search: string) {
   return stores
 }
 export async function getColor(db: IDBPDatabase, colorId: number): Promise<Color> {
-  return db.get(STORES.COLORS.name, colorId)
+  return await db.get(STORES.COLORS.name, colorId)
+}
+export async function getNumPartsInCategory(db: IDBPDatabase, id: string): Promise<number> {
+  return await countFromIndex(db, INDICES.PARTS_BY_CATEGORY, id)
+}
+async function getFromIndex(db: IDBPDatabase, index: IndexDefinition, query: string | (string | number)[] | number): Promise<any> {
+  return db.getFromIndex(index.store, index.name, query)
+}
+export async function getCategoryImage(db: IDBPDatabase, id: string): Promise<string | undefined> {
+  const part: Item = await getFromIndex(db, INDICES.PARTS_BY_CATEGORY, id)
+  if (!part) {
+    return
+  }
+  const variant: ItemVariant = await getFromIndex(db, INDICES.PART_VARIANTS_BY_PART, part.itemId)
+  console.log(id, part, variant)
+  return variant.image
+}
+export async function getCategoriesPageCategories(): Promise<CategoriesPageCategory[]> {
+  const db = await getDbConnection()
+  const categories = await db.getAll(STORES.CATEGORIES.name)
+  const categoriesPageCategories: CategoriesPageCategory[] = []
+  for (let i = 0; i < categories.length; i++) {
+    const category: Category = categories[i]
+    const numParts = await getNumPartsInCategory(db, category.id)
+    const image = await getCategoryImage(db, category.id)
+    categoriesPageCategories.push({
+      ...category,
+      numParts,
+      image
+    })
+  }
+  return categoriesPageCategories
+}
+export async function getPart(db: IDBPDatabase, partId: number): Promise<Item> {
+  return await db.get(STORES.PARTS.name, partId)
 }
 export async function getUiPartVariant(partId: number, colorId: number): Promise<UiItemVariant> {
   const db = await getDbConnection()
@@ -186,6 +228,57 @@ export async function getUiPart(id: number): Promise<UiItem | undefined> {
     variants
   }
   return uiPart
+}
+export async function countFromIndex(db: IDBPDatabase, index: IndexDefinition, query?: string | (string | number)[] | number) {
+  return await db.countFromIndex(index.store, index.name, query)
+}
+export async function countInvItemsWithColor(db: IDBPDatabase, id: number): Promise<number> {
+  return await countFromIndex(db, INDICES.INV_ITEMS_BY_COLORS, id)
+}
+
+export async function getInvItemsWithColor(db: IDBPDatabase, id: number): Promise<ColorPageInvItems[]> {
+  const invItems: InvItem[] = await getAllFromIndex(db, INDICES.INV_ITEMS_BY_COLORS, id)
+  const colorPageInvItems: ColorPageInvItem[] = []
+  for (let i = 0; i < invItems.length; i++) {
+    const invItem = invItems[i]
+    const part = await getPart(db, Number.parseInt(invItem.itemId))
+    const color = await getColor(db, invItem.color)
+    const variant: ItemVariant = await getItemVariant(db, invItem.itemId, id)
+    colorPageInvItems.push({
+      ...invItem,
+      item: part,
+      colorName: color.name,
+      variant
+    })
+  }
+  return colorPageInvItems
+}
+
+export async function getUiColor(id: string): Promise<ColorPageColor> {
+  const idNumber = Number.parseInt(id)
+  const db = await getDbConnection()
+  const color: Color = await db.get(STORES.COLORS.name, idNumber)
+  const invItems = await getInvItemsWithColor(db, idNumber)
+  const uiColor: ColorPageColor = {
+    ...color,
+    invItems
+  }
+  return uiColor
+}
+export async function getUiColors(): Promise<UiColor[]> {
+  const db = await getDbConnection()
+  const colors: Color[] = await db.getAll(STORES.COLORS.name)
+  const uiColors: UiColor[] = []
+  for (let i = 0; i < colors.length; i++) {
+    const color = colors[i]
+    const numInvItems = await countInvItemsWithColor(db, color.id)
+    console.log(numInvItems)
+    uiColors.push({
+      ...color,
+      numInvItems
+    })
+  }
+  return uiColors
 }
 export async function getUiStore(id: string): Promise<UiStore | undefined> {
   id = id + ''
@@ -706,7 +799,7 @@ export async function loadModels() {
   const db = await getDbConnection()
   await loadCategories(db)
   await loadColors(db)
-  await loadItems()
+  await loadParts()
   await loadStores()
   await loadShopLists()
   await loadSearches()
@@ -807,14 +900,20 @@ export async function loadShopLists() {
   }
 }
 
-export async function loadItems() {
+async function getCategory(db: IDBPDatabase, id: string): Promise<Category> {
+  return await db.get(STORES.CATEGORIES.name, id)
+}
+export async function loadParts() {
   const db = await getDbConnection()
-  const x = await db.getAll(STORES.PARTS.name)
+  const x: Item[] = await db.getAll(STORES.PARTS.name)
   const parts = []
   for (let i = 0; i < x.length; i++) {
-    const item = x[i]
-    item.variants = await loadItemVariants(db, item)
-    parts.push(item)
+    const part = x[i]
+    parts.push({
+      ...part,
+      variants: await loadItemVariants(db, part),
+      category: await getCategory(db, part.categoryString)
+    })
   }
   items.value = parts
 }

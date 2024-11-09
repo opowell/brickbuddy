@@ -10,13 +10,16 @@ defineEmits([
 ])
 import { Crumbs } from '../constants';
 import { useRouter } from 'vue-router'
-
+import ActiveSearchButton from '../components/ActiveSearchButton.vue';
 const router = useRouter()
 </script>
 
 <template>
   <div>
     <h4>Brick Buddy</h4>
+    <p>
+      <ActiveSearchButton />
+    </p>
     <StoresButton />
     <button @click="router.push(Crumbs.shoppingLists.href)">
       Shopping Lists

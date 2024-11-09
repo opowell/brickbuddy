@@ -9,6 +9,8 @@ import { LINKS } from './constants'
 import ItemPage from './pages/ItemPage.vue'
 import StorePage from './pages/StorePage.vue'
 import ItemVariantPage from './pages/ItemVariantPage.vue'
+import ColorPage from './pages/ColorPage.vue'
+import CategoryPage from './pages/CategoryPage.vue'
 export default [
   {
     name: 'home',
@@ -34,6 +36,16 @@ export default [
     name: 'part',
     path: '/' + LINKS.PART + '/:id',
     component: ItemPage
+  },
+  {
+    name: 'category',
+    path: '/' + LINKS.CATEGORY + '/:id',
+    component: CategoryPage
+  },
+  {
+    name: 'color',
+    path: '/' + LINKS.COLOR + '/:id',
+    component: ColorPage
   },
   {
     name: 'partVariant',

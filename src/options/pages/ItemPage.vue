@@ -58,7 +58,8 @@ const condition = ref<string>('New')
 </script>
 
 <template>
-  <div v-if="item">
+  <div v-if="!item">Loading...</div>
+  <div v-else>
     <HomeButton />
     <PartsButton />
     <h4>{{ item.itemName }}</h4>

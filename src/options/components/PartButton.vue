@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { UiItem } from '../types';
+import { Item } from '../types';
 import { Crumbs } from '../constants';
 import { useRouter } from 'vue-router'
 import {PropType} from 'vue'
 const { part } = defineProps({
-  part: Object as PropType<UiItem>
+  part: Object as PropType<Item>
 })
 const router = useRouter()
 const href = computed(() => {

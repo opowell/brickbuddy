@@ -10,6 +10,7 @@ const filteredParts = computed(() => {
   return items.value.filter((item: UiItem) => item.itemName.includes(search.value))
 })
 import HomeButton from '../components/HomeButton.vue'
+import CategoryButton from '../components/CategoryButton.vue';
 </script>
 
 <template>
@@ -34,7 +35,7 @@ import HomeButton from '../components/HomeButton.vue'
           <td>
             <PartButton :part="item" />
           </td>
-          <td>{{ item.categoryString }}</td>
+          <td><CategoryButton :category="item.category" /></td>
           <td>{{ item.variants.length }}</td>
         </tr>
       </tbody>

@@ -5,6 +5,7 @@ import type { UiInvItem, UiStore } from '../types';
 import { useRoute } from 'vue-router'
 import { getUiStore } from '../idb';
 import PartButton from '../components/PartButton.vue';
+import ColorButton from '../components/ColorButton.vue';
 const route = useRoute()
 const store = ref<UiStore | undefined>(undefined)
 onMounted(async () => {
@@ -29,6 +30,9 @@ function getVariant(invItem: UiInvItem) {
 
 // URL for cart, includes weights:
 // https://store.bricklink.com/ajax/clone/cart/list.ajax?sid=2066952&sum=0&_=1730928837742
+const url = computed(() => {
+  return 'https://store.bricklink.com/' + store.value?.slug
+})
 </script>
 
 
@@ -38,6 +42,9 @@ function getVariant(invItem: UiInvItem) {
     <StoresButton />
     <h4>{{ store.name }}</h4>
     <div>Fetch index: {{ store.fetchPageIndex }} / {{ store.fetchMaxPageIndex }}</div>
+    <div>Last scraped: {{ store.lastScraped.toISOString() }}</div>
+    <div>Price adjustment: {{ store.priceAdjustment }}%</div>
+    <div>Link: <a target="_blank" :href="url">{{ url }}</a></div>
     <h4>Inventory ({{ store.items.length }})</h4>
     <table>
       <thead>
@@ -60,11 +67,14 @@ function getVariant(invItem: UiInvItem) {
             <PartButton :part="item.item" />
           </td>
           <td>{{ item.condition }}</td>
-          <td><button @click="$emit('goColor', { id: item.color, name: item.colorName })">{{ item.colorName }}</button></td>
+          <td><ColorButton :color="{ id: item.color, name: item.colorName }" /></td>
           <td>{{ item.quantity }}</td>
           <td>{{ item.price*store.priceAdjustment/100 }}</td>
         </tr>
       </tbody>
     </table>
+  </div>
+  <div v-else>
+    Loading...
   </div>
 </template>

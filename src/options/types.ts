@@ -40,6 +40,7 @@ export interface UiItemVariant extends ItemVariant {
 }
 export interface UiItem extends Item {
   variants: UiItemVariant[]
+  category?: Category
 }
 export interface InvItem {
   invId: number
@@ -53,6 +54,13 @@ export interface InvItem {
 
 export interface UiInvItem extends InvItem {
   item: UiItem
+  store?: UiStore
+  colorName: string
+}
+
+export interface ColorPageInvItem extends InvItem {
+  variant: ItemVariant
+  item: Item
   store?: UiStore
   colorName: string
 }
@@ -97,9 +105,23 @@ export interface Color {
   name: string
 }
 
+export interface ColorPageColor extends Color {
+  invItems?: ColorPageInvItem[]
+}
+
+export interface UiColor extends Color {
+  numInvItems?: number
+  invItems?: UiInvItem[]
+}
+
 export interface Category {
   id: string
   name: string
+}
+
+export interface CategoriesPageCategory extends Category {
+  numParts: number
+  image?: string
 }
 
 export interface UiCategory extends Category {

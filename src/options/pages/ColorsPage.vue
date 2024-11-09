@@ -1,25 +1,22 @@
 <script setup lang="ts">
-const { colors } = defineProps({
-  colors: Object
+const colors = ref<UiColor[] | undefined>(undefined)
+onMounted(async () => {
+  colors.value = await getUiColors()
 })
-const emits = defineEmits(['goHome', 'add', 'goColor'])
 const newId = ref('')
 const newName = ref('')
 
 function add() {
-  emits('add', {
-    id: newId.value,
-    name: newName.value
-  })
+  // emits('add', {
+  //   id: newId.value,
+  //   name: newName.value
+  // })
 }
 
-const colorsArray = computed(() => {
-  if (!colors) {
-    return []
-  }
-  return Object.keys(colors).map(key => colors[key])
-})
+import ColorButton from '../components/ColorButton.vue';
 import HomeButton from '../components/HomeButton.vue';
+import { getUiColors } from '../idb';
+import { UiColor } from '../types';
 </script>
 
 <template>
@@ -31,17 +28,21 @@ import HomeButton from '../components/HomeButton.vue';
         <tr>
           <th>Id</th>
           <th>Name</th>
+          <th>Inventory Items</th>
         </tr>
       </thead>
       <tbody>
-        <tr v-for="color in colorsArray" :key="color.id">
+        <tr v-for="color in colors" :key="color.id">
           <td>
             {{ color.id }}
           </td>
           <td>
+            <ColorButton :color="color" />
+          </td>
+          <td>
             <button @click="$emit('goColor', color)">
-              {{ color.name }}
-            </button>
+              {{ color.numInvItems }}
+            </button>            
           </td>
         </tr>
       </tbody>

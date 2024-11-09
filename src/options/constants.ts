@@ -22,7 +22,9 @@ export const PAGES = {
 export const LINKS = {
   PART: 'part',
   PART_VARIANT: 'partVariant',
-  STORE: 'store'
+  STORE: 'store',
+  COLOR: 'color',
+  CATEGORY: 'category'
 }
 
 export const Routes = {
@@ -33,6 +35,12 @@ export const Routes = {
   parts: '/parts',
   searches: '/searches',
   shoppingLists: '/shopping-lists',
+  category(id: string) {
+    return '/' + LINKS.CATEGORY + '/' + encodeURIComponent(id)
+  },
+  color(id: number) {
+    return '/' + LINKS.COLOR + '/' + encodeURIComponent(id)
+  },
   part(id: string) {
     return '/' + LINKS.PART + '/' + encodeURIComponent(id)
   },
@@ -52,6 +60,12 @@ export const Hrefs = {
   parts: Routes.parts,
   searches: Routes.searches,
   shoppingLists: Routes.shoppingLists,
+  category(id: string) {
+    return Routes.category(id)
+  },
+  color(id: number) {
+    return Routes.color(id)
+  },
   part(id: string) {
     return Routes.part(id)
   },
@@ -91,6 +105,18 @@ export const Crumbs = {
   shoppingLists: {
     title: 'Shopping Lists',
     href: Hrefs.shoppingLists
+  },
+  category(title: string, id: string) {
+    return {
+      title,
+      href: Hrefs.category(id)
+    }
+  },
+  color(title: string, id: number) {
+    return {
+      title,
+      href: Hrefs.color(id)
+    }
   },
   part(title: string, id: string) {
     return {
