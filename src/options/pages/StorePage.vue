@@ -1,10 +1,14 @@
 <script setup lang="ts">
+import HomeButton from '../components/HomeButton.vue';
+import StoresButton from '../components/StoresButton.vue';
 import type { UiInvItem } from '../types';
-defineProps({
-  fetching: Boolean,
-  store: Object
+import { useRoute } from 'vue-router'
+import { getUiStore } from '../idb';
+const route = useRoute()
+const store = ref<UiStore | undefined>(undefined)
+onMounted(async () => {
+  store.value = await getUiStore(route.params.id - 0)
 })
-defineEmits(['goHome', 'goStores', 'goItem', 'startFetching', 'stopFetching', 'goVariant', 'goColor'])
 
 function getImageSrc(invItem: UiInvItem) {
   const variant = getVariant(invItem)
@@ -12,6 +16,9 @@ function getImageSrc(invItem: UiInvItem) {
     return
   }
   return variant.image
+}
+function goVariant(invItem: UiInvItem) {
+
 }
 function getVariant(invItem: UiInvItem) {
   return invItem.item.variants.find(v => v.colorId === invItem.color)
@@ -26,27 +33,10 @@ function getVariant(invItem: UiInvItem) {
 
 <template>
   <div v-if="store">
-    <button @click="$emit('goHome')">
-      Home
-    </button>
-    <button @click="$emit('goStores')">
-      Stores
-    </button>
+    <HomeButton />
+    <StoresButton />
     <h4>{{ store.name }}</h4>
     <div>Fetch index: {{ store.fetchPageIndex }} / {{ store.fetchMaxPageIndex }}</div>
-    <h4>Fetch inventory</h4>
-    <button
-      :disabled="fetching"
-      @click="$emit('startFetching')"
-    >
-      Start
-    </button>
-    <button
-      :disabled="!fetching"
-      @click="$emit('stopFetching')"
-    >
-      Stop
-    </button>
     <h4>Inventory ({{ store.items.length }})</h4>
     <table>
       <thead>
@@ -62,7 +52,7 @@ function getVariant(invItem: UiInvItem) {
         <tr v-for="item in store.items" :key="item.invId">
           <td><img
             :src="getImageSrc(item)"
-            @click="$emit('goVariant', getVariant(item))"
+            @click="goVariant(item)"
           ></td>
           <td>
             <button

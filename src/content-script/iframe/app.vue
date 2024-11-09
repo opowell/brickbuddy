@@ -1,21 +1,21 @@
 <script setup lang="ts"></script>
 
 <template>
-  <header
+  <!-- <header
     aria-label="Site Header"
     class="bg-gray-50"
   >
     Content Script Iframe Header
   </header>
-
+ -->
   <RouterView />
 
-  <footer
+  <!-- <footer
     aria-label="Site Footer"
     class="bg-gray-50"
   >
     Content Script Iframe Footer
-  </footer>
+  </footer> -->
 </template>
 
 <style scoped></style>

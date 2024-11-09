@@ -1,15 +1,27 @@
 <script setup lang="ts">
 import type { UiStore } from '../types';
-defineProps({
-  stores: Array<UiStore>,
-  scrapingOn: Boolean
-})
-const emits = defineEmits(['loadInitial', 'setScraping', 'goHome', 'goStore', 'add'])
+import StoreButton from '../components/StoreButton.vue';
+import { getDbCreateInitialStores, stopFetching, startFetching, addNewStore, stores } from '../idb'
 const newStoreId = ref('')
 const newStoreName = ref('')
+const scrapingOn = ref(true)
+function setScraping(value: boolean) {
+  if (value) {
+    startFetching()
+  } else {
+    stopFetching()
+  }
+  scrapingOn.value = value
+}
 
+function goHome() {
+
+}
+function goStore(store) {
+
+}
 function add() {
-  emits('add', {
+  addNewStore({
     sId: newStoreId.value,
     name: newStoreName.value
   })
@@ -19,19 +31,18 @@ onMounted(async () => {
   // stores2.value = await fetchStores(search.value)
 })
 const search = ref('')
+import HomeButton from '../components/HomeButton.vue';
 </script>
 
 <template>
   <div>
-    <button @click="$emit('goHome')">
-      Home
-    </button>
+    <HomeButton />
     <h4>Stores</h4>
-    <button @click="$emit('loadInitial')">Load initial</button>
+    <button @click="getDbCreateInitialStores">Load initial</button>
     <h4>Scraping: {{ scrapingOn ? 'On' : 'Off' }}</h4>
     <div>
-      <button @click="$emit('setScraping', true)" :disabled="scrapingOn">Start</button>
-      <button @click="$emit('setScraping', false)" :disabled="!scrapingOn">Stop</button>
+      <button @click="setScraping(true)" :disabled="scrapingOn">Start</button>
+      <button @click="setScraping(false)" :disabled="!scrapingOn">Stop</button>
     </div>
     <div>Search:<input v-model="search"></div>
     <table>
@@ -45,9 +56,7 @@ const search = ref('')
       <tbody>
         <tr v-for="store in stores" :key="store.sId">
           <td>
-            <button @click="$emit('goStore', store)">
-              {{ store.name }}
-            </button>
+            <StoreButton :store="store" />
           </td>
           <td>
             {{ store.items.length }}

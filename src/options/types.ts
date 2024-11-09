@@ -6,9 +6,11 @@ export interface ShippingCost {
   maxWeight?: number
   type?: 'eco' | 'priority'
 }
-export interface Store {
+export interface AddNewStore {
   sId: string
   name: string
+}
+export interface Store extends AddNewStore {
   fetchPageIndex: number
   fetchMaxPageIndex: number
   shippingCosts: ShippingCost[]
@@ -51,6 +53,7 @@ export interface InvItem {
 export interface UiInvItem extends InvItem {
   item: UiItem
   store?: UiStore
+  colorName: string
 }
 
 export interface UiStore extends Store {

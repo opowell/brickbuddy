@@ -7,7 +7,7 @@ function handleClick() {
 
 <template>
   <div>
-    <h1 class="text-red-800 font-bold text-xl">
+    <!-- <h1 class="text-red-800 font-bold text-xl">
       Content Script Iframe
     </h1>
     <button
@@ -15,7 +15,7 @@ function handleClick() {
       @click="handleClick"
     >
       Sample Daisy UI Button
-    </button>
+    </button> -->
   </div>
 </template>
 

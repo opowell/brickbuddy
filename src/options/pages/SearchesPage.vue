@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import HomeButton from '../components/HomeButton.vue';
 import type { UiSearch } from '../types'
 defineProps({
   searches: Array<UiSearch>
@@ -9,9 +10,7 @@ const newName = ref<string>('')
 
 <template>
   <div>
-    <button @click="$emit('goHome')">
-      Home
-    </button>
+    <HomeButton />
     <h4>Searches</h4>
     <table>
       <thead>

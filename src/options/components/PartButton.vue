@@ -1,0 +1,23 @@
+<script setup lang="ts">
+import { UiItem } from '../types';
+import { Crumbs } from '../constants';
+import { useRouter } from 'vue-router'
+import {PropType} from 'vue'
+const { part } = defineProps({
+  part: Object as PropType<UiItem>
+})
+const router = useRouter()
+const href = computed(() => {
+  if (!part) {
+    return
+  }
+  return Crumbs.part(part.itemName, part.itemId).href
+})
+</script>
+
+
+<template>
+  <button v-if="part" @click="router.push(href)">
+    {{ part?.itemName }}
+  </button>
+</template>

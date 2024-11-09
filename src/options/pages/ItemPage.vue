@@ -1,23 +1,32 @@
 <script setup lang="ts">
-import type { UiInvItem, UiItemVariant } from '../types'
+import HomeButton from '../components/HomeButton.vue';
+import PartsButton from '../components/PartsButton.vue';
+import { getUiPart } from '../idb';
+import type { UiInvItem, UiItem, UiItemVariant } from '../types'
 interface PartVariantWithPriceQuantity extends UiItemVariant {
   price: number
   quantity: number
 }
-const { item } = defineProps({
-  item: Object
+import { useRoute } from 'vue-router'
+const route = useRoute()
+
+const item = ref<UiItem | undefined>(undefined)
+onMounted(async () => {
+  item.value = await getUiPart(route.params.id - 0)
 })
-defineEmits(['goHome', 'goItems', 'goVariant', 'goColor'])
 const maxPrice = ref(Number.POSITIVE_INFINITY)
 const minQuantity = ref(0)
 const variants = computed<PartVariantWithPriceQuantity[]>(() => {
-  if (!item) {
+  if (!item.value) {
     return
   }
-  return item.variants.map((variant: UiItemVariant) => {
+  return item.value.variants.map((variant: UiItemVariant) => {
     let price = Number.POSITIVE_INFINITY
     let quantity = 0
     variant.invItems.forEach((invItem: UiInvItem) => {
+      if (condition.value !== 'Any' && invItem.condition !== condition.value) {
+        return
+      }
       if (invItem.quantity >= minQuantity.value && (price === 0 || invItem.price < price)) {
         price = invItem.price
       }
@@ -33,20 +42,30 @@ const variants = computed<PartVariantWithPriceQuantity[]>(() => {
   }).filter((variant: PartVariantWithPriceQuantity) => variant.price < Number.POSITIVE_INFINITY && variant.quantity > 0)
     .sort((a: PartVariantWithPriceQuantity, b: PartVariantWithPriceQuantity) => a.price - b.price)
 })
+const condition = ref<string>('New')
 </script>
 
 <template>
   <div v-if="item">
-    <button @click="$emit('goHome')">
-      Home
-    </button>
-    <button @click="$emit('goItems')">
-      Parts
-    </button>
+    <HomeButton />
+    <PartsButton />
     <h4>{{ item.itemName }}</h4>
     <div>Min quantity:<input v-model="minQuantity" type="number"></div>
     <div>Max price:<input v-model="maxPrice" type="number"></div>
     <div>Category: {{ item.categoryString }}</div>
+    <div>
+      Condition:<select v-model="condition">
+        <option value="New">
+          New
+        </option>
+        <option value="Any">
+          Any
+        </option>
+        <option value="Used">
+          Used
+        </option>
+      </select>
+    </div>
     <h4>Variants</h4>
     <table>
       <thead>
@@ -58,7 +77,7 @@ const variants = computed<PartVariantWithPriceQuantity[]>(() => {
           <th>Quantity</th>
         </tr>
       </thead>
-      <tbody>
+      <tbody v-if="false">
         <tr v-for="(variant, index) in variants" :key="index">
           <td><img :src="variant.image"></td>
           <td>

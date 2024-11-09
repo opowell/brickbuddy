@@ -1,7 +1,7 @@
 import { IDBPDatabase, openDB } from "idb";
 import STORES from './stores'
-import INDICES from './indices'
-import { Category, Color, InvItem, Item, ItemVariant, Search, ShippingCost, ShopListItem, Store, UiCategory, UiInvItem, UiItem, UiItemVariant, UiSearch, UiShopList, UiStore } from "./types";
+import INDICES, { IndexDefinition } from './indices'
+import { AddNewStore, Category, Color, InvItem, Item, ItemVariant, Search, ShippingCost, ShopListItem, Store, UiCategory, UiInvItem, UiItem, UiItemVariant, UiSearch, UiShopList, UiStore } from "./types";
 import { DB_NAME } from "./constants";
 import { toDataURL } from "./utils";
 import * as math from 'mathjs'
@@ -122,6 +122,62 @@ function getFetchStore() {
 async function fetchStores(search: string) {
   const db = await getDbConnection()
   return stores
+}
+export async function getUiPartVariants(db: IDBPDatabase, id: number): Promise<UiItemVariant[]> {
+  const variants: UiItemVariant[] = await getAllFromIndex(db, INDICES.PART_VARIANTS_BY_PART, id)
+  for (let i = 0; i < variants.length; i++) {
+    const variant = variants[i]
+    variant.invItems = await getAllFromIndex(
+      db,
+      INDICES.INV_ITEMS_BY_ITEM_AND_COLOR,
+      [variant.itemId, variant.colorId]
+    )
+  }
+  return variants
+}
+export async function getUiInvItems(db: IDBPDatabase, id: string): Promise<UiInvItem[]> {
+  const invItems: InvItem[] = await getAllFromIndex(db, INDICES.INV_ITEMS_BY_STORE, id)
+  const uiInvItems: UiInvItem[] = []
+  for (let i = 0; i < invItems.length; i++) {
+    const invItem = invItems[i]
+    const part = await getUiPart(Number.parseInt(invItem.itemId))
+    if (!part) {
+      continue
+    }
+    const uiInvItem: UiInvItem = {
+      ...invItem,
+      item: part,
+      colorName: colors.value[invItem.color].name
+    }
+    uiInvItems.push(uiInvItem)
+  }
+  return uiInvItems
+}
+export async function getUiPart(id: number): Promise<UiItem | undefined> {
+  const db = await getDbConnection()
+  const part: Item = await db.get(STORES.PARTS.name, id)
+  const variants: UiItemVariant[] = await getUiPartVariants(db, id)
+  const uiPart = {
+    ...part,
+    variants
+  }
+  return uiPart
+}
+export async function getUiStore(id: string): Promise<UiStore | undefined> {
+  id = id + ''
+  const db = await getDbConnection()
+  const store: Store = await db.get(STORES.STORES.name, id)
+  console.log('store', store, id)
+  const invItems: UiInvItem[] = await getUiInvItems(db, id)
+  const uiStore = {
+    ...store,
+    items: invItems
+  }
+  return uiStore
+}
+export async function getDbCreateInitialStores() {
+  const db = await getDbConnection()
+  return await createInitialStores(db)
 }
 export async function createInitialStores(db: IDBPDatabase) {
   if (!db) {
@@ -306,6 +362,7 @@ export async function createInitialStores(db: IDBPDatabase) {
   await addStore("A brick per day...", "709693", [], 'stefxan', 100, db)
 }
 async function createInitialData(db: IDBPDatabase) {
+  console.log('createInitialData')
   await createInitialStores(db)  
   await addShopListDb("Board games 2024", db)
   
@@ -391,6 +448,7 @@ export async function getDbConnection() {
   let createData = false
   const db = await openDB(DB_NAME, 1, {
     async upgrade(db, oldVersion, newVersion, transaction) {
+      console.log('upgrade')
       Object.keys(STORES).forEach((key) => {
         const store = STORES[key]
         db.createObjectStore(store.name, {
@@ -398,15 +456,11 @@ export async function getDbConnection() {
           autoIncrement: store.autoIncrement === true
         })
       })
-      const invItemsStore = transaction.objectStore(STORES.INVENTORY_ITEMS.name)
-      invItemsStore.createIndex('storeId', 'storeId')
-      invItemsStore.createIndex('itemId_color', ['itemId', 'color'])
-      const itemVariantsStore = transaction.objectStore(STORES.PART_VARIANTS.name)
-      itemVariantsStore.createIndex('itemId', 'itemId')
-      const shopListItemsStore = transaction.objectStore(STORES.SHOP_LIST_ITEMS.name)
-      shopListItemsStore.createIndex('shopListId', 'shopListId')
-      const partsStore = transaction.objectStore(STORES.PARTS.name)
-      partsStore.createIndex(INDICES.PARTS_BY_CATEGORY.name, INDICES.PARTS_BY_CATEGORY.keyPath)
+      Object.keys(INDICES).forEach((key) => {
+        const index = INDICES[key]
+        const store = transaction.objectStore(index.store)
+        store.createIndex(index.name, index.keyPath)
+      })
       createData = true
     }
   })
@@ -415,7 +469,7 @@ export async function getDbConnection() {
   }
   return db
 }
-export async function addNewStore(store: Store) {
+export async function addNewStore(store: AddNewStore) {
   const db = await getDbConnection()
   await addStore(store.name, store.sId, [], '', 100, db)
 }
@@ -425,6 +479,7 @@ export async function addNewSearch(name: string) {
 }
 
 async function addStore(name: string, sId: string, shippingCosts: ShippingCost[], slug: string, priceAdjustment: number, db: IDBPDatabase) {
+  console.log('add store', name)
   const existingStore: Store = await db.get(STORES.STORES.name, sId)
   const newStore: Store = {
     sId,
@@ -576,7 +631,6 @@ async function addCategory(
 }
 
 async function addUiCategory(db: IDBPDatabase, category: Category) {
-  console.log('addUiCategory', category)
   try {
     const numParts = await db.countFromIndex(STORES.PARTS.name, INDICES.PARTS_BY_CATEGORY.name, category.id)
     categories.value.set(category.id, {
@@ -604,14 +658,12 @@ export async function addNewShopListItem(item) {
 
 async function getStoreItems(storeId: string) {
   const db = await getDbConnection()
-  const tx = db.transaction(db.objectStoreNames, 'readonly')
-  const objStore = tx.objectStore(STORES.INVENTORY_ITEMS.name)
-  const index = objStore.index('storeId')
-  if (!index) {
-    return []
-  }
   try {
-    const storeItems = await index.getAll(storeId)
+    const storeItems = await getAllFromIndex(
+      db,
+      INDICES.INV_ITEMS_BY_STORE,
+      storeId
+    )
     for (let i = 0; i < storeItems.length; i++) {
       const storeItem = storeItems[i]
       storeItem.item = items.value.find(item => item.itemId === storeItem.itemId)
@@ -666,14 +718,12 @@ export async function getItemVariant(
 }
 
 async function getVariantInvItems(db: IDBPDatabase, variant: ItemVariant, item: Item) {
-  const tx = db.transaction(db.objectStoreNames, 'readonly')
-  const objStore = tx.objectStore(STORES.INVENTORY_ITEMS.name)
-  const index = objStore.index('itemId_color')
-  if (!index) {
-    return []
-  }
   try {
-    const storeItems = await index.getAll([item.itemId, variant.colorId])
+    const storeItems = await getAllFromIndex(
+      db,
+      INDICES.INV_ITEMS_BY_COLORS,
+      [item.itemId, variant.colorId]
+    )
     for (let i = 0; i < storeItems.length; i++) {
       const storeItem = storeItems[i]
       storeItem.item = item
@@ -735,22 +785,22 @@ export async function loadShopLists() {
 export async function loadItems() {
   const db = await getDbConnection()
   const x = await db.getAll(STORES.PARTS.name)
+  const parts = []
   for (let i = 0; i < x.length; i++) {
     const item = x[i]
     item.variants = await loadItemVariants(db, item)
-    items.value.push(item)
+    parts.push(item)
   }
+  items.value = parts
 }
 
 async function loadItemVariants(db: IDBPDatabase, item: Item) {
-  const tx = db.transaction(db.objectStoreNames, 'readonly')
-  const objStore = tx.objectStore(STORES.PART_VARIANTS.name)
-  const index = objStore.index('itemId')
-  if (!index) {
-    return []
-  }
   try {
-    const variants = await index.getAll(item.itemId)
+    const variants = await getAllFromIndex(
+      db,
+      INDICES.PART_VARIANTS_BY_PART,
+      item.itemId
+    )
     for (let i = 0; i < variants.length; i++) {
       const variant = variants[i]
       variant.item = item
@@ -764,15 +814,17 @@ async function loadItemVariants(db: IDBPDatabase, item: Item) {
   return []
 }
 
+async function getAllFromIndex(db: IDBPDatabase, index: IndexDefinition, keys: string | (string | number)[] | number) {
+  return db.getAllFromIndex(index.store, index.name, keys)
+}
+
 async function loadShopListItems(db: IDBPDatabase, shopListId: string) {
-  const tx = db.transaction(db.objectStoreNames, 'readonly')
-  const objStore = tx.objectStore(STORES.SHOP_LIST_ITEMS.name)
-  const index = objStore.index('shopListId')
-  if (!index) {
-    return []
-  }
   try {
-    const shopListItems = await index.getAll(shopListId)
+    const shopListItems = await getAllFromIndex(
+      db,
+      INDICES.SHOP_LIST_ITEMS_BY_SHOP_LIST,
+      shopListId
+    )
     for (let i = 0; i < shopListItems.length; i++) {
       const shopListItem = shopListItems[i]
       shopListItem.item = items.value.find(item => item.itemId === shopListItem.itemId)

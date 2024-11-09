@@ -19,13 +19,12 @@ const colorsArray = computed(() => {
   }
   return Object.keys(colors).map(key => colors[key])
 })
+import HomeButton from '../components/HomeButton.vue';
 </script>
 
 <template>
   <div>
-    <button @click="$emit('goHome')">
-      Home
-    </button>
+    <HomeButton />
     <h4>Colors</h4>
     <table>
       <thead>

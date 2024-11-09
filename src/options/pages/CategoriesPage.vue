@@ -21,13 +21,12 @@ const categoriesArray = computed(() => {
   }
   return Array.from(categories.values())
 })
+import HomeButton from '../components/HomeButton.vue';
 </script>
 
 <template>
   <div>
-    <button @click="$emit('goHome')">
-      Home
-    </button>
+    <HomeButton />
     <h4>Categories</h4>
     <table>
       <thead>

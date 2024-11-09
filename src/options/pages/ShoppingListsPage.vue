@@ -1,17 +1,19 @@
 <script setup lang="ts">
 import type { UiShopList } from '../types'
-defineProps({
-  lists: Array<UiShopList>
-})
-defineEmits(['goHome', 'open', 'add'])
+import { shopLists } from '../idb'
+import HomeButton from '../components/HomeButton.vue';
 const newListName = ref('')
+function open(list: UiShopList) {
+
+}
+function add(name: string) {
+
+}
 </script>
 
 <template>
   <div>
-    <button @click="$emit('goHome')">
-      Home
-    </button>
+    <HomeButton />
     <h4>Shopping Lists</h4>
     <table>
       <thead>
@@ -21,9 +23,9 @@ const newListName = ref('')
         </tr>
       </thead>
       <tbody>
-        <tr v-for="list in lists" :key="list.id">
+        <tr v-for="list in shopLists" :key="list.id">
           <td>
-            <button @click="$emit('open', list)">
+            <button @click="open(list)">
               {{ list.name }}
             </button>
           </td>
@@ -35,7 +37,7 @@ const newListName = ref('')
     </table>
     <h4>Add</h4>
     <div>Name:<input v-model="newListName" type="text"></div>
-    <button @click="$emit('add', newListName)">
+    <button @click="add(newListName)">
       Add
     </button>
   </div>

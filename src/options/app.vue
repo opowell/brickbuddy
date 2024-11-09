@@ -1,25 +1,18 @@
 <script setup lang="ts">
-import HomePage from './pages/HomePage.vue'
-import StoresPage from './pages/StoresPage.vue'
-import ColorsPage from './pages/ColorsPage.vue'
-import CategoriesPage from './pages/CategoriesPage.vue'
 import CategoryPage from './pages/CategoryPage.vue'
 import ColorPage from './pages/ColorPage.vue'
-import ItemsPage from './pages/ItemsPage.vue'
 import ItemPage from './pages/ItemPage.vue'
 import ItemVariantPage from './pages/ItemVariantPage.vue'
 import StorePage from './pages/StorePage.vue'
-import ShoppingListsPage from './pages/ShoppingListsPage.vue'
 import ShoppingListPage from './pages/ShoppingListPage.vue'
-import SearchesPage from './pages/SearchesPage.vue'
 import SearchPage from './pages/SearchPage.vue'
-import type { Color, UiCategory, UiItem, UiItemVariant, UiSearch, UiShopList, UiStore } from './types'
-import { createInitialStores, fetchingStoreInventory, searchRemoveStore, searches, categories, setSearchShopList, addNewSearch, stopFetching, addShopList, addSearchStore, startFetching, addNewShopListItem, addNewStore, colors, items, shopLists, itemVariantPageAddToList, loadModels, openCategory, openSearch, openStore, stores } from './idb';
+import type { Color, UiCategory, UiItem, UiItemVariant, UiSearch, UiShopList } from './types'
+import { fetchingStoreInventory, searchRemoveStore, searches, categories, setSearchShopList, addNewSearch, stopFetching, addSearchStore, startFetching, addNewShopListItem, colors, items, shopLists, itemVariantPageAddToList, loadModels, openCategory, openSearch, openStore, stores } from './idb';
 import { PAGES } from './constants'
 
 onMounted(() => {
   loadModels()
-  setScraping(true)
+  startFetching()
 })
 
 const openItemVariant = ref<UiItemVariant | null>(null)
@@ -33,10 +26,6 @@ watch(page, () => {
   }
   window.scrollTo(0, 0)
 })
-function goStore(store: UiStore) {
-  openStore.value = store
-  page.value = PAGES.STORE
-}
 function goShopList(shopList: UiShopList) {
   openShopList.value = shopList
   page.value = PAGES.SHOP_LIST
@@ -63,45 +52,11 @@ function goCategory(category: UiCategory) {
   page.value = PAGES.CATEGORY
 }
 const openColor = ref<Color | null>(null)
-const scrapingOn = ref(true)
-function setScraping(value: boolean) {
-  if (value) {
-    startFetching()
-  } else {
-    stopFetching()
-  }
-  scrapingOn.value = value
-}
 </script>
 <template>
-  <HomePage
-    v-if="page === PAGES.HOME"
-    v-model="page"
-  />
-  <StoresPage
-    v-else-if="page === PAGES.STORES"
-    :scraping-on="scrapingOn"
-    :stores="stores"
-    @go-home="page = PAGES.HOME"
-    @set-scraping="setScraping"
-    @go-store="goStore"
-    @add="addNewStore"
-    @load-initial="createInitialStores"
-  />
-  <CategoriesPage
-    v-else-if="page === PAGES.CATEGORIES"
-    :categories="categories"
-    @go-home="page = PAGES.HOME"
-    @go-category="goCategory"
-  />
-  <ColorsPage
-    v-else-if="page === PAGES.COLORS"
-    :colors="colors"
-    @go-home="page = PAGES.HOME"
-    @go-color="goColor"
-  />
+  <router-view />
   <CategoryPage
-    v-else-if="page === PAGES.CATEGORY && openCategory"
+    v-if="page === PAGES.CATEGORY && openCategory"
     :category="openCategory"
     @go-home="page = PAGES.HOME"
     @go-categories="page = PAGES.CATEGORIES"
@@ -111,20 +66,6 @@ function setScraping(value: boolean) {
     :color="openColor"
     @go-home="page = PAGES.HOME"
     @go-colors="page = PAGES.COLORS"
-  />
-  <ItemsPage
-    v-else-if="page === PAGES.PARTS"
-    :items="items"
-    @go-home="page = PAGES.HOME"
-    @go-item="goItem"
-  />
-  <ItemPage
-    v-else-if="page === PAGES.PART && openItem"
-    :item="openItem"
-    @go-home="page = PAGES.HOME"
-    @go-items="page = PAGES.PARTS"
-    @go-variant="goVariant"
-    @go-color="goColor"
   />
   <ItemVariantPage
     v-else-if="page === PAGES.PART_VARIANT && openItemVariant"
@@ -148,13 +89,6 @@ function setScraping(value: boolean) {
     @stop-fetching="stopFetching"
     @go-color="goColor"
   />
-  <ShoppingListsPage
-    v-else-if="page === PAGES.SHOP_LISTS"
-    :lists="shopLists"
-    @go-home="page = PAGES.HOME"
-    @open="goShopList"
-    @add="addShopList"
-  />
   <ShoppingListPage
     v-else-if="page === PAGES.SHOP_LIST && openShopList"
     :list="openShopList"
@@ -163,13 +97,6 @@ function setScraping(value: boolean) {
     @add-item="addNewShopListItem"
     @go-shop-lists="page = PAGES.SHOP_LISTS"
     @go-item="goItem"
-  />
-  <SearchesPage
-    v-else-if="page === PAGES.SEARCHES"
-    :searches="searches"
-    @add="addNewSearch"
-    @go-home="page = PAGES.HOME"
-    @go-search="goSearch"
   />
   <SearchPage
     v-else-if="page === PAGES.SEARCH && openSearch"

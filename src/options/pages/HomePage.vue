@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import PartsButton from '../components/PartsButton.vue';
+import StoresButton from '../components/StoresButton.vue';
 import { PAGES } from '../constants'
 defineProps({
   modelValue: String
@@ -6,27 +8,27 @@ defineProps({
 defineEmits([
   'update:modelValue'
 ])
+import { Crumbs } from '../constants';
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 </script>
 
 <template>
   <div>
     <h4>Brick Buddy</h4>
-    <button @click="$emit('update:modelValue', PAGES.STORES)">
-      Stores
-    </button>
-    <button @click="$emit('update:modelValue', PAGES.SHOP_LISTS)">
+    <StoresButton />
+    <button @click="router.push(Crumbs.shoppingLists.href)">
       Shopping Lists
     </button>
-    <button @click="$emit('update:modelValue', PAGES.COLORS)">
+    <button @click="router.push(Crumbs.colors.href)">
       Colors
     </button>
-    <button @click="$emit('update:modelValue', PAGES.SEARCHES)">
+    <button @click="router.push(Crumbs.searches.href)">
       Searches
     </button>
-    <button @click="$emit('update:modelValue', PAGES.PARTS)">
-      Parts
-    </button>
-    <button @click="$emit('update:modelValue', PAGES.CATEGORIES)">
+    <PartsButton />
+    <button @click="router.push(Crumbs.categories.href)">
       Categories
     </button>
   </div>
