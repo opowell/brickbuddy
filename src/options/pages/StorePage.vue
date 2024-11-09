@@ -4,6 +4,7 @@ import StoresButton from '../components/StoresButton.vue';
 import type { UiInvItem } from '../types';
 import { useRoute } from 'vue-router'
 import { getUiStore } from '../idb';
+import PartButton from '../components/PartButton.vue';
 const route = useRoute()
 const store = ref<UiStore | undefined>(undefined)
 onMounted(async () => {
@@ -55,11 +56,7 @@ function getVariant(invItem: UiInvItem) {
             @click="goVariant(item)"
           ></td>
           <td>
-            <button
-              @click="$emit('goItem', item.item)"
-            >
-              {{ item.item.itemName }}
-            </button>
+            <PartButton :part="item.item" />
           </td>
           <td><button @click="$emit('goColor', { id: item.color, name: item.colorName })">{{ item.colorName }}</button></td>
           <td>{{ item.quantity }}</td>

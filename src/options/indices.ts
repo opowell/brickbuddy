@@ -6,6 +6,7 @@ export interface IndexDefinition {
   keyPath: string | string[]
 }
 const indices: {
+  STORES_BY_LAST_SCRAPED: IndexDefinition
   PARTS_BY_CATEGORY: IndexDefinition
   PART_VARIANTS_BY_PART: IndexDefinition
   INV_ITEMS_BY_ITEM_AND_COLOR: IndexDefinition
@@ -13,6 +14,11 @@ const indices: {
   INV_ITEMS_BY_COLORS: IndexDefinition
   SHOP_LIST_ITEMS_BY_SHOP_LIST: IndexDefinition
 } = {
+  STORES_BY_LAST_SCRAPED: {
+    store: stores.STORES.name,
+    name: 'storesByLastScraped',
+    keyPath: 'lastScraped'
+  },
   INV_ITEMS_BY_STORE: {
     store: stores.INVENTORY_ITEMS.name,
     name: 'inventoryItemsByStore',
@@ -31,12 +37,12 @@ const indices: {
   INV_ITEMS_BY_ITEM_AND_COLOR: {
     store: stores.INVENTORY_ITEMS.name,
     name: 'inventoryItemsByItemAndColor',
-    keyPath: ['itemId', 'colorId']
+    keyPath: ['itemId', 'color']
   },
   INV_ITEMS_BY_COLORS: {
     store: stores.INVENTORY_ITEMS.name,
     name: 'inventoryItemsByColor',
-    keyPath: ['itemId', 'color']
+    keyPath: 'color'
   },
   SHOP_LIST_ITEMS_BY_SHOP_LIST: {
     store: stores.SHOP_LIST_ITEMS.name,

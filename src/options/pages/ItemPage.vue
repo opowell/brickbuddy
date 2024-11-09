@@ -18,7 +18,7 @@ const maxPrice = ref(Number.POSITIVE_INFINITY)
 const minQuantity = ref(0)
 const variants = computed<PartVariantWithPriceQuantity[]>(() => {
   if (!item.value) {
-    return
+    return []
   }
   return item.value.variants.map((variant: UiItemVariant) => {
     let price = Number.POSITIVE_INFINITY
@@ -77,7 +77,7 @@ const condition = ref<string>('New')
           <th>Quantity</th>
         </tr>
       </thead>
-      <tbody v-if="false">
+      <tbody>
         <tr v-for="(variant, index) in variants" :key="index">
           <td><img :src="variant.image"></td>
           <td>

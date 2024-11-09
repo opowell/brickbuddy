@@ -18,7 +18,8 @@ export const openSearch = ref<UiSearch | null>(null)
 export const openStore = ref<UiStore | null>(null)
 
 async function getPrices() {
-  const store = getFetchStore()
+  const db = await getDbConnection()
+  const store: Store = await getFetchStore(db)
   if (!store) {
     return
   }
@@ -30,10 +31,10 @@ async function getPrices() {
     "credentials": "include"
   })
   store.fetchPageIndex++
+  store.lastScraped = new Date()
   if (store.fetchPageIndex >= store.fetchMaxPageIndex) {
     store.fetchPageIndex = 1
   }
-  const db = await getDbConnection()
   const json = await response.json()
   store.fetchMaxPageIndex = Math.ceil(json.result.totalLotCnt / 100) + 1
   updateStore(db, store)
@@ -74,7 +75,6 @@ async function getPrices() {
           invItem.invQty,
           math.number(math.multiply(math.bignumber(100), math.bignumber(invItem.rawConvertedPrice))),
           invItem.itemID,
-          uiVariant
         )
       } catch (e) {
         console.log('error adding item', invItem, e)
@@ -90,7 +90,6 @@ export function stopFetching() {
 }
 let fetchPricesInterval: NodeJS.Timeout
 
-let fetchingStoreIndex = 0
 export async function startFetching() {
   if (fetchingStoreInventory.value) {
     return
@@ -107,16 +106,9 @@ export async function startFetching() {
   }, 15000)
 }
 
-function getFetchStore() {
-  let store = openStore.value
-  if (!store) {
-    store = stores.value[fetchingStoreIndex]
-    fetchingStoreIndex++
-    if (fetchingStoreIndex >= stores.value.length) {
-      fetchingStoreIndex = 0
-    }
-  }
-  return store
+async function getFetchStore(db: IDBPDatabase): Promise<Store> {
+  const stores = await getAllFromIndex(db, INDICES.STORES_BY_LAST_SCRAPED, undefined, 1)
+  return stores[0]
 }
 
 async function fetchStores(search: string) {
@@ -127,6 +119,7 @@ export async function getUiPartVariants(db: IDBPDatabase, id: number): Promise<U
   const variants: UiItemVariant[] = await getAllFromIndex(db, INDICES.PART_VARIANTS_BY_PART, id)
   for (let i = 0; i < variants.length; i++) {
     const variant = variants[i]
+    variant.color = colors.value[variant.colorId]
     variant.invItems = await getAllFromIndex(
       db,
       INDICES.INV_ITEMS_BY_ITEM_AND_COLOR,
@@ -479,7 +472,6 @@ export async function addNewSearch(name: string) {
 }
 
 async function addStore(name: string, sId: string, shippingCosts: ShippingCost[], slug: string, priceAdjustment: number, db: IDBPDatabase) {
-  console.log('add store', name)
   const existingStore: Store = await db.get(STORES.STORES.name, sId)
   const newStore: Store = {
     sId,
@@ -488,7 +480,8 @@ async function addStore(name: string, sId: string, shippingCosts: ShippingCost[]
     fetchMaxPageIndex: existingStore?.fetchMaxPageIndex || 10,
     priceAdjustment,
     shippingCosts,
-    slug
+    slug,
+    lastScraped: new Date()
   }
   db.put(STORES.STORES.name, newStore)
   const newUiStore: UiStore = {
@@ -507,9 +500,12 @@ async function updateStore(db: IDBPDatabase, store: Store | UiStore) {
       sId: store.sId,
       name: store.name,
       fetchPageIndex: store.fetchPageIndex,
-      fetchMaxPageIndex: store.fetchMaxPageIndex
+      fetchMaxPageIndex: store.fetchMaxPageIndex,
+      lastScraped: store.lastScraped,
+      priceAdjustment: store.priceAdjustment,
+      shippingCosts: store.shippingCosts,
+      slug: store.slug
     }
-    console.log(storeObj)
     db.put(STORES.STORES.name, storeObj)
   } catch (e) {
     console.log(store, e)
@@ -575,13 +571,12 @@ async function addShopListItem(
 async function addInvItem(
   db: IDBPDatabase,
   invId: number,
-  store: UiStore,
+  store: Store,
   color: number,
   condition: string,
   quantity: number,
   price: number,
   itemId: string,
-  variant: UiItemVariant
 ) {
   const invItem: InvItem = {
     storeId: store.sId,
@@ -593,15 +588,15 @@ async function addInvItem(
     color
   }
   await db.put(STORES.INVENTORY_ITEMS.name, invItem)
-  const uiInvItem: UiInvItem = {
-    item: variant.item,
-    store,
-    ...invItem
-  }
-  variant.invItems = variant.invItems.filter(invItem => invItem.invId !== invId)
-  variant.invItems.push(uiInvItem)
-  store.items = store.items.filter(invItem => invItem.invId !== invId)
-  store.items.push(uiInvItem)
+  // const uiInvItem: UiInvItem = {
+  //   item: variant.item,
+  //   store,
+  //   ...invItem
+  // }
+  // variant.invItems = variant.invItems.filter(invItem => invItem.invId !== invId)
+  // variant.invItems.push(uiInvItem)
+  // store.items = store.items.filter(invItem => invItem.invId !== invId)
+  // store.items.push(uiInvItem)
 }
 
 async function addColor(
@@ -721,7 +716,7 @@ async function getVariantInvItems(db: IDBPDatabase, variant: ItemVariant, item: 
   try {
     const storeItems = await getAllFromIndex(
       db,
-      INDICES.INV_ITEMS_BY_COLORS,
+      INDICES.INV_ITEMS_BY_ITEM_AND_COLOR,
       [item.itemId, variant.colorId]
     )
     for (let i = 0; i < storeItems.length; i++) {
@@ -814,8 +809,8 @@ async function loadItemVariants(db: IDBPDatabase, item: Item) {
   return []
 }
 
-async function getAllFromIndex(db: IDBPDatabase, index: IndexDefinition, keys: string | (string | number)[] | number) {
-  return db.getAllFromIndex(index.store, index.name, keys)
+async function getAllFromIndex(db: IDBPDatabase, index: IndexDefinition, query?: string | (string | number)[] | number, count?: number) {
+  return db.getAllFromIndex(index.store, index.name, query, count)
 }
 
 async function loadShopListItems(db: IDBPDatabase, shopListId: string) {

@@ -51,6 +51,7 @@ import HomeButton from '../components/HomeButton.vue';
           <th>Name</th>
           <th>Inventory</th>
           <th>Fetch Index</th>
+          <th>Last Scraped</th>
         </tr>
       </thead>
       <tbody>
@@ -63,6 +64,9 @@ import HomeButton from '../components/HomeButton.vue';
           </td>
           <td>
             {{ store.fetchPageIndex }} / {{ store.fetchMaxPageIndex }}
+          </td>
+          <td>
+            {{ store.lastScraped.toISOString() }}
           </td>
         </tr>
       </tbody>

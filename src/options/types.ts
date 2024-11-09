@@ -16,6 +16,7 @@ export interface Store extends AddNewStore {
   shippingCosts: ShippingCost[]
   slug: string
   priceAdjustment: number
+  lastScraped: Date
 }
 
 export interface Item {
