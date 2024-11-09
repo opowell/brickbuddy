@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import HomeButton from '../components/HomeButton.vue';
 import StoresButton from '../components/StoresButton.vue';
-import type { UiInvItem } from '../types';
+import type { UiInvItem, UiStore } from '../types';
 import { useRoute } from 'vue-router'
 import { getUiStore } from '../idb';
 import PartButton from '../components/PartButton.vue';
 const route = useRoute()
 const store = ref<UiStore | undefined>(undefined)
 onMounted(async () => {
-  store.value = await getUiStore(route.params.id - 0)
+  store.value = await getUiStore(route.params.id)
 })
 
 function getImageSrc(invItem: UiInvItem) {
@@ -44,6 +44,7 @@ function getVariant(invItem: UiInvItem) {
         <tr>
           <th>Item</th>
           <th>Name</th>
+          <th>Condition</th>
           <th>Color</th>
           <th>Quantity</th>
           <th>Price</th>
@@ -58,9 +59,10 @@ function getVariant(invItem: UiInvItem) {
           <td>
             <PartButton :part="item.item" />
           </td>
+          <td>{{ item.condition }}</td>
           <td><button @click="$emit('goColor', { id: item.color, name: item.colorName })">{{ item.colorName }}</button></td>
           <td>{{ item.quantity }}</td>
-          <td>{{ item.price }}</td>
+          <td>{{ item.price*store.priceAdjustment/100 }}</td>
         </tr>
       </tbody>
     </table>

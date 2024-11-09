@@ -121,15 +121,28 @@ export async function getColor(db: IDBPDatabase, colorId: number): Promise<Color
 export async function getUiPartVariant(partId: number, colorId: number): Promise<UiItemVariant> {
   const db = await getDbConnection()
   const variant: ItemVariant = await db.get(STORES.PART_VARIANTS.name, [partId, colorId])
+  const invItems: InvItem[] = await getAllFromIndex(
+    db,
+    INDICES.INV_ITEMS_BY_ITEM_AND_COLOR,
+    [variant.itemId, variant.colorId]
+  )
+  const uiInvItems: UiInvItem[] = []
+  for (let i = 0; i < invItems.length; i++) {
+    const invItem: InvItem = invItems[i]
+    const store = await db.get(STORES.STORES.name, invItem.storeId)
+    const item = null
+    uiInvItems.push({
+      ...invItem,
+      store,
+      item,
+      colorName: 'red'
+    })
+  }
   const uiPartVariant: UiItemVariant = {
     ...variant,
     color: await getColor(db, variant.colorId),
-    invItems: await getAllFromIndex(
-      db,
-      INDICES.INV_ITEMS_BY_ITEM_AND_COLOR,
-      [variant.itemId, variant.colorId]
-    ),
-    item: await getUiPart(Number.parseInt(variant.itemId))
+    invItems: uiInvItems,
+    item: await getUiPart(Number.parseInt(variant.itemId)),
   }
   return uiPartVariant
 }
@@ -178,7 +191,6 @@ export async function getUiStore(id: string): Promise<UiStore | undefined> {
   id = id + ''
   const db = await getDbConnection()
   const store: Store = await db.get(STORES.STORES.name, id)
-  console.log('store', store, id)
   const invItems: UiInvItem[] = await getUiInvItems(db, id)
   const uiStore = {
     ...store,

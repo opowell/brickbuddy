@@ -58,7 +58,7 @@ const sortedInvItems = computed(() => {
 </script>
 
 <template>
-  <div v-if="variant">
+  <div v-if="variant && variant.item">
     <HomeButton />
     <PartsButton />
     <PartButton :part="variant.item" />
