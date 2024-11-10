@@ -24,7 +24,8 @@ export const LINKS = {
   PART_VARIANT: 'partVariant',
   STORE: 'store',
   COLOR: 'color',
-  CATEGORY: 'category'
+  CATEGORY: 'category',
+  CONDITION: 'condition'
 }
 
 export const Routes = {
@@ -32,12 +33,16 @@ export const Routes = {
   activeSearch: '/active-search',
   stores: '/stores',
   colors: '/colors',
+  conditions: '/conditions',
   categories: '/categories',
   parts: '/parts',
   searches: '/searches',
   shoppingLists: '/shopping-lists',
   category(id: string) {
     return '/' + LINKS.CATEGORY + '/' + encodeURIComponent(id)
+  },
+  condition(id: string) {
+    return '/' + LINKS.CONDITION + '/' + encodeURIComponent(id)
   },
   color(id: number) {
     return '/' + LINKS.COLOR + '/' + encodeURIComponent(id)
@@ -57,6 +62,7 @@ export const Hrefs = {
   home: Routes.home,
   activeSearch: Routes.activeSearch,
   stores: Routes.stores,
+  conditions: Routes.conditions,
   colors: Routes.colors,
   categories: Routes.categories,
   parts: Routes.parts,
@@ -64,6 +70,9 @@ export const Hrefs = {
   shoppingLists: Routes.shoppingLists,
   category(id: string) {
     return Routes.category(id)
+  },
+  condition(id: string) {
+    return Routes.condition(id)
   },
   color(id: number) {
     return Routes.color(id)
@@ -92,6 +101,10 @@ export const Crumbs = {
     title: 'Stores',
     href: Hrefs.stores
   },
+  conditions: {
+    title: 'Conditions',
+    href: Hrefs.conditions
+  },
   searches: {
     title: 'Searches',
     href: Hrefs.searches
@@ -111,6 +124,12 @@ export const Crumbs = {
   shoppingLists: {
     title: 'Shopping Lists',
     href: Hrefs.shoppingLists
+  },
+  condition(id: string) {
+    return {
+      id,
+      href: Hrefs.condition(id)
+    }
   },
   category(title: string, id: string) {
     return {

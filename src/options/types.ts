@@ -51,6 +51,8 @@ export interface InvItem {
   quantity: number
   price: number
   color: number
+  condition_New: number
+  condition_Used: number
 }
 
 export interface UiInvItem extends InvItem {
@@ -66,6 +68,13 @@ export interface ColorPageInvItem extends InvItem {
   colorName: string
 }
 
+export interface ConditionsPageCondition {
+  id: string
+  numInvItems: number
+}
+export interface StoresPageStore extends Store {
+  numInvItems: number
+}
 export interface UiStore extends Store {
   items: UiInvItem[]
 }
@@ -83,14 +92,17 @@ export interface ShopListItem {
   maxPrice: number
   colors: string[]
 }
-interface SearchBase {
-  id?: number
+export interface SearchBase {
   categories: {
     ids: string[]
     excluded: boolean
   }
   colors: {
     ids: number[]
+    excluded: boolean
+  }
+  conditions: {
+    ids: string[]
     excluded: boolean
   }
   stores: {
@@ -103,6 +115,7 @@ interface SearchBase {
   }
 }
 export interface Search extends SearchBase {
+  id: number
   name: string
   shoppingListId?: number
   shopListItemIds?: number[]
@@ -117,7 +130,12 @@ interface ActiveSearchPagePart extends Item {
 interface ActiveSearchPageStore extends Store {
   numParts: number
 }
+export interface ActiveSearchPageCondition {
+  id: string
+  numInvItems: number
+}
 export interface ActiveSearchPageSearch extends ActiveSearch {
+  conditionObjects: ActiveSearchPageCondition[] 
   categoryObjects: CategoriesPageCategory[] 
   colorObjects: UiColor[] 
   partObjects: ActiveSearchPagePart[] 
@@ -153,6 +171,10 @@ export interface UiColor extends Color {
 export interface Category {
   id: string
   name: string
+}
+
+export interface CategoryPageCategory extends Category {
+  parts: UiItem[]
 }
 
 export interface CategoriesPageCategory extends Category {

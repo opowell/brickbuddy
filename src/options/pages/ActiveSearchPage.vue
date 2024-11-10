@@ -8,6 +8,7 @@ onMounted(async () => {
   search.value = await getActiveSearchPageSearch()
 })
 import CategoryButton from '../components/CategoryButton.vue';
+import ConditionButton from '../components/ConditionButton.vue';
 </script>
 
 <template>
@@ -40,6 +41,31 @@ import CategoryButton from '../components/CategoryButton.vue';
             </td>
             <td>
               {{ category.numParts }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </template>
+    <template v-if="search.conditions.ids.length">
+      <div>Conditions {{ '(' + search.conditions.ids.length + ')' }}</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Actions</th>
+            <th>Name</th>
+            <th>Inv. Items</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="condition in search.conditionObjects" :key="condition.id">
+            <td>
+              <button>x</button>
+            </td>
+            <td>
+              <ConditionButton :condition="condition.id" />
+            </td>
+            <td>
+              {{ condition.numInvItems }}
             </td>
           </tr>
         </tbody>

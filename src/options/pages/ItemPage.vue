@@ -4,6 +4,7 @@ import PartsButton from '../components/PartsButton.vue';
 import PartVariantButton from '../components/PartVariantButton.vue';
 import { getUiPart } from '../idb';
 import type { UiInvItem, UiItem, UiItemVariant } from '../types'
+import ActiveSearchButton from '../components/ActiveSearchButton.vue';
 interface PartVariantWithPriceQuantity extends UiItemVariant {
   price: number
   maxPrice: number
@@ -51,7 +52,9 @@ const variants = computed<PartVariantWithPriceQuantity[]>(() => {
       maxPrice: varMaxPrice,
       quantity
     }
-  }).filter((variant: PartVariantWithPriceQuantity) => variant.price < Number.POSITIVE_INFINITY && variant.quantity > 0)
+  }).filter((variant: PartVariantWithPriceQuantity) => {
+    return variant.price < Number.POSITIVE_INFINITY && variant.quantity > 0
+  })
     .sort((a: PartVariantWithPriceQuantity, b: PartVariantWithPriceQuantity) => a.price - b.price)
 })
 const condition = ref<string>('New')
@@ -62,6 +65,7 @@ const condition = ref<string>('New')
   <div v-else>
     <HomeButton />
     <PartsButton />
+    <ActiveSearchButton />
     <h4>{{ item.itemName }}</h4>
     <div>Min quantity:<input v-model="minQuantity" type="number"></div>
     <div>Max price:<input v-model="maxPrice" type="number"></div>

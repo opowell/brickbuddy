@@ -12,6 +12,7 @@ const indices: {
   INV_ITEMS_BY_ITEM_AND_COLOR: IndexDefinition
   INV_ITEMS_BY_STORE: IndexDefinition
   INV_ITEMS_BY_COLORS: IndexDefinition
+  INV_ITEMS_BY_CONDITION: IndexDefinition
   SHOP_LIST_ITEMS_BY_SHOP_LIST: IndexDefinition
 } = {
   STORES_BY_LAST_SCRAPED: {
@@ -43,6 +44,11 @@ const indices: {
     store: stores.INVENTORY_ITEMS.name,
     name: 'inventoryItemsByColor',
     keyPath: 'color'
+  },
+  INV_ITEMS_BY_CONDITION: {
+    store: stores.INVENTORY_ITEMS.name,
+    name: 'inventoryItemsByCondition',
+    keyPath: 'condition'
   },
   SHOP_LIST_ITEMS_BY_SHOP_LIST: {
     store: stores.SHOP_LIST_ITEMS.name,

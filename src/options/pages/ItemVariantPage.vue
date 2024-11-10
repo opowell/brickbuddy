@@ -5,7 +5,6 @@ import PartButton from '../components/PartButton.vue';
 import { UiShopList, type UiInvItem, type UiItemVariant } from '../types'
 import { getUiPartVariant } from '../idb';
 
-defineEmits(['goHome', 'goItems', 'goItem', 'goStore', 'addToList', 'goShopList'])
 const addToListId = ref<number | undefined>()
 const addToListCondition = ref<string>('New')
 const addToListMinQ = ref<number>(1)

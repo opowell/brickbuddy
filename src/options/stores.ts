@@ -1,4 +1,4 @@
-interface StoreDefinition {
+export interface StoreDefinition {
   name: string
   keyPath: string | string[]
   autoIncrement?: boolean

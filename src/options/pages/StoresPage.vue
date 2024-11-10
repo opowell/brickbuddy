@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import type { UiStore } from '../types';
+import type { StoresPageStore, UiStore } from '../types';
 import StoreButton from '../components/StoreButton.vue';
-import { getDbCreateInitialStores, stopFetching, startFetching, addNewStore, stores } from '../idb'
+import { getDbCreateInitialStores, stopFetching, startFetching, addNewStore, getStoresPageStores } from '../idb'
 const newStoreId = ref('')
 const newStoreName = ref('')
 const scrapingOn = ref(true)
@@ -13,6 +13,10 @@ function setScraping(value: boolean) {
   }
   scrapingOn.value = value
 }
+const stores = ref<StoresPageStore[] | undefined>(undefined)
+onMounted(async () => {
+  stores.value = await getStoresPageStores()
+})
 
 function add() {
   addNewStore({
@@ -20,17 +24,15 @@ function add() {
     name: newStoreName.value
   })
 }
-const stores2 = ref<UiStore[]>()
-onMounted(async () => {
-  // stores2.value = await fetchStores(search.value)
-})
 const search = ref('')
 import HomeButton from '../components/HomeButton.vue';
+import ActiveSearchButton from '../components/ActiveSearchButton.vue';
 </script>
 
 <template>
   <div>
     <HomeButton />
+    <ActiveSearchButton />
     <h4>Stores</h4>
     <button @click="getDbCreateInitialStores">Load initial</button>
     <h4>Scraping: {{ scrapingOn ? 'On' : 'Off' }}</h4>
@@ -54,7 +56,7 @@ import HomeButton from '../components/HomeButton.vue';
             <StoreButton :store="store" />
           </td>
           <td>
-            {{ store.items.length }}
+            {{ store.numInvItems }}
           </td>
           <td>
             {{ store.fetchPageIndex }} / {{ store.fetchMaxPageIndex }}

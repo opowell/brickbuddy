@@ -7,6 +7,7 @@ import ActiveSearchButton from '../components/ActiveSearchButton.vue';
 import ColorsButton from '../components/ColorsButton.vue';
 import SearchesButton from '../components/SearchesButton.vue';
 import CategoriesButton from '../components/CategoriesButton.vue';
+import ConditionsButton from '../components/ConditionsButton.vue';
 const router = useRouter()
 </script>
 
@@ -21,6 +22,7 @@ const router = useRouter()
       Shopping Lists
     </button>
     <ColorsButton />
+    <ConditionsButton />
     <SearchesButton />
     <PartsButton />
     <CategoriesButton />

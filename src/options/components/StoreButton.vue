@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { UiItem, UiStore } from '../types';
+import { Store } from '../types';
 import { Crumbs } from '../constants';
 import { useRouter } from 'vue-router'
 import {PropType} from 'vue'
 const { store } = defineProps({
-  store: Object as PropType<UiStore>
+  store: Object as PropType<Store>
 })
 
 const router = useRouter()

@@ -1,15 +1,18 @@
 <script setup lang="ts">
 import HomeButton from '../components/HomeButton.vue';
 import StoresButton from '../components/StoresButton.vue';
-import type { UiInvItem, UiStore } from '../types';
+import { ActiveSearch, type UiInvItem, type UiStore } from '../types';
 import { useRoute } from 'vue-router'
-import { getUiStore } from '../idb';
+import { getActiveSearch, getUiStore } from '../idb';
 import PartButton from '../components/PartButton.vue';
 import ColorButton from '../components/ColorButton.vue';
+import ActiveSearchButton from '../components/ActiveSearchButton.vue';
 const route = useRoute()
 const store = ref<UiStore | undefined>(undefined)
+const search = ref<ActiveSearch | undefined>(undefined)
 onMounted(async () => {
   store.value = await getUiStore(route.params.id)
+  search.value = getActiveSearch()
 })
 
 function getImageSrc(invItem: UiInvItem) {
@@ -40,6 +43,7 @@ const url = computed(() => {
   <div v-if="store">
     <HomeButton />
     <StoresButton />
+    <ActiveSearchButton />
     <h4>{{ store.name }}</h4>
     <div>Fetch index: {{ store.fetchPageIndex }} / {{ store.fetchMaxPageIndex }}</div>
     <div>Last scraped: {{ store.lastScraped.toISOString() }}</div>
@@ -51,7 +55,7 @@ const url = computed(() => {
         <tr>
           <th>Item</th>
           <th>Name</th>
-          <th>Condition</th>
+          <th v-if="search && search.conditions.ids.length < 1">Condition</th>
           <th>Color</th>
           <th>Quantity</th>
           <th>Price</th>
@@ -66,7 +70,7 @@ const url = computed(() => {
           <td>
             <PartButton :part="item.item" />
           </td>
-          <td>{{ item.condition }}</td>
+          <td v-if="search && search.conditions.ids.length < 1">{{ item.condition }}</td>
           <td><ColorButton :color="{ id: item.color, name: item.colorName }" /></td>
           <td>{{ item.quantity }}</td>
           <td>{{ item.price*store.priceAdjustment/100 }}</td>

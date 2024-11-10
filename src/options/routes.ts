@@ -12,6 +12,7 @@ import ItemVariantPage from './pages/ItemVariantPage.vue'
 import ColorPage from './pages/ColorPage.vue'
 import CategoryPage from './pages/CategoryPage.vue'
 import ActiveSearchPage from './pages/ActiveSearchPage.vue'
+import ConditionsPage from './pages/ConditionsPage.vue'
 export default [
   {
     name: 'home',
@@ -62,6 +63,11 @@ export default [
     name: 'categories',
     path: Routes.categories,
     component: CategoriesPage
+  },
+  {
+    name: 'conditions',
+    path: Routes.conditions,
+    component: ConditionsPage
   },
   {
     name: 'parts',

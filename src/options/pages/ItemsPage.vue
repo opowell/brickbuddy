@@ -15,6 +15,7 @@ const filteredParts = computed(() => {
 })
 import HomeButton from '../components/HomeButton.vue'
 import CategoryButton from '../components/CategoryButton.vue';
+import ActiveSearchButton from '../components/ActiveSearchButton.vue';
 </script>
 
 <template>
@@ -23,6 +24,7 @@ import CategoryButton from '../components/CategoryButton.vue';
   </div>
   <div v-else>
     <HomeButton />
+    <ActiveSearchButton />
     <h4>Parts ({{ filteredParts.length }} / {{ items.length }})</h4>
     <div>Search: <input v-model="search"></div>
     <table>

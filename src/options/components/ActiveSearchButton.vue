@@ -12,28 +12,27 @@ const showButton = computed(() => {
   if (!activeSearch.value) {
     return false
   }
-  if (activeSearch.value.categories.ids.length > 0) {
-    return true
+  return text.value.length > 0
+})
+const text = computed(() => {
+  const search = activeSearch.value
+  if (!search) {
+    return ''
   }
-  if (activeSearch.value.colors.ids.length > 0) {
-    return true
-  }
-  if (activeSearch.value.parts.ids.length > 0) {
-    return true
-  }
-  if (activeSearch.value.stores.ids.length > 0) {
-    return true
-  }
-  return false
+  const texts: string[] = []
+  const fields = ['categories', 'colors', 'parts', 'conditions']
+  fields.forEach(field => {
+    const searchField: { ids: string[], excluded: boolean } = search[field]
+    if (searchField.ids.length > 0) {
+      texts.push(searchField.ids.length + ' ' + (searchField.excluded ? 'excluded' : 'included') + ' ' + field)
+    }
+  })
+  return texts.join(', ')
 })
 </script>
 
 <template>
   <button v-if="activeSearch && showButton" @click="router.push(Crumbs.activeSearch.href)">
-    Active search:
-    <span v-if="activeSearch.categories.ids.length > 0">{{ activeSearch.categories.ids.length }} {{ activeSearch.categories.excluded ? 'excluded' : 'included' }} categories</span>
-    <span v-if="activeSearch.colors.ids.length > 0">{{ activeSearch.colors.ids.length }} {{ activeSearch.colors.excluded ? 'excluded' : 'included' }} colors</span>
-    <span v-if="activeSearch.parts.ids.length > 0">{{ activeSearch.parts.ids.length }} {{ activeSearch.parts.excluded ? 'excluded' : 'included' }} parts</span>
-    <span v-if="activeSearch.stores.ids.length > 0">{{ activeSearch.stores.ids.length }} {{ activeSearch.stores.excluded ? 'excluded' : 'included' }} stores</span>
+    {{ text }}
   </button>
 </template>
