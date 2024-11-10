@@ -5,10 +5,18 @@ import { excludeCategory } from '../idb';
 const { category } = defineProps({
   category: Object as PropType<Category>
 })
+const emits = defineEmits(['exclude'])
+function exclude() {
+  if (!category) {
+    return
+  }
+  excludeCategory(category)
+  emits('exclude')
+}
 </script>
 
 <template>
-  <button v-if="category" @click="excludeCategory(category)">
+  <button v-if="category" @click="exclude">
     Exclude
   </button>
 </template>

@@ -1,3 +1,4 @@
+import { ActiveSearchPageSearch } from './types';
 export interface ShippingCost {
   region?: string
   minOrderPrice?: number
@@ -82,17 +83,52 @@ export interface ShopListItem {
   maxPrice: number
   colors: string[]
 }
-export interface Search {
+interface SearchBase {
   id?: number
+  categories: {
+    ids: string[]
+    excluded: boolean
+  }
+  colors: {
+    ids: number[]
+    excluded: boolean
+  }
+  stores: {
+    ids: string[]
+    excluded: boolean
+  }
+  parts: {
+    ids: number[]
+    excluded: boolean
+  }
+}
+export interface Search extends SearchBase {
   name: string
   shoppingListId?: number
   shopListItemIds?: number[]
   storeIds: string[]
 }
+export interface ActiveSearch extends SearchBase {
+  linkedSearch?: string
+}
+interface ActiveSearchPagePart extends Item {
+  numVariants: number
+}
+interface ActiveSearchPageStore extends Store {
+  numParts: number
+}
+export interface ActiveSearchPageSearch extends ActiveSearch {
+  categoryObjects: CategoriesPageCategory[] 
+  colorObjects: UiColor[] 
+  partObjects: ActiveSearchPagePart[] 
+  storeObjects: ActiveSearchPageStore[] 
+}
 export interface UiSearch extends Search {
   shoppingList?: UiShopList
-  stores?: UiStore[]
   shopListItems?: UiShopListItem[]
+}
+export interface SearchesPageSearch extends Search {
+
 }
 export interface UiShopListItem extends ShopListItem {
   item?: UiItem

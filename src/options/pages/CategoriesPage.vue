@@ -10,21 +10,23 @@ onMounted(async () => {
   categories.value = await getCategoriesPageCategories()
 })
 function add() {
-  emits('add', {
-    id: newId.value,
-    name: newName.value
-  })
+}
+function excludeCategory(index: number) {
+  categories.value?.splice(index, 1)
 }
 import CategoryButton from '../components/CategoryButton.vue';
 import HomeButton from '../components/HomeButton.vue';
-import FiltersBar from '../components/FiltersBar.vue';
 import { getCategoriesPageCategories } from '../idb';
+import ActiveSearchButton from '../components/ActiveSearchButton.vue';
 </script>
 
 <template>
-  <div>
+  <div v-if="!categories">
+    Loading...
+  </div>
+  <div v-else>
     <HomeButton />
-    <FiltersBar />
+    <ActiveSearchButton />
     <h4>Categories {{ categories ? '(' + categories.length + ')' : '' }}</h4>
     <table>
       <thead>
@@ -37,7 +39,7 @@ import { getCategoriesPageCategories } from '../idb';
         </tr>
       </thead>
       <tbody>
-        <tr v-for="category in categories" :key="category.id">
+        <tr v-for="(category, index) in categories" :key="category.id">
           <td><img v-if="category.image" :src="category.image"></td>
           <td>
             {{ category.id }}
@@ -49,7 +51,7 @@ import { getCategoriesPageCategories } from '../idb';
             {{ category.numParts }}
           </td>
           <td>
-            <ExcludeCategoryButton :category="category" />
+            <ExcludeCategoryButton :category="category" @exclude="excludeCategory(index)"/>
           </td>
         </tr>
       </tbody>

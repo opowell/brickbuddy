@@ -1,10 +1,14 @@
 <script setup lang="ts">
+import { getPartsPageParts } from '../idb';
 import type { UiItem } from '../types';
-import { items } from '../idb'
 import PartButton from '../components/PartButton.vue';
 const search = ref('')
+const items = ref<UiItem[] | undefined>(undefined)
+onMounted(async () => {
+  items.value = await getPartsPageParts()
+})
 const filteredParts = computed(() => {
-  if (!items) {
+  if (!items.value) {
     return []
   }
   return items.value.filter((item: UiItem) => item.itemName.includes(search.value))
@@ -14,7 +18,10 @@ import CategoryButton from '../components/CategoryButton.vue';
 </script>
 
 <template>
-  <div>
+  <div v-if="!items">
+    Loading...
+  </div>
+  <div v-else>
     <HomeButton />
     <h4>Parts ({{ filteredParts.length }} / {{ items.length }})</h4>
     <div>Search: <input v-model="search"></div>

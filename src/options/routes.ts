@@ -5,12 +5,13 @@ import ItemsPage from './pages/ItemsPage.vue'
 import SearchesPage from './pages/SearchesPage.vue'
 import ShoppingListsPage from './pages/ShoppingListsPage.vue'
 import StoresPage from './pages/StoresPage.vue'
-import { LINKS } from './constants'
+import { LINKS, Routes } from './constants'
 import ItemPage from './pages/ItemPage.vue'
 import StorePage from './pages/StorePage.vue'
 import ItemVariantPage from './pages/ItemVariantPage.vue'
 import ColorPage from './pages/ColorPage.vue'
 import CategoryPage from './pages/CategoryPage.vue'
+import ActiveSearchPage from './pages/ActiveSearchPage.vue'
 export default [
   {
     name: 'home',
@@ -59,7 +60,7 @@ export default [
   },
   {
     name: 'categories',
-    path: '/categories',
+    path: Routes.categories,
     component: CategoriesPage
   },
   {
@@ -71,5 +72,10 @@ export default [
     name: 'searches',
     path: '/searches',
     component: SearchesPage
+  },
+  {
+    name: 'activeSearch',
+    path: Routes.activeSearch,
+    component: ActiveSearchPage
   },
 ]

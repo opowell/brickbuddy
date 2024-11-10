@@ -29,6 +29,7 @@ export const LINKS = {
 
 export const Routes = {
   home: '/',
+  activeSearch: '/active-search',
   stores: '/stores',
   colors: '/colors',
   categories: '/categories',
@@ -54,6 +55,7 @@ export const Routes = {
 
 export const Hrefs = {
   home: Routes.home,
+  activeSearch: Routes.activeSearch,
   stores: Routes.stores,
   colors: Routes.colors,
   categories: Routes.categories,
@@ -81,6 +83,10 @@ export const Crumbs = {
   home: {
     title: 'Home',
     href: Hrefs.home
+  },
+  activeSearch: {
+    title: 'Active search',
+    href: Hrefs.activeSearch
   },
   stores: {
     title: 'Stores',

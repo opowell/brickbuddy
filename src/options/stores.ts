@@ -7,6 +7,7 @@ interface StoreDefinition {
   }
 }
 const stores: {
+  ACTIVE_SEARCH: StoreDefinition
   CATEGORIES: StoreDefinition
   COLORS: StoreDefinition
   INVENTORY_ITEMS: StoreDefinition
@@ -17,6 +18,11 @@ const stores: {
   SHOP_LIST_ITEMS: StoreDefinition
   STORES: StoreDefinition
 } = {
+  ACTIVE_SEARCH: {
+    name: 'activeSearch',
+    keyPath: 'id',
+    autoIncrement: true
+  },
   CATEGORIES: {
     name: 'categories',
     keyPath: 'id',

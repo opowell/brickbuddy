@@ -1,16 +1,12 @@
 <script setup lang="ts">
 import PartsButton from '../components/PartsButton.vue';
 import StoresButton from '../components/StoresButton.vue';
-import { PAGES } from '../constants'
-defineProps({
-  modelValue: String
-})
-defineEmits([
-  'update:modelValue'
-])
 import { Crumbs } from '../constants';
 import { useRouter } from 'vue-router'
 import ActiveSearchButton from '../components/ActiveSearchButton.vue';
+import ColorsButton from '../components/ColorsButton.vue';
+import SearchesButton from '../components/SearchesButton.vue';
+import CategoriesButton from '../components/CategoriesButton.vue';
 const router = useRouter()
 </script>
 
@@ -24,15 +20,9 @@ const router = useRouter()
     <button @click="router.push(Crumbs.shoppingLists.href)">
       Shopping Lists
     </button>
-    <button @click="router.push(Crumbs.colors.href)">
-      Colors
-    </button>
-    <button @click="router.push(Crumbs.searches.href)">
-      Searches
-    </button>
+    <ColorsButton />
+    <SearchesButton />
     <PartsButton />
-    <button @click="router.push(Crumbs.categories.href)">
-      Categories
-    </button>
+    <CategoriesButton />
   </div>
 </template>

@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import HomeButton from '../components/HomeButton.vue';
-import type { UiSearch } from '../types'
-defineProps({
-  searches: Array<UiSearch>
+import { getSearchesPagesSearches, addNewSearch } from '../idb';
+import type { SearchesPageSearch } from '../types'
+const searches = ref<SearchesPageSearch[] | undefined>(undefined)
+onMounted(async () => {
+  searches.value = await getSearchesPagesSearches()
 })
-defineEmits(['goHome', 'add', 'goSearch'])
 const newName = ref<string>('')
 </script>
 
@@ -16,7 +17,6 @@ const newName = ref<string>('')
       <thead>
         <tr>
           <th>Name</th>
-          <th>Shop List</th>
         </tr>
       </thead>
       <tbody>
@@ -26,15 +26,12 @@ const newName = ref<string>('')
               {{ search.name }}
             </button>
           </td>
-          <td>
-            {{ search.shoppingList?.name }}
-          </td>
         </tr>
       </tbody>
     </table>
     <h4>Add</h4>
     <div>Name:<input v-model="newName" type="text"></div>
-    <button @click="$emit('add', newName)">
+    <button @click="addNewSearch(newName)">
       Add
     </button>
   </div>
