@@ -13,6 +13,7 @@ function add() {
   // })
 }
 
+import ActiveSearchButton from '../components/ActiveSearchButton.vue';
 import ColorButton from '../components/ColorButton.vue';
 import HomeButton from '../components/HomeButton.vue';
 import { getUiColors } from '../idb';
@@ -22,10 +23,12 @@ import { UiColor } from '../types';
 <template>
   <div>
     <HomeButton />
+    <ActiveSearchButton />
     <h4>Colors</h4>
     <table>
       <thead>
         <tr>
+          <th>Image</th>
           <th>Id</th>
           <th>Name</th>
           <th>Inventory Items</th>
@@ -33,6 +36,7 @@ import { UiColor } from '../types';
       </thead>
       <tbody>
         <tr v-for="color in colors" :key="color.id">
+          <td><img v-if="color.image" :src="color.image"></td>
           <td>
             {{ color.id }}
           </td>

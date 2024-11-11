@@ -1,7 +1,7 @@
 import CategoriesPage from './pages/CategoriesPage.vue'
 import ColorsPage from './pages/ColorsPage.vue'
 import HomePage from './pages/HomePage.vue'
-import ItemsPage from './pages/ItemsPage.vue'
+import PartsPage from './pages/PartsPage.vue'
 import SearchesPage from './pages/SearchesPage.vue'
 import ShoppingListsPage from './pages/ShoppingListsPage.vue'
 import StoresPage from './pages/StoresPage.vue'
@@ -72,7 +72,7 @@ export default [
   {
     name: 'parts',
     path: '/parts',
-    component: ItemsPage
+    component: PartsPage
   },
   {
     name: 'searches',

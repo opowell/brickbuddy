@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { Crumbs } from '../constants';
 import { useRouter } from 'vue-router'
-import { ActiveSearch } from '../types';
-import { getActiveSearch } from '../idb';
+import { ActiveSearchButtonActiveSearch } from '../types';
+import { getActiveSearchButtonActiveSearch } from '../idb';
 const router = useRouter()
-const activeSearch = ref<ActiveSearch | undefined>(undefined)
-onMounted(() => {
-  activeSearch.value = getActiveSearch()
+const activeSearch = ref<ActiveSearchButtonActiveSearch | undefined>(undefined)
+onMounted(async () => {
+  activeSearch.value = await getActiveSearchButtonActiveSearch()
 })
 const showButton = computed(() => {
   if (!activeSearch.value) {
@@ -14,6 +14,9 @@ const showButton = computed(() => {
   }
   return text.value.length > 0
 })
+function capitalizeFirstLetter(val: string) {
+    return String(val).charAt(0).toUpperCase() + String(val).slice(1);
+}
 const text = computed(() => {
   const search = activeSearch.value
   if (!search) {
@@ -24,10 +27,19 @@ const text = computed(() => {
   fields.forEach(field => {
     const searchField: { ids: string[], excluded: boolean } = search[field]
     if (searchField.ids.length > 0) {
-      texts.push(searchField.ids.length + ' ' + (searchField.excluded ? 'excluded' : 'included') + ' ' + field)
+      // texts.push(searchField.ids.length + ' ' + (searchField.excluded ? 'excluded' : 'included') + ' ' + field)
+      let names = searchField.ids
+      if (searchField.objects) {
+        names = searchField.objects.map(object => object?.name)
+      }
+      if (searchField.excluded) {
+        texts.push(capitalizeFirstLetter(field) + ': all except ' + names.join(', '))
+      } else {
+        texts.push(capitalizeFirstLetter(field) + ': only ' + names.join(', '))
+      }
     }
   })
-  return texts.join(', ')
+  return texts.join('; ')
 })
 </script>
 

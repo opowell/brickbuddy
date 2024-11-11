@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import type { StoresPageStore, UiStore } from '../types';
+import type { StoresPageStore } from '../types';
 import StoreButton from '../components/StoreButton.vue';
-import { getDbCreateInitialStores, stopFetching, startFetching, addNewStore, getStoresPageStores } from '../idb'
+import { stopFetching, startFetching, addNewStore, getStoresPageStores } from '../idb'
 const newStoreId = ref('')
 const newStoreName = ref('')
 const scrapingOn = ref(true)
@@ -34,7 +34,6 @@ import ActiveSearchButton from '../components/ActiveSearchButton.vue';
     <HomeButton />
     <ActiveSearchButton />
     <h4>Stores</h4>
-    <button @click="getDbCreateInitialStores">Load initial</button>
     <h4>Scraping: {{ scrapingOn ? 'On' : 'Off' }}</h4>
     <div>
       <button @click="setScraping(true)" :disabled="scrapingOn">Start</button>

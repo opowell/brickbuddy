@@ -3,7 +3,7 @@ import HomeButton from '../components/HomeButton.vue';
 import StoresButton from '../components/StoresButton.vue';
 import { ActiveSearch, type UiInvItem, type UiStore } from '../types';
 import { useRoute } from 'vue-router'
-import { getActiveSearch, getUiStore } from '../idb';
+import { getActiveSearch, getStorePageStore } from '../idb';
 import PartButton from '../components/PartButton.vue';
 import ColorButton from '../components/ColorButton.vue';
 import ActiveSearchButton from '../components/ActiveSearchButton.vue';
@@ -11,7 +11,7 @@ const route = useRoute()
 const store = ref<UiStore | undefined>(undefined)
 const search = ref<ActiveSearch | undefined>(undefined)
 onMounted(async () => {
-  store.value = await getUiStore(route.params.id)
+  store.value = await getStorePageStore(route.params.id)
   search.value = getActiveSearch()
 })
 

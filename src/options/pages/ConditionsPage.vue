@@ -7,7 +7,7 @@ function excludeCondition(index: number) {
 const search = ref<ActiveSearch | undefined>(undefined)
 onMounted(async () => {
   conditions.value = await getConditionsPageConditions()
-  search.value = getActiveSearch()
+  search.value = await getActiveSearch()
 })
 const availableConditions = computed(() => {
   if (!conditions.value) {

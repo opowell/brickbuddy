@@ -2,8 +2,8 @@
 import HomeButton from '../components/HomeButton.vue';
 import PartsButton from '../components/PartsButton.vue';
 import PartButton from '../components/PartButton.vue';
-import { UiShopList, type UiInvItem, type UiItemVariant } from '../types'
-import { getUiPartVariant } from '../idb';
+import { ActiveSearch, UiShopList, type UiInvItem, type UiItemVariant } from '../types'
+import { getActiveSearch, getUiPartVariant } from '../idb';
 
 const addToListId = ref<number | undefined>()
 const addToListCondition = ref<string>('New')
@@ -13,12 +13,15 @@ const addToListMaxP = ref<number>(0)
 
 import { useRoute } from 'vue-router'
 import StoreButton from '../components/StoreButton.vue';
+import ActiveSearchButton from '../components/ActiveSearchButton.vue';
 const route = useRoute()
 
 const variant = ref<UiItemVariant | undefined>(undefined)
 const lists = ref<UiShopList[] | undefined>(undefined)
+const search = ref<ActiveSearch | undefined>(undefined)
 onMounted(async () => {
   variant.value = await getUiPartVariant(route.params.partId - 0, route.params.colorId - 0)
+  search.value = await getActiveSearch()
 })
 
 const addToListItem = computed(() => {
@@ -61,6 +64,7 @@ const sortedInvItems = computed(() => {
     <HomeButton />
     <PartsButton />
     <PartButton :part="variant.item" />
+    <ActiveSearchButton />
     <h4>{{ variant.item.itemName }}, {{ variant.color.name }}</h4>
     <img :src="variant.image">
     <h4>Add to shopping list</h4>
@@ -74,7 +78,7 @@ const sortedInvItems = computed(() => {
           {{ list.name }}
         </option>
       </select>
-      <div>
+      <div v-if="search && search.conditions.ids.length < 1">
         Condition:<select v-model="addToListCondition">
           <option value="New">
             New
@@ -99,7 +103,7 @@ const sortedInvItems = computed(() => {
       <thead>
         <tr>
           <th>Store</th>
-          <th>Condition</th>
+          <th v-if="search && search.conditions.ids.length < 1">Condition</th>
           <th>Price</th>
           <th>Quantity</th>
         </tr>
@@ -109,7 +113,7 @@ const sortedInvItems = computed(() => {
           <td>
             <StoreButton :store="invItem.store" />
           </td>
-          <td>{{ invItem.condition }}</td>
+          <td v-if="search && search.conditions.ids.length < 1">{{ invItem.condition }}</td>
           <td>{{ invItem.price }}</td>
           <td>{{ invItem.quantity }}</td>
         </tr>

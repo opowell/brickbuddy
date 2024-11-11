@@ -1,3 +1,4 @@
+import { categories } from './idb';
 import { ActiveSearchPageSearch } from './types';
 export interface ShippingCost {
   region?: string
@@ -124,6 +125,13 @@ export interface Search extends SearchBase {
 export interface ActiveSearch extends SearchBase {
   linkedSearch?: string
 }
+export interface ActiveSearchButtonActiveSearch extends ActiveSearch {
+  categories: {
+    ids: string[]
+    excluded: boolean
+    objects: Category[]
+  }
+}
 interface ActiveSearchPagePart extends Item {
   numVariants: number
 }
@@ -166,6 +174,7 @@ export interface ColorPageColor extends Color {
 export interface UiColor extends Color {
   numInvItems?: number
   invItems?: UiInvItem[]
+  image?: string
 }
 
 export interface Category {
