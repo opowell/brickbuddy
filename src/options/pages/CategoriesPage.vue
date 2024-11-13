@@ -16,7 +16,7 @@ function excludeCategory(index: number) {
 }
 import CategoryButton from '../components/CategoryButton.vue';
 import HomeButton from '../components/HomeButton.vue';
-import { getCategoriesPageCategories } from '../idb';
+import { getCategoriesPageCategories } from '../idb/idb';
 import ActiveSearchButton from '../components/ActiveSearchButton.vue';
 </script>
 

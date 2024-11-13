@@ -10,6 +10,7 @@ const indices: {
   PARTS_BY_CATEGORY: IndexDefinition
   PART_VARIANTS_BY_PART: IndexDefinition
   PART_VARIANTS_BY_COLOR: IndexDefinition
+  INV_ITEMS_BY_ITEM: IndexDefinition
   INV_ITEMS_BY_ITEM_AND_COLOR: IndexDefinition
   INV_ITEMS_BY_STORE: IndexDefinition
   INV_ITEMS_BY_COLORS: IndexDefinition
@@ -18,22 +19,22 @@ const indices: {
 } = {
   STORES_BY_LAST_SCRAPED: {
     store: stores.STORES.name,
-    name: 'storesByLastScraped',
+    name: 'lastScraped',
     keyPath: 'lastScraped'
   },
   INV_ITEMS_BY_STORE: {
     store: stores.INVENTORY_ITEMS.name,
-    name: 'inventoryItemsByStore',
+    name: 'store',
     keyPath: 'storeId'
   },
   PARTS_BY_CATEGORY: {
     store: stores.PARTS.name,
-    name: 'partsByCategory',
+    name: 'category',
     keyPath: 'categoryString'
   },
   PART_VARIANTS_BY_PART: {
     store: stores.PART_VARIANTS.name,
-    name: 'partVariantsByPart',
+    name: 'part',
     keyPath: 'itemId'
   },
   PART_VARIANTS_BY_COLOR: {
@@ -41,24 +42,29 @@ const indices: {
     name: 'color',
     keyPath: 'colorId'
   },
+  INV_ITEMS_BY_ITEM: {
+    store: stores.INVENTORY_ITEMS.name,
+    name: 'item',
+    keyPath: 'itemId'
+  },
   INV_ITEMS_BY_ITEM_AND_COLOR: {
     store: stores.INVENTORY_ITEMS.name,
-    name: 'inventoryItemsByItemAndColor',
+    name: 'itemColor',
     keyPath: ['itemId', 'color']
   },
   INV_ITEMS_BY_COLORS: {
     store: stores.INVENTORY_ITEMS.name,
-    name: 'inventoryItemsByColor',
+    name: 'color',
     keyPath: 'color'
   },
   INV_ITEMS_BY_CONDITION: {
     store: stores.INVENTORY_ITEMS.name,
-    name: 'inventoryItemsByCondition',
+    name: 'condition',
     keyPath: 'condition'
   },
   SHOP_LIST_ITEMS_BY_SHOP_LIST: {
     store: stores.SHOP_LIST_ITEMS.name,
-    name: 'shopListItemsByShopList',
+    name: 'shopList',
     keyPath: 'shopListId'
   }
 }

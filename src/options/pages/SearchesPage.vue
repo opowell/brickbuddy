@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import HomeButton from '../components/HomeButton.vue';
-import { getSearchesPagesSearches, addNewSearch } from '../idb';
+import { getSearchesPagesSearches, addNewSearch } from '../idb/idb';
 import type { SearchesPageSearch } from '../types'
 const searches = ref<SearchesPageSearch[] | undefined>(undefined)
 onMounted(async () => {

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import PartsButton from '../components/PartsButton.vue';
 import StoresButton from '../components/StoresButton.vue';
-import { Crumbs } from '../constants';
+import { Crumbs } from '../idb/constants';
 import { useRouter } from 'vue-router'
 import ActiveSearchButton from '../components/ActiveSearchButton.vue';
 import ColorsButton from '../components/ColorsButton.vue';

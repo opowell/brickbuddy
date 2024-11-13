@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { startFetching, loadModels } from './idb';
+import { startFetching, loadModels } from './idb/idb';
 onMounted(() => {
   loadModels()
   startFetching()

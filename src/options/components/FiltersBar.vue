@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { getExcludedCategories } from '../idb';
+import { excludedCategories, getExcludedCategories } from '../idb/idb';
 import { Category } from '../types';
 
-const excludedCategories = ref<Category[] | undefined>(undefined)
+// const excludedCategories = ref<Category[] | undefined>(undefined)
 onMounted(async () => {
-  excludedCategories.value = await getExcludedCategories()
+  // excludedCategories.value = await getExcludedCategories()
 })
 </script>
 

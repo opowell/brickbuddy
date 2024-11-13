@@ -2,7 +2,7 @@
 import ColorsButton from '../components/ColorsButton.vue';
 import HomeButton from '../components/HomeButton.vue';
 import PartButton from '../components/PartButton.vue';
-import { getUiColor } from '../idb'
+import { getUiColor } from '../idb/idb'
 
 import { useRoute } from 'vue-router'
 import { ColorPageColor, ColorPageInvItem } from '../types';

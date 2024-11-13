@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { UiItem, UiItemVariant } from '../types';
-import { Crumbs } from '../constants';
+import { Crumbs } from '../idb/constants';
 import { useRouter } from 'vue-router'
 import {PropType} from 'vue'
 const { part, variant } = defineProps({
@@ -19,6 +19,8 @@ const href = computed(() => {
 
 <template>
   <button @click="router.push(href)">
-    {{ part?.itemName + ', ' + variant?.color.name }}
+    <slot>
+      {{ part?.itemName + ', ' + variant?.color.name }}
+    </slot>
   </button>
 </template>

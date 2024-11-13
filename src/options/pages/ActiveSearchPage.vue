@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import HomeButton from '../components/HomeButton.vue';
-import { getActiveSearchPageSearch } from '../idb';
+import { getActiveSearchPageSearch } from '../idb/idb';
 
 import { ActiveSearchPageSearch } from '../types';
 const search = ref<ActiveSearchPageSearch | undefined>(undefined)

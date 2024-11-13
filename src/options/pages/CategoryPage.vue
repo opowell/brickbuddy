@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { Crumbs } from '../constants';
+import { Crumbs } from '../idb/constants';
 import CategoriesButton from '../components/CategoriesButton.vue';
 import HomeButton from '../components/HomeButton.vue';
 
 import { useRoute } from 'vue-router'
-import { getCategoryPageCategory } from '../idb';
+import { getCategoryPageCategory } from '../idb/idb';
 import { CategoryPageCategory } from '../types';
 import ExcludeCategoryButton from '../components/ExcludeCategoryButton.vue';
 const route = useRoute()
@@ -45,6 +45,7 @@ onMounted(async () => {
             <PartButton :part="item" />
           </td>
           <td>{{ item.variants?.length }}</td>
+          <td>{{ item.numInvItems }}</td>
         </tr>
       </tbody>
     </table>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { PropType } from 'vue'
-import { excludeCondition } from '../idb';
+import { excludeCondition } from '../idb/condition';
 const { condition } = defineProps({
   condition: String as PropType<string>
 })

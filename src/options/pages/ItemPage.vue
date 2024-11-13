@@ -2,7 +2,7 @@
 import HomeButton from '../components/HomeButton.vue';
 import PartsButton from '../components/PartsButton.vue';
 import PartVariantButton from '../components/PartVariantButton.vue';
-import { getUiPart } from '../idb';
+import { getPartPagePart } from '../idb/idb';
 import type { UiInvItem, UiItem, UiItemVariant } from '../types'
 import ActiveSearchButton from '../components/ActiveSearchButton.vue';
 interface PartVariantWithPriceQuantity extends UiItemVariant {
@@ -15,7 +15,7 @@ const route = useRoute()
 
 const item = ref<UiItem | undefined>(undefined)
 onMounted(async () => {
-  item.value = await getUiPart(route.params.id - 0)
+  item.value = await getPartPagePart(route.params.id - 0)
 })
 const maxPrice = ref<number | undefined>(Number.POSITIVE_INFINITY)
 const minQuantity = ref(0)
@@ -58,6 +58,16 @@ const variants = computed<PartVariantWithPriceQuantity[]>(() => {
     .sort((a: PartVariantWithPriceQuantity, b: PartVariantWithPriceQuantity) => a.price - b.price)
 })
 const condition = ref<string>('New')
+const invItems = computed<UiInvItem[] | undefined>(() => {
+  return item.value?.variants.flatMap(variant => {
+    return variant.invItems.map(invItem => {
+      return {
+        ...invItem,
+        variant
+      }
+    })
+  })
+})
 </script>
 
 <template>
@@ -88,7 +98,6 @@ const condition = ref<string>('New')
       <thead>
         <tr>
           <th>Image</th>
-          <th>Name</th>
           <th>Color</th>
           <th>Price</th>
           <th>Quantity</th>
@@ -96,9 +105,10 @@ const condition = ref<string>('New')
       </thead>
       <tbody>
         <tr v-for="(variant, index) in variants" :key="index">
-          <td><img :src="variant.image"></td>
           <td>
-            <PartVariantButton :part="item" :variant="variant" />
+            <PartVariantButton :part="item" :variant="variant">
+              <img :src="variant.image">
+            </PartVariantButton>
           </td>
           <td>
             <button @click="$emit('goColor', variant.color)">
@@ -111,5 +121,6 @@ const condition = ref<string>('New')
         </tr>
       </tbody>
     </table>
+    <StoreItemsTable :items="invItems" show-color />
   </div>
 </template>

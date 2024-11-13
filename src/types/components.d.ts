@@ -11,6 +11,7 @@ declare module 'vue' {
     Install: typeof import('./../components/install.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    StoreItemsTable: typeof import('./../components/StoreItemsTable.vue')['default']
     Update: typeof import('./../components/update.vue')['default']
   }
 }

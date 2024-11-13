@@ -3,7 +3,7 @@ import HomeButton from '../components/HomeButton.vue';
 import StoresButton from '../components/StoresButton.vue';
 import { ActiveSearch, type UiInvItem, type UiStore } from '../types';
 import { useRoute } from 'vue-router'
-import { getActiveSearch, getStorePageStore } from '../idb';
+import { getActiveSearch, getStorePageStore } from '../idb/idb';
 import PartButton from '../components/PartButton.vue';
 import ColorButton from '../components/ColorButton.vue';
 import ActiveSearchButton from '../components/ActiveSearchButton.vue';

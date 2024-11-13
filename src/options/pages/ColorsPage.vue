@@ -16,7 +16,7 @@ function add() {
 import ActiveSearchButton from '../components/ActiveSearchButton.vue';
 import ColorButton from '../components/ColorButton.vue';
 import HomeButton from '../components/HomeButton.vue';
-import { getUiColors } from '../idb';
+import { getUiColors } from '../idb/idb';
 import { UiColor } from '../types';
 </script>
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { getPartsPageParts } from '../idb';
+import { getPartsPageParts } from '../idb/idb';
 import type { UiItem } from '../types';
 import PartButton from '../components/PartButton.vue';
 const search = ref('')

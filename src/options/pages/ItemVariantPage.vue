@@ -3,8 +3,8 @@ import HomeButton from '../components/HomeButton.vue';
 import PartsButton from '../components/PartsButton.vue';
 import PartButton from '../components/PartButton.vue';
 import { ActiveSearch, UiShopList, type UiInvItem, type UiItemVariant } from '../types'
-import { getActiveSearch, getUiPartVariant } from '../idb';
-
+import { getActiveSearch, getUiPartVariant } from '../idb/idb';
+import StoreItemsTable from '@/components/StoreItemsTable.vue';
 const addToListId = ref<number | undefined>()
 const addToListCondition = ref<string>('New')
 const addToListMinQ = ref<number>(1)
@@ -21,7 +21,7 @@ const lists = ref<UiShopList[] | undefined>(undefined)
 const search = ref<ActiveSearch | undefined>(undefined)
 onMounted(async () => {
   variant.value = await getUiPartVariant(route.params.partId - 0, route.params.colorId - 0)
-  search.value = await getActiveSearch()
+  search.value = getActiveSearch()
 })
 
 const addToListItem = computed(() => {
@@ -49,13 +49,6 @@ watch(() => lists, () => {
 }, {
   deep: true,
   immediate: true
-})
-
-const sortedInvItems = computed(() => {
-  if (!variant.value) {
-    return []
-  }
-  return variant.value.invItems.sort((a: UiInvItem, b: UiInvItem) => a.price - b.price)
 })
 </script>
 
@@ -98,27 +91,7 @@ const sortedInvItems = computed(() => {
     <button @click="$emit('addToList', addToListItem)">
       Add
     </button>
-    <h4>Store items</h4>
-    <table>
-      <thead>
-        <tr>
-          <th>Store</th>
-          <th v-if="search && search.conditions.ids.length < 1">Condition</th>
-          <th>Price</th>
-          <th>Quantity</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="(invItem, index) in sortedInvItems" :key="index">
-          <td>
-            <StoreButton :store="invItem.store" />
-          </td>
-          <td v-if="search && search.conditions.ids.length < 1">{{ invItem.condition }}</td>
-          <td>{{ invItem.price }}</td>
-          <td>{{ invItem.quantity }}</td>
-        </tr>
-      </tbody>
-    </table>
+    <StoreItemsTable :items="variant.invItems" />
     <h4>Shopping lists</h4>
     <table>
       <thead>

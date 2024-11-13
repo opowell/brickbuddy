@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Color } from '../types';
-import { Crumbs } from '../constants';
+import { Crumbs } from '../idb/constants';
 import { useRouter } from 'vue-router'
 import {PropType} from 'vue'
 const { color } = defineProps({

@@ -7,7 +7,7 @@ function excludeCondition(index: number) {
 const search = ref<ActiveSearch | undefined>(undefined)
 onMounted(async () => {
   conditions.value = await getConditionsPageConditions()
-  search.value = await getActiveSearch()
+  search.value = getActiveSearch()
 })
 const availableConditions = computed(() => {
   if (!conditions.value) {
@@ -29,8 +29,9 @@ const availableConditions = computed(() => {
 import ActiveSearchButton from '../components/ActiveSearchButton.vue';
 import ConditionButton from '../components/ConditionButton.vue';
 import HomeButton from '../components/HomeButton.vue';
-import { getActiveSearch, getConditionsPageConditions } from '../idb';
+import { getActiveSearch } from '../idb/idb';
 import { ActiveSearch, ConditionsPageCondition } from '../types';
+import { getConditionsPageConditions } from '../idb/condition';
 </script>
 
 <template>

@@ -1,4 +1,3 @@
-import { categories } from './idb';
 import { ActiveSearchPageSearch } from './types';
 export interface ShippingCost {
   region?: string
@@ -29,18 +28,29 @@ export interface Item {
   itemSeq?: number
   itemStatus?: string
   itemType?: string
+  legoPrice?: number
+  legoPartId?: number
 }
 export interface ItemVariant {
   itemId: string
   colorId: number
   image: string
 }
+
+export interface ObjectCache {
+  colors: Map<string, UiColor>
+}
+
 export interface UiItemVariant extends ItemVariant {
   color: Color
   invItems: UiInvItem[]
   item?: UiItem
 }
 export interface UiItem extends Item {
+  variants: UiItemVariant[]
+  category?: Category
+}
+export interface PartPagePart extends Item {
   variants: UiItemVariant[]
   category?: Category
 }
@@ -182,8 +192,12 @@ export interface Category {
   name: string
 }
 
+export interface CategoryPagePart extends Item {
+  numInvItems: number
+}
+
 export interface CategoryPageCategory extends Category {
-  parts: UiItem[]
+  parts: CategoryPagePart[]
 }
 
 export interface CategoriesPageCategory extends Category {

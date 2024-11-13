@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { Crumbs } from '../constants';
+import { Crumbs } from '../idb/constants';
 import { useRouter } from 'vue-router'
 import { ActiveSearchButtonActiveSearch } from '../types';
-import { getActiveSearchButtonActiveSearch } from '../idb';
+import { getActiveSearchButtonActiveSearch } from '../idb/idb';
 const router = useRouter()
 const activeSearch = ref<ActiveSearchButtonActiveSearch | undefined>(undefined)
 onMounted(async () => {
