@@ -47,6 +47,7 @@ export default antfu(
       '@eslint-community/eslint-comments/no-unlimited-disable': 'off',
       'ts/explicit-function-return-type': 'off',
       "@html-eslint/attrs-newline": "error",
+      "function-paren-newline": ["error", { "minItems": 3 }]
     },
   }
 )

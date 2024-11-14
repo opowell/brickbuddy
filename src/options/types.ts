@@ -11,6 +11,11 @@ export interface AddNewStore {
   sId: string
   name: string
 }
+
+export enum StoreType {
+  BrickLink,
+  Lego
+}
 export interface Store extends AddNewStore {
   fetchPageIndex: number
   fetchMaxPageIndex: number
@@ -18,6 +23,7 @@ export interface Store extends AddNewStore {
   slug: string
   priceAdjustment: number
   lastScraped: Date
+  type: StoreType
 }
 
 export interface Item {

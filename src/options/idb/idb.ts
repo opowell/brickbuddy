@@ -1,11 +1,12 @@
 import { IDBPDatabase, openDB } from "idb";
 import STORES, { StoreDefinition } from './stores'
 import INDICES, { IndexDefinition } from './indices'
-import { ActiveSearch, ActiveSearchButtonActiveSearch, ActiveSearchPageSearch, AddNewStore, CategoriesPageCategory, Category, CategoryPageCategory, CategoryPagePart, Color, ColorPageColor, ColorPageInvItem, InvItem, Item, ItemVariant, ObjectCache, PartPagePart, Search, SearchBase, SearchesPageSearch, ShippingCost, ShopListItem, Store, StoresPageStore, UiCategory, UiColor, UiInvItem, UiItem, UiItemVariant, UiSearch, UiShopList, UiStore } from "../types";
+import { ActiveSearch, ActiveSearchButtonActiveSearch, ActiveSearchPageSearch, AddNewStore, CategoriesPageCategory, Category, CategoryPageCategory, CategoryPagePart, Color, ColorPageColor, ColorPageInvItem, InvItem, Item, ItemVariant, ObjectCache, PartPagePart, Search, SearchBase, SearchesPageSearch, ShippingCost, ShopListItem, Store, StoresPageStore, StoreType, UiCategory, UiColor, UiInvItem, UiItem, UiItemVariant, UiSearch, UiShopList, UiStore } from "../types";
 import { DB_NAME } from "./constants";
 import { toDataURL } from "../utils";
-import * as math from 'mathjs'
 import { getCondition } from "./condition";
+import { getBrickLinkPrices } from "./getBrickLinkPrices";
+import { getLegoPrices } from "./getLegoPrices";
 
 export const categories = ref<Map<string, UiCategory>>(new Map<string, UiCategory>())
 export const colors = ref({})
@@ -22,82 +23,17 @@ async function getPrices() {
   if (!store) {
     return
   }
-  const response = await fetch(`https://store.bricklink.com/ajax/clone/store/searchitems.ajax?sort=6&pgSize=100&pg=${store.fetchPageIndex}&showHomeItems=0&sid=${store.sId}`, {
-  "headers": {
-    "accept": "application/json, text/javascript, */*; q=0.01",
-    "accept-language": "en,de;q=0.9,es;q=0.8,en-US;q=0.7",
-    "cache-control": "no-cache",
-    "pragma": "no-cache",
-    "priority": "u=1, i",
-    "sec-ch-ua": "\"Chromium\";v=\"130\", \"Google Chrome\";v=\"130\", \"Not?A_Brand\";v=\"99\"",
-    "sec-ch-ua-mobile": "?0",
-    "sec-ch-ua-platform": "\"macOS\"",
-    "sec-fetch-dest": "empty",
-    "sec-fetch-mode": "cors",
-    "sec-fetch-site": "same-origin",
-    "x-requested-with": "XMLHttpRequest"
-  },
-  "referrer": "https://store.bricklink.com/" + store.slug + "?p=" + store.slug,
-  "referrerPolicy": "no-referrer-when-downgrade",
-  "body": null,
-  "method": "GET",
-  "mode": "cors",
-  "credentials": "include"
-});
-  store.fetchPageIndex++
-  store.lastScraped = new Date()
-  if (store.fetchPageIndex >= store.fetchMaxPageIndex) {
-    store.fetchPageIndex = 1
-  }
-  const json = await response.json()
-  if (!json?.result) {
-    updateStore(db, store)
-    return
-  }
-  store.fetchMaxPageIndex = Math.ceil(json.result.totalLotCnt / 100) + 1
-  updateStore(db, store)
-  for (let i = 0; i < json.result.categories.length; i++) {
-    const category = json.result.categories[i]
-    if (category.type !== 'P') {
-      continue
-    }
-    for (let j = 0; j < category.categories.length; j++) {
-      const cat = category.categories[j]
-      await addCategory(db, cat.catstr, cat.name)
-    }
-  }
-  for (let i = 0; i < json.result.groups.length; i++) {
-    const group = json.result.groups[i]
-    for (let j = 0; j < group.items.length; j++) {
-      const invItem = group.items[j]
-      try {
-        await addColor(db, invItem.colorID, invItem.colorName)
-        await addItem(
-          invItem.categoryString,
-          invItem.colorID,
-          invItem.itemID,
-          invItem.itemName,
-          invItem.itemNo,
-          invItem.itemSeq,
-          invItem.itemStatus,
-          invItem.itemType,
-          invItem.newThumb1Img,
-          db
-        )
-        await addInvItem(
-          db,
-          invItem.invID,
-          store,
-          invItem.colorID,
-          invItem.invNew,
-          invItem.invQty,
-          math.number(math.multiply(math.bignumber(100), math.bignumber(invItem.rawConvertedPrice))),
-          invItem.itemID,
-        )
-      } catch (e) {
-        console.log('error adding item', invItem, e)
-      }
-    }
+  await getStorePrices(db, store)
+}
+export async function getStorePrices(db: IDBPDatabase, store: Store) {
+  switch (store.type) {
+    case StoreType.Lego:
+      getLegoPrices(db, store)
+      break
+    case StoreType.BrickLink:
+    default:
+      getBrickLinkPrices(db, store)
+      break
   }
 }
 let stopFetch: boolean = false
@@ -392,7 +328,7 @@ export async function getUiPartVariant(partId: number, colorId: number): Promise
   }
   return uiPartVariant
 }
-export async function getUiPartVariants(db: IDBPDatabase, id: number, objectCache?: ObjectCache): Promise<UiItemVariant[]> {
+export async function getUiPartVariants(db: IDBPDatabase, id: string, objectCache?: ObjectCache): Promise<UiItemVariant[]> {
   const variants: UiItemVariant[] = await getAllFromIndex(db, INDICES.PART_VARIANTS_BY_PART, id)
   for (let i = 0; i < variants.length; i++) {
     const variant = variants[i]
@@ -426,7 +362,7 @@ export async function getStorePageInvItems(db: IDBPDatabase, id: string): Promis
   const uiInvItems: UiInvItem[] = []
   for (let i = 0; i < invItems.length; i++) {
     const invItem = invItems[i]
-    const part = await getUiPart(Number.parseInt(invItem.itemId), objectCache)
+    const part = await getUiPart(invItem.itemId, objectCache)
     if (!part) {
       continue
     }
@@ -439,7 +375,8 @@ export async function getStorePageInvItems(db: IDBPDatabase, id: string): Promis
   }
   return uiInvItems
 }
-export async function getUiPart(id: number, objectCache?: ObjectCache): Promise<UiItem | undefined> {
+export async function getUiPart(id: string, objectCache?: ObjectCache): Promise<UiItem | undefined> {
+  id = id + ''
   const db = await getDbConnection()
   const part: Item = await get(db, STORES.PARTS, id)
   const uiPart = await getUiPartFromPart(db, part, objectCache)
@@ -448,10 +385,10 @@ export async function getUiPart(id: number, objectCache?: ObjectCache): Promise<
 async function getStore(db: IDBPDatabase, storeId: string): Promise<Store> {
   return await db.get(STORES.STORES.name, storeId)
 }
-export async function getPartPagePart(id: number): Promise<PartPagePart | undefined> {
+export async function getPartPagePart(id: string): Promise<PartPagePart | undefined> {
   const db = await getDbConnection()
   const part: Item = await get(db, STORES.PARTS, id)
-  const variants: UiItemVariant[] = await getUiPartVariants(db, Number.parseInt(part.itemId))
+  const variants: UiItemVariant[] = await getUiPartVariants(db, part.itemId + '')
   for (let i = 0; i < variants.length; i++) {
     const variant = variants[i]
     for (let j = 0; j < variant.invItems.length; j++) {
@@ -465,8 +402,12 @@ export async function getPartPagePart(id: number): Promise<PartPagePart | undefi
   }
 }
 
-async function getUiPartFromPart(db: IDBPDatabase, part: Item, objectCache?: ObjectCache): Promise<UiItem> {
-  const variants: UiItemVariant[] = await getUiPartVariants(db, Number.parseInt(part.itemId), objectCache)
+async function getUiPartFromPart(db: IDBPDatabase, part: Item, objectCache?: ObjectCache): Promise<UiItem | undefined> {
+  if (!part) {
+    console.log('getUiPartFromPart: error, no part')
+    return
+  }
+  const variants: UiItemVariant[] = await getUiPartVariants(db, part.itemId + '', objectCache)
   return {
     ...part,
     variants
@@ -550,6 +491,17 @@ export async function createInitialStores(db: IDBPDatabase) {
   if (!db) {
     db = await getDbConnection()
   }
+  await addStore("Lego Pick a Brick", "lego-pick-a-brick", [
+    {
+      region: 'AT',
+      cost: 0,
+      minOrderPrice: 1200
+    },
+    {
+      region: 'AT',
+      cost: 600,
+    },
+  ], 'https://www.lego.com/de-at/pick-and-build/pick-a-brick', 100, db, StoreType.Lego)
   await addStore("BrickDom's Brick Shop", "1720918", [
     {
       region: 'AT',
@@ -770,10 +722,47 @@ async function addItemNoVariant(
   await db.put(STORES.PARTS.name, newItem)
   return newItem
 }
-async function addItem(
+export async function addLegoItem(
   categoryString: string,
   colorId: number,
   itemId: string,
+  itemName: string,
+  newThumb1Img: string,
+  db: IDBPDatabase
+) {
+  const newItem = await addItemNoVariant(
+    db,
+    categoryString,
+    itemId,
+    itemName,
+  )
+  let variant: ItemVariant = await getItemVariant(db, itemId, colorId)
+  if (!variant) {
+    const image: string = await toDataURL('https:' + newThumb1Img)
+    variant = {
+      itemId,
+      colorId,
+      image
+    }
+  }
+  await db.put(STORES.PART_VARIANTS.name, variant)
+  const uiItem = await getUiPart(Number.parseInt(itemId))
+  if (!uiItem) {
+    return
+  }
+  const uiVariant: UiItemVariant = {
+    ...variant,
+    color: colors.value[variant.colorId],
+    invItems: await getVariantInvItems(db, variant, newItem),
+    item: uiItem
+  }
+  return uiVariant
+}
+
+export async function addItem(
+  categoryString: string,
+  colorId: number,
+  itemId: string | number,
   itemName: string,
   itemNo: string,
   itemSeq: number,
@@ -782,6 +771,7 @@ async function addItem(
   newThumb1Img: string,
   db: IDBPDatabase
 ) {
+  itemId = itemId + ''
   const newItem = await addItemNoVariant(
     db,
     categoryString,
@@ -802,7 +792,7 @@ async function addItem(
     }
   }
   await db.put(STORES.PART_VARIANTS.name, variant)
-  const uiItem = await getUiPart(Number.parseInt(itemId))
+  const uiItem = await getUiPart(itemId)
   if (!uiItem) {
     return
   }
@@ -855,7 +845,15 @@ export async function addNewSearch(name: string) {
   await addSearch(name, db)
 }
 
-async function addStore(name: string, sId: string, shippingCosts: ShippingCost[], slug: string, priceAdjustment: number, db: IDBPDatabase) {
+async function addStore(
+  name: string,
+  sId: string,
+  shippingCosts: ShippingCost[],
+  slug: string,
+  priceAdjustment: number,
+  db: IDBPDatabase,
+  type: StoreType = StoreType.BrickLink
+) {
   const existingStore: Store = await get(db, STORES.STORES, sId)
   const newStore: Store = {
     sId,
@@ -865,7 +863,8 @@ async function addStore(name: string, sId: string, shippingCosts: ShippingCost[]
     priceAdjustment,
     shippingCosts,
     slug,
-    lastScraped: new Date()
+    lastScraped: new Date(),
+    type: type
   }
   db.put(STORES.STORES.name, newStore)
   const newUiStore: UiStore = {
@@ -874,7 +873,7 @@ async function addStore(name: string, sId: string, shippingCosts: ShippingCost[]
   }
   return newUiStore
 }
-async function updateStore(db: IDBPDatabase, store: Store | UiStore) {
+export async function updateStore(db: IDBPDatabase, store: Store | UiStore) {
   if (isProxy(store)) {
     store = toRaw(store)
   }
@@ -887,7 +886,8 @@ async function updateStore(db: IDBPDatabase, store: Store | UiStore) {
       lastScraped: store.lastScraped,
       priceAdjustment: store.priceAdjustment,
       shippingCosts: store.shippingCosts,
-      slug: store.slug
+      slug: store.slug,
+      type: store.type
     }
     db.put(STORES.STORES.name, storeObj)
   } catch (e) {
@@ -951,7 +951,7 @@ async function addShopListItem(
   await db.put(STORES.SHOP_LIST_ITEMS.name, item)
   shopList.items.push(item)
 }
-async function addInvItem(
+export async function addInvItem(
   db: IDBPDatabase,
   invId: number,
   store: Store,
@@ -984,7 +984,7 @@ async function addInvItem(
   // store.items.push(uiInvItem)
 }
 
-async function addColor(
+export async function addColor(
   db: IDBPDatabase,
   id: number,
   name: string,
@@ -1015,7 +1015,7 @@ function getIndexPermutations(title: string, ids: IDBValidKey[]) {
   return out
 }
 
-async function addCategory(
+export async function addCategory(
   db: IDBPDatabase,
   id: string,
   name: string,

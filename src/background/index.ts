@@ -8,12 +8,12 @@ chrome.runtime.onInstalled.addListener(async (opt) => {
     })
   }
 
-  if (opt.reason === 'update') {
-    chrome.tabs.create({
-      active: true,
-      url: chrome.runtime.getURL('src/setup/index.html?type=update'),
-    })
-  }
+  // if (opt.reason === 'update') {
+  //   chrome.tabs.create({
+  //     active: true,
+  //     url: chrome.runtime.getURL('src/setup/index.html?type=update'),
+  //   })
+  // }
 })
 
 console.log('hello world from background')

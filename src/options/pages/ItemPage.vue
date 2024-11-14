@@ -15,7 +15,7 @@ const route = useRoute()
 
 const item = ref<UiItem | undefined>(undefined)
 onMounted(async () => {
-  item.value = await getPartPagePart(route.params.id - 0)
+  item.value = await getPartPagePart(route.params.id)
 })
 const maxPrice = ref<number | undefined>(Number.POSITIVE_INFINITY)
 const minQuantity = ref(0)
@@ -124,3 +124,8 @@ const invItems = computed<UiInvItem[] | undefined>(() => {
     <StoreItemsTable :items="invItems" show-color />
   </div>
 </template>
+<style scoped>
+img {
+  max-width: 79px;
+  max-height: 59px;
+}</style>

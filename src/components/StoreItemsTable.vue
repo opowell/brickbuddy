@@ -93,3 +93,8 @@ const sortedItems = computed<StoreItemsTableInvItem[]>(() => {
     </tbody>
   </table>
 </template>
+<style scoped>
+img {
+  max-width: 79px;
+  max-height: 59px;
+}</style>

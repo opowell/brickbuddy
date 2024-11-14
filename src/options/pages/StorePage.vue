@@ -3,14 +3,17 @@ import HomeButton from '../components/HomeButton.vue';
 import StoresButton from '../components/StoresButton.vue';
 import { ActiveSearch, type UiInvItem, type UiStore } from '../types';
 import { useRoute } from 'vue-router'
-import { getActiveSearch, getStorePageStore } from '../idb/idb';
+import { getActiveSearch, getDbConnection, getStorePageStore, getStorePrices } from '../idb/idb';
 import PartButton from '../components/PartButton.vue';
 import ColorButton from '../components/ColorButton.vue';
 import ActiveSearchButton from '../components/ActiveSearchButton.vue';
+import { IDBPDatabase } from 'idb';
 const route = useRoute()
 const store = ref<UiStore | undefined>(undefined)
 const search = ref<ActiveSearch | undefined>(undefined)
+const db = ref<IDBPDatabase | undefined>(undefined)
 onMounted(async () => {
+  db.value = await getDbConnection()
   store.value = await getStorePageStore(route.params.id)
   search.value = getActiveSearch()
 })
@@ -45,6 +48,7 @@ const url = computed(() => {
     <StoresButton />
     <ActiveSearchButton />
     <h4>{{ store.name }}</h4>
+    <div v-if="db"><button @click="getStorePrices(db, store)">Scrape</button></div>
     <div>Fetch index: {{ store.fetchPageIndex }} / {{ store.fetchMaxPageIndex }}</div>
     <div>Last scraped: {{ store.lastScraped.toISOString() }}</div>
     <div>Price adjustment: {{ store.priceAdjustment }}%</div>
@@ -82,3 +86,8 @@ const url = computed(() => {
     Loading...
   </div>
 </template>
+<style scoped>
+img {
+  max-width: 79px;
+  max-height: 59px;
+}</style>
