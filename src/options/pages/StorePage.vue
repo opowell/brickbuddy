@@ -86,8 +86,3 @@ const url = computed(() => {
     Loading...
   </div>
 </template>
-<style scoped>
-img {
-  max-width: 79px;
-  max-height: 59px;
-}</style>

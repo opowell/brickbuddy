@@ -6,4 +6,8 @@ button, select, input {
   font-size: 20px;
 }
 
+img {
+  max-width: 79px;
+  max-height: 59px;
+}
 @import '/node_modules/vite-plugin-vue-devtools/src//overlay/devtools-overlay.css';

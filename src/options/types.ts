@@ -181,6 +181,10 @@ export interface UiShopListItem extends ShopListItem {
 export interface Color {
   id: number
   name: string
+  brickLinkName?: string
+  brickLinkId?: string
+  legoName?: string
+  legoId?: string
 }
 
 export interface ColorPageColor extends Color {
