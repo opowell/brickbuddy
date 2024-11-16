@@ -1,11 +1,11 @@
 import { IDBPDatabase } from "idb";
-import { Color, Store } from "../types";
-import { addBrickLinkItem, addCategory, addInvItem, addItem, getFromIndex, getPart, getPartByBrickLinkId, updateStore } from "./idb";
+import { Category, Color, Item, Store } from "../types";
+import { addBrickLinkItem, addCategory, addInvItem, addItem, getCategory, getFromIndex, getPart, getPartByBrickLinkId, updateCategory, updatePart, updateStore } from "./idb";
 import * as math from 'mathjs'
 import INDICES from './indices'
 
 async function getColorByBrickLinkId(db: IDBPDatabase, brickLinkId: string): Promise<Color> {
-  return getFromIndex(db, INDICES.COLOR_BY_BRICKLINK_ID, brickLinkId)
+  return getFromIndex(db, INDICES.COLOR_BY_BRICKLINK_ID, brickLinkId + '')
 }
 
 export async function getBrickLinkPrices(db: IDBPDatabase, store: Store) {
@@ -53,34 +53,58 @@ export async function getBrickLinkPrices(db: IDBPDatabase, store: Store) {
       await addCategory(db, cat.catstr, cat.name)
     }
   }
+  const partCategories = json.result.categories.find(c => c.type === 'P')
+  const blCategories = {}
+  if (partCategories) {
+    for (let i = 0; i < partCategories.categories.length; i++) {
+      const partCategory = partCategories.categories[i]
+      blCategories[partCategory.id + ''] = partCategory.name + ''
+    }
+  }
   for (let i = 0; i < json.result.groups.length; i++) {
     const group = json.result.groups[i]
     for (let j = 0; j < group.items.length; j++) {
       const blItem = group.items[j]
       try {
         const color: Color = await getColorByBrickLinkId(db, blItem.colorID)
-        const item = await getPartByBrickLinkId(db, blItem.itemNo)
-        await addBrickLinkItem(
-          blItem.categoryString,
-          color?.id || blItem.colorID,
-          item.itemId,
-          blItem.itemName,
-          blItem.itemNo,
-          blItem.itemSeq,
-          blItem.itemStatus,
-          blItem.itemType,
-          blItem.newThumb1Img,
-          db
-        )
+        if (!color) {
+          console.log('no color!!', blItem.colorID, blItem)
+          continue
+        }
+        const item: Item = await getPartByBrickLinkId(db, blItem.itemNo)
+        if (!item) {
+          continue
+        }
+        item.brickLinkId = blItem.itemNo
+        item.brickLinkName = blItem.itemName
+        await updatePart(db, item)
+        const category: Category = await getCategory(db, item.categoryString)
+        if (category) {
+          const blCategoryName = blCategories[blItem.categoryString]
+          category.brickLinkId = blItem.categoryString + ''
+          if (!blCategoryName) {
+            console.log('NO BL NAME!', category, blItem, blCategories, blItem.categoryString)
+          }
+          category.brickLinkName = blCategoryName
+          await updateCategory(db, category)
+        }
+        // await addBrickLinkItem(
+        //   blItem.categoryString,
+        //   color?.id || blItem.colorID,
+        //   item.itemId,
+        //   blItem.itemName,
+        //   blItem.newThumb1Img,
+        //   db
+        // )
         await addInvItem(
           db,
           blItem.invID,
           store,
-          blItem.colorID,
+          color.id,
           blItem.invNew,
           blItem.invQty,
           math.number(math.multiply(math.bignumber(100), math.bignumber(blItem.rawConvertedPrice))),
-          blItem.itemNo,
+          item.itemId,
         )
       } catch (e) {
         console.log('error adding item', blItem, e)

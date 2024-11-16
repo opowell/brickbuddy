@@ -26,6 +26,10 @@ onMounted(async () => {
     <h4>{{ category.name }}</h4>
     <ExcludeCategoryButton :category="category" @exclude="router.push(Crumbs.categories.href)"/>
     <div>Id: {{ category.id }}</div>
+    <div>BrickLink Id: {{ category.brickLinkId }}</div>
+    <div>BrickLink Name: {{ category.brickLinkName }}</div>
+    <div>Lego Id: {{ category.legoId }}</div>
+    <div>Lego Name: {{ category.legoName }}</div>
     <h4>Parts</h4>
     <table>
       <thead>

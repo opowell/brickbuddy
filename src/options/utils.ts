@@ -29,3 +29,30 @@ export async function getUsage() {
   return quota
 }
 
+export function formatAmount(x: number) {
+  if (x === 0) {
+    return 0
+  }
+  if (x < 10) {
+    return x.toFixed(2)
+  }
+  if (x < 1000) {
+    return x.toFixed(1)
+  }
+  if (x < 1000000) {
+    return (x/1000).toFixed(1) + 'k'
+  }
+  return (x/1000000).toFixed(1) + 'm'
+}
+export function formatInteger(x: number) {
+  if (x < 1000) {
+    return x
+  }
+  if (x < 10000) {
+    return (x/1000).toFixed(2) + 'k'
+  }
+  if (x < 1000000) {
+    return (x/1000).toFixed(0) + 'k'
+  }
+  return (x/1000000).toFixed(1) + 'm'
+}

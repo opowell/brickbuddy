@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { PropType } from 'vue';
 import { ActiveSearch, type UiInvItem } from '../options/types'
-
+import { formatAmount } from '@/options/utils';
 import PartVariantButton from '@/options/components/PartVariantButton.vue';
 import StoreButton from '@/options/components/StoreButton.vue';
 import { getActiveSearch } from '@/options/idb/idb';
@@ -19,21 +19,6 @@ onMounted(async () => {
   search.value = getActiveSearch()
 })
 
-function formatAmount(x: number) {
-  if (x === 0) {
-    return 0
-  }
-  if (x < 1) {
-    return x.toFixed(2)
-  }
-  if (x < 1000) {
-    return x.toFixed(1)
-  }
-  if (x < 1000000) {
-    return (x/1000).toFixed(1) + 'k'
-  }
-  return (x/1000000).toFixed(1) + 'm'
-}
 const sortedItems = computed<StoreItemsTableInvItem[]>(() => {
   if (!items) {
     return []
@@ -86,7 +71,7 @@ const sortedItems = computed<StoreItemsTableInvItem[]>(() => {
         </td>
         <td v-if="showColor"><ColorButton :color="invItem.variant.color" /></td>
         <td v-if="search && search.conditions.ids.length < 1">{{ invItem.condition }}</td>
-        <td>{{ invItem.price }}</td>
+        <td>{{ formatAmount(invItem.price) }}</td>
         <td>{{ formatAmount(invItem.priceScore) }}</td>
         <td>{{ invItem.quantity }}</td>
       </tr>

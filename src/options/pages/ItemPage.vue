@@ -112,7 +112,7 @@ const invItems = computed<UiInvItem[] | undefined>(() => {
           </td>
           <td>
             <button @click="$emit('goColor', variant.color)">
-              {{ variant.color.name }}
+              {{ variant.color?.name }}
             </button>
           </td>
           <td v-if="variant.price === variant.maxPrice">{{ variant.price }}</td>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { getPartsPageParts, startPartScraping, stopPartScrapingFn, importRbPartsExternal } from '../idb/idb';
+import { getPartsPageParts, startPartScraping, stopPartScrapingFn, importRbPartsToMemory } from '../idb/idb';
 import type { UiItem } from '../types';
 import PartButton from '../components/PartButton.vue';
 const search = ref('')
@@ -26,15 +26,13 @@ import ActiveSearchButton from '../components/ActiveSearchButton.vue';
     <HomeButton />
     <ActiveSearchButton />
     <h4>Parts ({{ filteredParts.length }} / {{ items.length }})</h4>
-    <div>Scrape details from Rebrickable: <button @click="startPartScraping">Start</button></div>
-    <div><button @click="importRbPartsExternal">Import from Rb JSON</button></div>
-    <div><button @click="stopPartScrapingFn">Stop</button></div>
+    <div>Scrape details from Rebrickable: <button @click="startPartScraping">Start</button><button @click="stopPartScrapingFn">Stop</button></div>
+    <div><button @click="importRbPartsToMemory">Import from Rb JSON</button></div>
     <div>Search: <input v-model="search"></div>
     <table>
       <thead>
         <tr>
           <th>Image</th>
-          <th>Id</th>
           <th>Name</th>
           <th>Category</th>
           <th>Colors</th>
@@ -45,7 +43,6 @@ import ActiveSearchButton from '../components/ActiveSearchButton.vue';
       <tbody>
         <tr v-for="item in filteredParts" :key="item.itemId">
           <td><img v-if="item.variants.length" :src="item.variants[0].image"></td>
-          <td>{{ item.itemId }}</td>
           <td>
             <PartButton :part="item" />
           </td>

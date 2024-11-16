@@ -17,6 +17,6 @@ const href = computed(() => {
 
 <template>
   <button v-if="category" @click="router.push(href)">
-    {{ category.name }}
+    {{ category.name }} ({{ category.id }})
   </button>
 </template>

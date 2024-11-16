@@ -1,6 +1,6 @@
 import { IDBPDatabase } from "idb";
-import { Color, Item, Store } from "../types";
-import { addCategory, addColor, addInvItem, addItem, addLegoItem, getFromIndex, getPartByLegoId, updateStore } from "./idb";
+import { Category, Color, Item, Store } from "../types";
+import { addCategory, addColor, addInvItem, addItem, addLegoItem, getCategory, getFromIndex, getPartByLegoId, updateCategory, updateStore } from "./idb";
 import * as math from 'mathjs'
 import INDICES from './indices'
 
@@ -59,38 +59,44 @@ export async function getLegoPrices(db: IDBPDatabase, store: Store) {
   updateStore(db, store)
   const results = searchElements.results
   for (let i = 0; i < results.length; i++) {
-    const invItem = results[i]
+    const legoInvItem = results[i]
     try {
-      const color = await getColorByLegoId(db, invItem.facets.color.key)
+      const color = await getColorByLegoId(db, legoInvItem.facets.color.key)
       if (!color) {
-        console.log('no color?!', invItem.facets.color.key)
+        console.log('no color?!', legoInvItem.facets.color.key)
       }
-      const colorId = color?.id || invItem.facets.color.key
-      const item: Item = await getPartByLegoId(db, invItem.id)
+      const colorId = color?.id || legoInvItem.facets.color.key
+      const item: Item = await getPartByLegoId(db, legoInvItem.designId)
       if (!item) {
-        console.log('no item, skipping', invItem, invItem.id)
+        console.log('no item, skipping', legoInvItem, legoInvItem.designId)
         continue
       }
+      const category: Category = await getCategory(db, item.categoryString)
+      if (category) {
+        category.legoId = legoInvItem.facets.subcategory.key
+        category.legoName = legoInvItem.facets.subcategory.name
+        await updateCategory(db, category)
+      }
       await addLegoItem(
-        invItem.facets.category.key,
+        legoInvItem.facets.category.key,
         colorId,
         item.itemId,
-        invItem.name,
-        '//www.lego.com/cdn/product-assets/element.img.photoreal.192x192/' + invItem.id + '.jpg',
+        legoInvItem.name,
+        '//www.lego.com/cdn/product-assets/element.img.photoreal.192x192/' + legoInvItem.id + '.jpg',
         db
       )
       await addInvItem(
         db,
-        invItem.id,
+        legoInvItem.id,
         store,
         colorId,
         'New',
         1000000,
-        invItem.price.centAmount,
-        invItem.designId,
+        legoInvItem.price.centAmount,
+        legoInvItem.designId,
       )
     } catch (e) {
-      console.log('error adding item', invItem, e)
+      console.log('error adding item', legoInvItem, e)
     }
   }
 }

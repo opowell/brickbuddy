@@ -3,7 +3,7 @@ import ColorsButton from '../components/ColorsButton.vue';
 import HomeButton from '../components/HomeButton.vue';
 import PartButton from '../components/PartButton.vue';
 import { getColorPageColor } from '../idb/idb'
-
+import { formatAmount } from '../utils';
 import { useRoute } from 'vue-router'
 import { ColorPageColor, ColorPageInvItem } from '../types';
 import StoreButton from '../components/StoreButton.vue';
@@ -25,15 +25,12 @@ function getImageSrc(invItem: ColorPageInvItem) {
   <div v-if="color">
     <HomeButton />
     <ColorsButton />
-    <h4>{{ color.name }}</h4>
-    <div>Id: {{ color.id }}</div>
-    <div>Lego Id: {{ color.legoId }}</div>
-    <div>Lego Name: {{ color.legoName }}</div>
-    <div>BrickLink Id: {{ color.brickLinkId }}</div>
-    <div>BrickLink Name: {{ color.brickLinkName }}</div>
+    <h4>{{ color.name }} ({{ color.id }})</h4>
+    <div>Lego: {{ color.legoName }} ({{ color.legoId }})</div>
+    <div>BrickLink: {{ color.brickLinkName }} ({{ color.brickLinkId }})</div>
     <h4>Part variants</h4>
     <h4>Shop list items</h4>
-    <h4>Inventory items {{ color.invItems?.length }}</h4>
+    <h4>Inventory items ({{ color.invItems?.length }})</h4>
     <table>
       <thead>
         <tr>
@@ -56,7 +53,7 @@ function getImageSrc(invItem: ColorPageInvItem) {
           <td>{{ item.condition }}</td>
           <td><StoreButton :store="item.store" /></td>
           <td>{{ item.quantity }}</td>
-          <td>{{ item.store ? item.price*item.store.priceAdjustment/100 : item.price }}</td>
+          <td>{{ formatAmount(item.store ? item.price*item.store.priceAdjustment/100 : item.price) }}</td>
         </tr>
       </tbody>
     </table>

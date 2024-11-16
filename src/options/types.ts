@@ -1,4 +1,4 @@
-import { ActiveSearchPageSearch } from './types';
+import { ActiveSearchPageSearch, PartPageVariant } from './types';
 export interface ShippingCost {
   region?: string
   minOrderPrice?: number
@@ -30,16 +30,14 @@ export interface Item {
   categoryString: string
   itemId: string
   itemName: string
-  itemNo?: string
-  itemSeq?: number
-  itemStatus?: string
-  itemType?: string
   legoPartId?: string
+  legoName?: string
   brickLinkId?: string
+  brickLinkName?: string
 }
 export interface ItemVariant {
   itemId: string
-  colorId: number
+  colorId: string
   image: string
 }
 
@@ -52,22 +50,31 @@ export interface UiItemVariant extends ItemVariant {
   invItems: UiInvItem[]
   item?: UiItem
 }
+export interface PartPageVariant extends ItemVariant {
+  color: Color
+  invItems: PartPageVariantInvItem[]
+  item?: UiItem
+}
+export interface PartPageVariantInvItem extends InvItem {
+  store: Store
+  colorObject: Color
+}
 export interface UiItem extends Item {
   variants: UiItemVariant[]
   category?: Category
 }
 export interface PartPagePart extends Item {
-  variants: UiItemVariant[]
+  variants: PartPageVariant[]
   category?: Category
 }
 export interface InvItem {
-  invId: number
+  invId: string
   storeId: string
   itemId: string
   condition: string
   quantity: number
   price: number
-  color: number
+  color: string
   condition_New: number
   condition_Used: number
 }
@@ -221,6 +228,10 @@ export interface ColorsPageColor extends Color {
 export interface Category {
   id: string
   name: string
+  brickLinkId?: string
+  brickLinkName?: string
+  legoId?: string
+  legoName?: string
 }
 
 export interface CategoryPagePart extends Item {

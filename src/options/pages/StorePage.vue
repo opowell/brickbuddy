@@ -8,6 +8,7 @@ import PartButton from '../components/PartButton.vue';
 import ColorButton from '../components/ColorButton.vue';
 import ActiveSearchButton from '../components/ActiveSearchButton.vue';
 import { IDBPDatabase } from 'idb';
+import { formatAmount, formatInteger } from '../utils';
 const route = useRoute()
 const store = ref<UiStore | undefined>(undefined)
 const search = ref<ActiveSearch | undefined>(undefined)
@@ -76,8 +77,8 @@ const url = computed(() => {
           </td>
           <td v-if="search && search.conditions.ids.length < 1">{{ item.condition }}</td>
           <td><ColorButton :color="{ id: item.color, name: item.colorName }" /></td>
-          <td>{{ item.quantity }}</td>
-          <td>{{ item.price*store.priceAdjustment/100 }}</td>
+          <td>{{ formatInteger(item.quantity) }}</td>
+          <td>{{ formatAmount(item.price*store.priceAdjustment/100) }}</td>
         </tr>
       </tbody>
     </table>

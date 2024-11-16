@@ -34,6 +34,8 @@ import ActiveSearchButton from '../components/ActiveSearchButton.vue';
           <th>Image</th>
           <th>Id</th>
           <th>Name</th>
+          <th>BrickLink</th>
+          <th>Lego</th>
           <th>Parts</th>
           <th>Actions</th>
         </tr>
@@ -46,6 +48,12 @@ import ActiveSearchButton from '../components/ActiveSearchButton.vue';
           </td>
           <td>
             <CategoryButton :category="category" />
+          </td>
+          <td>
+            {{ category.brickLinkName }} ({{ category.brickLinkId }})
+          </td>
+          <td>
+            {{ category.legoName }} ({{ category.legoId }})
           </td>
           <td>
             {{ category.numParts }}
