@@ -1,6 +1,6 @@
 import { IDBPDatabase } from "idb";
-import { Color, Store } from "../types";
-import { addCategory, addColor, addInvItem, addItem, addLegoItem, getFromIndex, updateStore } from "./idb";
+import { Color, Item, Store } from "../types";
+import { addCategory, addColor, addInvItem, addItem, addLegoItem, getFromIndex, getPartByLegoId, updateStore } from "./idb";
 import * as math from 'mathjs'
 import INDICES from './indices'
 
@@ -66,10 +66,15 @@ export async function getLegoPrices(db: IDBPDatabase, store: Store) {
         console.log('no color?!', invItem.facets.color.key)
       }
       const colorId = color?.id || invItem.facets.color.key
+      const item: Item = await getPartByLegoId(db, invItem.id)
+      if (!item) {
+        console.log('no item, skipping', invItem, invItem.id)
+        continue
+      }
       await addLegoItem(
         invItem.facets.category.key,
         colorId,
-        invItem.designId,
+        item.itemId,
         invItem.name,
         '//www.lego.com/cdn/product-assets/element.img.photoreal.192x192/' + invItem.id + '.jpg',
         db

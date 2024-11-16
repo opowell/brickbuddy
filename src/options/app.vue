@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { startFetching, loadModels } from './idb/idb';
-onMounted(() => {
-  loadModels()
+import { startFetching, loadModels, importRbPartsExternal } from './idb/idb';
+onMounted(async () => {
+  await importRbPartsExternal()
+  await loadModels()
   startFetching()
 })
 </script>

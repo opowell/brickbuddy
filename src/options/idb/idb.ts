@@ -45,6 +45,7 @@ export function stopFetching() {
 let fetchPricesInterval: NodeJS.Timeout
 
 export async function startFetching() {
+  console.log('startFetching')
   if (fetchingStoreInventory.value) {
     return
   }
@@ -86,10 +87,12 @@ export async function getPartsPageParts(): Promise<UiItem[]> {
   for (let i = 0; i < items.length; i++) {
     const part = items[i]
     if (partExcluded(part, activeSearch)) {
+      console.log('excluded')
       continue
     }
     const variants = await loadItemVariants(db, part)
     if (variants.length === 0) {
+      console.log('no variants')
       continue
     }
     uiItems.push({
@@ -343,25 +346,14 @@ export async function getUiPartVariants(db: IDBPDatabase, id: string, objectCach
 }
 export async function getStorePageInvItems(db: IDBPDatabase, id: string): Promise<UiInvItem[]> {
   const search = getActiveSearch()
-  let indexNames: string[] = []
-  let indexValues: (string | number)[] = []
-  search.categories.ids.sort((a, b) => a > b ? 1 : -1).forEach(id => {
-    indexNames.push('category_' + id)
-    indexValues.push(search.categories.excluded ? 0 : 1)
-  })
-  search.conditions.ids.sort((a, b) => a > b ? 1 : -1).forEach(id => {
-    indexNames.push('condition_' + id)
-  })
-  const indexName: string = indexNames.join('_')
-  console.log(indexName)
   const objectCache: ObjectCache = {
     colors: new Map<string, UiColor>,
   }
-  // const invItems: InvItem[] = await db.getAllFromIndex(indexName, id)
   const invItems: InvItem[] = await getAllFromIndex(db, INDICES.INV_ITEMS_BY_STORE, id)
   const uiInvItems: UiInvItem[] = []
   for (let i = 0; i < invItems.length; i++) {
     const invItem = invItems[i]
+    console.log('invItem', invItem)
     const part = await getUiPart(invItem.itemId, objectCache)
     if (!part) {
       continue
@@ -379,6 +371,7 @@ export async function getUiPart(id: string, objectCache?: ObjectCache): Promise<
   id = id + ''
   const db = await getDbConnection()
   const part: Item = await get(db, STORES.PARTS, id)
+  console.log('getUiPart', id, part)
   const uiPart = await getUiPartFromPart(db, part, objectCache)
   return uiPart
 }
@@ -407,7 +400,7 @@ export async function getPartPagePart(id: string): Promise<PartPagePart | undefi
 
 async function getUiPartFromPart(db: IDBPDatabase, part: Item, objectCache?: ObjectCache): Promise<UiItem | undefined> {
   if (!part) {
-    console.log('getUiPartFromPart: error, no part')
+    console.log('getUiPartFromPart: error, no part', part)
     return
   }
   const variants: UiItemVariant[] = await getUiPartVariants(db, part.itemId + '', objectCache)
@@ -757,12 +750,52 @@ async function createInitialColors(db: IDBPDatabase) {
         legoId = first
         legoName = JSON.parse(rest.join(' ').replaceAll('\'', '"').trim())[0]
       }
-      await addColor(db, rbColor.ID, rbColor.Name, blId, blName, legoId, legoName)
+      await addColor(db, rbColor.ID.toString(), rbColor.Name, blId, blName, legoId, legoName)
     } catch (e) {
       console.log(e)
     }
   }
 }
+import rbParts from '../rbPartMappings.json'
+export const rbPartsLegoId = {}
+export const rbPartsBrickLinkId = {}
+export async function importRbPartsExternal() {
+  return await importRbParts()
+}
+async function importRbParts() {
+  console.log('importRbParts')
+  for (let i = 0; i < rbParts.length; i++) {
+  // for (let i = 0; i < 30000; i++) {
+    if (i % 10000 === 0) {
+      console.log(i)
+    }  
+    const rbPart = rbParts[i]
+    let legoPartId
+    if (rbPart.external_ids.LEGO) {
+      legoPartId = rbPart.external_ids.LEGO[0]
+    }
+    let brickLinkId
+    if (rbPart.external_ids.BrickLink) {
+      brickLinkId = rbPart.external_ids.BrickLink[0]
+    }
+    const part: Item = {
+      itemId: rbPart.part_num,
+      categoryString: rbPart.part_cat_id,
+      itemName: rbPart.name,
+      legoPartId,
+      brickLinkId,
+    }
+    // console.log(rbPart, part)
+    // await put(db, STORES.PARTS, part)
+    if (legoPartId) {
+      rbPartsLegoId[legoPartId] = part
+    }
+    if (brickLinkId) {
+      rbPartsBrickLinkId[brickLinkId] = part
+    }
+  }
+}
+
 async function createInitialData(db: IDBPDatabase) {
   console.log('createInitialData')
   await createInitialColors(db)  
@@ -782,7 +815,8 @@ async function addItemNoVariant(
   itemStatus?: string,
   itemType?: string,
 ) {
-  const newItem: Item = {
+  const existingItem = await get(db, STORES.PARTS, itemId)
+  let newItem: Item = {
     categoryString,
     itemId,
     itemName,
@@ -791,7 +825,13 @@ async function addItemNoVariant(
     itemStatus,
     itemType,
   }
-  await db.put(STORES.PARTS.name, newItem)
+  if (existingItem) {
+    newItem = {
+      ...existingItem,
+      ...newItem
+    }
+  }
+  await put(db, STORES.PARTS, newItem)
   return newItem
 }
 export async function addLegoItem(
@@ -877,11 +917,83 @@ export async function addItem(
   return uiVariant
 }
 
+export async function getPartByBrickLinkId(db: IDBPDatabase, brickLinkId: string): Promise<Item> {
+  brickLinkId = brickLinkId + ''
+  let item = await getFromIndex(db, INDICES.PARTS_BY_BRICKLINK_ID, brickLinkId)
+  if (!item) {
+    item = rbPartsBrickLinkId[brickLinkId]
+    if (item) {
+      await put(db, STORES.PARTS, item)
+    } else {
+      console.log('no item', brickLinkId, item, Object.keys(rbPartsBrickLinkId).includes(brickLinkId))
+    }
+  }
+  return item
+}
+
+export async function getPartByLegoId(db: IDBPDatabase, legoId: string): Promise<Item> {
+  legoId = legoId + ''
+  let item = await getFromIndex(db, INDICES.PARTS_BY_LEGO_ID, legoId)
+  if (!item) {
+    item = rbPartsLegoId[legoId]
+    if (item) {
+      await put(db, STORES.PARTS, item)
+    } else {
+      console.log('none', item, legoId, Object.keys(rbPartsLegoId))
+    }
+  }
+  return item
+}
+
+export async function addBrickLinkItem(
+  categoryString: string,
+  colorId: number,
+  itemId: string,
+  itemName: string,
+  itemNo: string,
+  itemSeq: number,
+  itemStatus: string,
+  itemType: string,
+  newThumb1Img: string,
+  db: IDBPDatabase
+) {
+  const newItem = await addItemNoVariant(
+    db,
+    categoryString,
+    itemId,
+    itemName,
+    itemNo,
+    itemSeq,
+    itemStatus,
+    itemType,
+  )
+  let variant: ItemVariant = await getItemVariant(db, itemId, colorId)
+  if (!variant) {
+    const image: string = await toDataURL('https:' + newThumb1Img)
+    variant = {
+      itemId,
+      colorId,
+      image
+    }
+  }
+  await db.put(STORES.PART_VARIANTS.name, variant)
+  const uiItem = await getUiPart(itemId)
+  if (!uiItem) {
+    return
+  }
+  const uiVariant: UiItemVariant = {
+    ...variant,
+    color: colors.value[variant.colorId],
+    invItems: await getVariantInvItems(db, variant, newItem),
+    item: uiItem
+  }
+  return uiVariant
+}
+
 export async function getDbConnection(): Promise<IDBPDatabase> {
   let createData = false
   const db = await openDB(DB_NAME, 1, {
     async upgrade(db, oldVersion, newVersion, transaction) {
-      console.log('upgrade')
       Object.keys(STORES).forEach((key) => {
         const store = STORES[key]
         db.createObjectStore(store.name, {
@@ -1057,11 +1169,15 @@ export async function addInvItem(
 }
 
 async function put(db: IDBPDatabase, storeDef: StoreDefinition, value: any) {
-  db.put(storeDef.name, value)
+  try {
+    await db.put(storeDef.name, value)
+  } catch (e) {
+    console.log(value, e)
+  }
 }
 export async function addColor(
   db: IDBPDatabase,
-  id: number,
+  id: string,
   name: string,
   brickLinkId?: string,
   brickLinkName?: string,

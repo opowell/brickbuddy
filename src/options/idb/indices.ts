@@ -8,6 +8,8 @@ export interface IndexDefinition {
 const indices: {
   STORES_BY_LAST_SCRAPED: IndexDefinition
   PARTS_BY_CATEGORY: IndexDefinition
+  PARTS_BY_BRICKLINK_ID: IndexDefinition
+  PARTS_BY_LEGO_ID: IndexDefinition
   PART_VARIANTS_BY_PART: IndexDefinition
   PART_VARIANTS_BY_COLOR: IndexDefinition
   INV_ITEMS_BY_ITEM: IndexDefinition
@@ -33,6 +35,16 @@ const indices: {
     store: stores.PARTS.name,
     name: 'category',
     keyPath: 'categoryString'
+  },
+  PARTS_BY_BRICKLINK_ID: {
+    store: stores.PARTS.name,
+    name: 'brickLinkId',
+    keyPath: 'brickLinkId'
+  },
+  PARTS_BY_LEGO_ID: {
+    store: stores.PARTS.name,
+    name: 'legoId',
+    keyPath: 'legoId'
   },
   PART_VARIANTS_BY_PART: {
     store: stores.PART_VARIANTS.name,

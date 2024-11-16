@@ -1,6 +1,6 @@
 import { IDBPDatabase } from "idb";
 import { Color, Store } from "../types";
-import { addCategory, addInvItem, addItem, getFromIndex, updateStore } from "./idb";
+import { addBrickLinkItem, addCategory, addInvItem, addItem, getFromIndex, getPart, getPartByBrickLinkId, updateStore } from "./idb";
 import * as math from 'mathjs'
 import INDICES from './indices'
 
@@ -56,33 +56,34 @@ export async function getBrickLinkPrices(db: IDBPDatabase, store: Store) {
   for (let i = 0; i < json.result.groups.length; i++) {
     const group = json.result.groups[i]
     for (let j = 0; j < group.items.length; j++) {
-      const invItem = group.items[j]
+      const blItem = group.items[j]
       try {
-        const color: Color = await getColorByBrickLinkId(db, invItem.colorID)
-        await addItem(
-          invItem.categoryString,
-          color?.id || invItem.colorID,
-          invItem.itemID,
-          invItem.itemName,
-          invItem.itemNo,
-          invItem.itemSeq,
-          invItem.itemStatus,
-          invItem.itemType,
-          invItem.newThumb1Img,
+        const color: Color = await getColorByBrickLinkId(db, blItem.colorID)
+        const item = await getPartByBrickLinkId(db, blItem.itemNo)
+        await addBrickLinkItem(
+          blItem.categoryString,
+          color?.id || blItem.colorID,
+          item.itemId,
+          blItem.itemName,
+          blItem.itemNo,
+          blItem.itemSeq,
+          blItem.itemStatus,
+          blItem.itemType,
+          blItem.newThumb1Img,
           db
         )
         await addInvItem(
           db,
-          invItem.invID,
+          blItem.invID,
           store,
-          invItem.colorID,
-          invItem.invNew,
-          invItem.invQty,
-          math.number(math.multiply(math.bignumber(100), math.bignumber(invItem.rawConvertedPrice))),
-          invItem.itemID,
+          blItem.colorID,
+          blItem.invNew,
+          blItem.invQty,
+          math.number(math.multiply(math.bignumber(100), math.bignumber(blItem.rawConvertedPrice))),
+          blItem.itemNo,
         )
       } catch (e) {
-        console.log('error adding item', invItem, e)
+        console.log('error adding item', blItem, e)
       }
     }
   }

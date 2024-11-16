@@ -34,8 +34,8 @@ export interface Item {
   itemSeq?: number
   itemStatus?: string
   itemType?: string
-  legoPrice?: number
-  legoPartId?: number
+  legoPartId?: string
+  brickLinkId?: string
 }
 export interface ItemVariant {
   itemId: string
@@ -179,7 +179,7 @@ export interface UiShopListItem extends ShopListItem {
 }
 
 export interface Color {
-  id: number
+  id: string
   name: string
   brickLinkName?: string
   brickLinkId?: string
