@@ -3,7 +3,7 @@
     "incremental": true,
     "target": "ES6",
     "jsx": "preserve",
-    "lib": ["ES6", "DOM", "WebWorker"],
+    "lib": ["ES6", "DOM", "WebWorker","ES2021"],
     "useDefineForClassFields": true,
     "module": "ESNext",
     "moduleResolution": "Bundler",

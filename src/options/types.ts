@@ -81,7 +81,7 @@ export interface UiInvItem extends InvItem {
 export interface ColorPageInvItem extends InvItem {
   variant: ItemVariant
   item: Item
-  store?: UiStore
+  store?: Store
   colorName: string
 }
 
@@ -187,11 +187,32 @@ export interface Color {
   legoId?: string
 }
 
+export interface RbColor {
+  Img: string
+  ID: number
+  Name: string
+  RGB: string
+  "Num Parts": number
+  "Num Sets": number
+  "First Year": number | null
+  "Last Year": number | null
+  LEGO: string
+  LDraw: string
+  BrickLink: string
+  BrickOwl: string
+}
+
 export interface ColorPageColor extends Color {
   invItems?: ColorPageInvItem[]
 }
 
 export interface UiColor extends Color {
+  numInvItems?: number
+  invItems?: UiInvItem[]
+  image?: string
+}
+
+export interface ColorsPageColor extends Color {
   numInvItems?: number
   invItems?: UiInvItem[]
   image?: string

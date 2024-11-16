@@ -1,7 +1,8 @@
 <script setup lang="ts">
-const colors = ref<UiColor[] | undefined>(undefined)
+import { getColorsPageColors } from '../idb/idb';
+const colors = ref<ColorsPageColor[] | undefined>(undefined)
 onMounted(async () => {
-  colors.value = await getUiColors()
+  colors.value = await getColorsPageColors()
 })
 const newId = ref('')
 const newName = ref('')
@@ -16,15 +17,14 @@ function add() {
 import ActiveSearchButton from '../components/ActiveSearchButton.vue';
 import ColorButton from '../components/ColorButton.vue';
 import HomeButton from '../components/HomeButton.vue';
-import { getUiColors } from '../idb/idb';
-import { UiColor } from '../types';
+import { ColorsPageColor } from '../types';
 </script>
 
 <template>
   <div>
     <HomeButton />
     <ActiveSearchButton />
-    <h4>Colors</h4>
+    <h4 v-if="colors">Colors ({{ colors.length }})</h4>
     <table>
       <thead>
         <tr>
@@ -32,6 +32,10 @@ import { UiColor } from '../types';
           <th>Id</th>
           <th>Name</th>
           <th>Inventory Items</th>
+          <th>BrickLink Id</th>
+          <th>BrickLink Name</th>
+          <th>Lego Id</th>
+          <th>Lego Name</th>
         </tr>
       </thead>
       <tbody>
@@ -47,6 +51,18 @@ import { UiColor } from '../types';
             <button @click="$emit('goColor', color)">
               {{ color.numInvItems }}
             </button>            
+          </td>
+          <td>
+            {{ color.brickLinkId }}
+          </td>
+          <td>
+            {{ color.brickLinkName }}
+          </td>
+          <td>
+            {{ color.legoId }}
+          </td>
+          <td>
+            {{ color.legoName }}
           </td>
         </tr>
       </tbody>

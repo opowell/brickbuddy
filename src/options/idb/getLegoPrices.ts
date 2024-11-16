@@ -1,7 +1,13 @@
 import { IDBPDatabase } from "idb";
-import { Store } from "../types";
-import { addCategory, addColor, addInvItem, addItem, addLegoItem, updateStore } from "./idb";
+import { Color, Store } from "../types";
+import { addCategory, addColor, addInvItem, addItem, addLegoItem, getFromIndex, updateStore } from "./idb";
 import * as math from 'mathjs'
+import INDICES from './indices'
+
+async function getColorByLegoId(db: IDBPDatabase, legoId: string | number): Promise<Color> {
+  legoId = legoId.toString()
+  return getFromIndex(db, INDICES.COLOR_BY_LEGO_ID, legoId)
+}
 
 export async function getLegoPrices(db: IDBPDatabase, store: Store) {
   let referrer = `https://www.lego.com/de-at/pick-and-build/pick-a-brick`
@@ -55,10 +61,14 @@ export async function getLegoPrices(db: IDBPDatabase, store: Store) {
   for (let i = 0; i < results.length; i++) {
     const invItem = results[i]
     try {
-      await addColor(db, invItem.facets.color.key, invItem.facets.color.name)
+      const color = await getColorByLegoId(db, invItem.facets.color.key)
+      if (!color) {
+        console.log('no color?!', invItem.facets.color.key)
+      }
+      const colorId = color?.id || invItem.facets.color.key
       await addLegoItem(
         invItem.facets.category.key,
-        invItem.facets.color.key,
+        colorId,
         invItem.designId,
         invItem.name,
         '//www.lego.com/cdn/product-assets/element.img.photoreal.192x192/' + invItem.id + '.jpg',
@@ -68,7 +78,7 @@ export async function getLegoPrices(db: IDBPDatabase, store: Store) {
         db,
         invItem.id,
         store,
-        invItem.facets.color.key,
+        colorId,
         'New',
         1000000,
         invItem.price.centAmount,

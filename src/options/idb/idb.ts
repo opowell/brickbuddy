@@ -1,7 +1,7 @@
 import { IDBPDatabase, openDB } from "idb";
 import STORES, { StoreDefinition } from './stores'
 import INDICES, { IndexDefinition } from './indices'
-import { ActiveSearch, ActiveSearchButtonActiveSearch, ActiveSearchPageSearch, AddNewStore, CategoriesPageCategory, Category, CategoryPageCategory, CategoryPagePart, Color, ColorPageColor, ColorPageInvItem, InvItem, Item, ItemVariant, ObjectCache, PartPagePart, Search, SearchBase, SearchesPageSearch, ShippingCost, ShopListItem, Store, StoresPageStore, StoreType, UiCategory, UiColor, UiInvItem, UiItem, UiItemVariant, UiSearch, UiShopList, UiStore } from "../types";
+import { ActiveSearch, ActiveSearchButtonActiveSearch, ActiveSearchPageSearch, AddNewStore, CategoriesPageCategory, Category, CategoryPageCategory, CategoryPagePart, Color, ColorPageColor, ColorPageInvItem, ColorsPageColor, InvItem, Item, ItemVariant, ObjectCache, PartPagePart, RbColor, Search, SearchBase, SearchesPageSearch, ShippingCost, ShopListItem, Store, StoresPageStore, StoreType, UiCategory, UiColor, UiInvItem, UiItem, UiItemVariant, UiSearch, UiShopList, UiStore } from "../types";
 import { DB_NAME } from "./constants";
 import { toDataURL } from "../utils";
 import { getCondition } from "./condition";
@@ -210,7 +210,7 @@ export async function getPartsInCategory(db: IDBPDatabase, id: string): Promise<
 export async function getNumPartsInCategory(db: IDBPDatabase, id: string): Promise<number> {
   return await countFromIndex(db, INDICES.PARTS_BY_CATEGORY, id)
 }
-async function getFromIndex(
+export async function getFromIndex(
   db: IDBPDatabase,
   index: IndexDefinition,
   query: IDBKeyRange | IDBValidKey
@@ -369,7 +369,7 @@ export async function getStorePageInvItems(db: IDBPDatabase, id: string): Promis
     const uiInvItem: UiInvItem = {
       ...invItem,
       item: part,
-      colorName: colors.value[invItem.color].name
+      colorName: colors.value[invItem.color]?.name
     }
     uiInvItems.push(uiInvItem)
   }
@@ -388,6 +388,9 @@ async function getStore(db: IDBPDatabase, storeId: string): Promise<Store> {
 export async function getPartPagePart(id: string): Promise<PartPagePart | undefined> {
   const db = await getDbConnection()
   const part: Item = await get(db, STORES.PARTS, id)
+  if (!part) {
+    return
+  }
   const variants: UiItemVariant[] = await getUiPartVariants(db, part.itemId + '')
   for (let i = 0; i < variants.length; i++) {
     const variant = variants[i]
@@ -422,7 +425,7 @@ export async function countInvItemsWithColor(db: IDBPDatabase, id: number): Prom
   return await countFromIndex(db, INDICES.INV_ITEMS_BY_COLORS, id)
 }
 
-export async function getInvItemsWithColor(db: IDBPDatabase, id: number): Promise<ColorPageInvItems[]> {
+export async function getInvItemsWithColor(db: IDBPDatabase, id: number): Promise<ColorPageInvItem[]> {
   const invItems: InvItem[] = await getAllFromIndex(db, INDICES.INV_ITEMS_BY_COLORS, id)
   const colorPageInvItems: ColorPageInvItem[] = []
   for (let i = 0; i < invItems.length; i++) {
@@ -451,6 +454,50 @@ export async function getUiColor(id: string): Promise<ColorPageColor> {
   }
   return uiColor
 }
+export async function getColorPageColor(id: string): Promise<ColorPageColor> {
+  const idNumber = Number.parseInt(id)
+  const db = await getDbConnection()
+  const color: Color = await get(db, STORES.COLORS, idNumber)
+  const invItems: InvItem[] = await getAllFromIndex(db, INDICES.INV_ITEMS_BY_COLORS, idNumber)
+  const colorPageInvItems: ColorPageInvItem[] = []
+  for (let i = 0; i < invItems.length; i++) {
+    const invItem = invItems[i]
+    const part = await getPart(db, Number.parseInt(invItem.itemId))
+    const color = await getColor(db, invItem.color)
+    const variant: ItemVariant = await getItemVariant(db, invItem.itemId, idNumber)
+    const store: Store = await getStore(db, invItem.storeId)
+    colorPageInvItems.push({
+      ...invItem,
+      item: part,
+      colorName: color.name,
+      variant,
+      store
+    })
+  }
+  const uiColor: ColorPageColor = {
+    ...color,
+    invItems: colorPageInvItems
+  }
+  return uiColor
+}
+export async function getColorsPageColors(): Promise<ColorsPageColor[]> {
+  const db = await getDbConnection()
+  const colors: Color[] = await db.getAll(STORES.COLORS.name)
+  const uiColors: ColorsPageColor[] = []
+  for (let i = 0; i < colors.length; i++) {
+    const color = colors[i]
+    const numInvItems = await countInvItemsWithColor(db, color.id)
+    const invItem: ItemVariant = await getFromIndex(db, INDICES.PART_VARIANTS_BY_COLOR, color.id)
+    // console.log(invItem, color.id)
+    const image = invItem?.image
+    uiColors.push({
+      ...color,
+      numInvItems,
+      image
+    })
+  }
+  return uiColors
+}
 export async function getUiColors(): Promise<UiColor[]> {
   const db = await getDbConnection()
   const colors: Color[] = await db.getAll(STORES.COLORS.name)
@@ -459,7 +506,7 @@ export async function getUiColors(): Promise<UiColor[]> {
     const color = colors[i]
     const numInvItems = await countInvItemsWithColor(db, color.id)
     const invItem: ItemVariant = await getFromIndex(db, INDICES.PART_VARIANTS_BY_COLOR, color.id)
-    console.log(invItem, color.id)
+    // console.log(invItem, color.id)
     const image = invItem?.image
     uiColors.push({
       ...color,
@@ -692,8 +739,33 @@ export async function createInitialStores(db: IDBPDatabase) {
   ], 'carinthia_brick', 100, db)
   await addStore("A brick per day...", "709693", [], 'stefxan', 100, db)
 }
+import rbColors from '../rebrickable-colors.json'
+async function createInitialColors(db: IDBPDatabase) {
+  for (let i = 0; i < rbColors.length; i++) {
+    const rbColor: RbColor = rbColors[i]
+    try {
+      let blId, blName, legoId, legoName
+      if (rbColor.BrickLink !== '') {
+        const variant = rbColor.BrickLink.split('\n')[0].trim()
+        const [first, ...rest] = variant.split(' ')
+        blId = first
+        blName = JSON.parse(rest.join(' ').replaceAll('\'', '"').trim())[0]
+      }
+      if (rbColor.LEGO !== '') {
+        const variant = rbColor.LEGO.split('\n')[0].trim()
+        const [first, ...rest] = variant.split(' ')
+        legoId = first
+        legoName = JSON.parse(rest.join(' ').replaceAll('\'', '"').trim())[0]
+      }
+      await addColor(db, rbColor.ID, rbColor.Name, blId, blName, legoId, legoName)
+    } catch (e) {
+      console.log(e)
+    }
+  }
+}
 async function createInitialData(db: IDBPDatabase) {
   console.log('createInitialData')
+  await createInitialColors(db)  
   await createInitialStores(db)  
   await addShopListDb("Board games 2024", db)
   
@@ -984,16 +1056,27 @@ export async function addInvItem(
   // store.items.push(uiInvItem)
 }
 
+async function put(db: IDBPDatabase, storeDef: StoreDefinition, value: any) {
+  db.put(storeDef.name, value)
+}
 export async function addColor(
   db: IDBPDatabase,
   id: number,
   name: string,
+  brickLinkId?: string,
+  brickLinkName?: string,
+  legoId?: string,
+  legoName?: string
 ) {
   const color: Color = {
     id,
-    name
+    name,
+    brickLinkId,
+    brickLinkName,
+    legoId,
+    legoName
   }
-  await db.put(STORES.COLORS.name, color)
+  await put(db, STORES.COLORS, color)
   colors.value[id] = color
 }
 

@@ -16,6 +16,8 @@ const indices: {
   INV_ITEMS_BY_COLORS: IndexDefinition
   INV_ITEMS_BY_CONDITION: IndexDefinition
   SHOP_LIST_ITEMS_BY_SHOP_LIST: IndexDefinition
+  COLOR_BY_BRICKLINK_ID: IndexDefinition
+  COLOR_BY_LEGO_ID: IndexDefinition
 } = {
   STORES_BY_LAST_SCRAPED: {
     store: stores.STORES.name,
@@ -66,6 +68,16 @@ const indices: {
     store: stores.SHOP_LIST_ITEMS.name,
     name: 'shopList',
     keyPath: 'shopListId'
+  },
+  COLOR_BY_BRICKLINK_ID: {
+    store: stores.COLORS.name,
+    name: 'brickLinkId',
+    keyPath: 'brickLinkId'
+  },
+  COLOR_BY_LEGO_ID: {
+    store: stores.COLORS.name,
+    name: 'legoId',
+    keyPath: 'legoId'
   }
 }
 

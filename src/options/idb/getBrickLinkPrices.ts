@@ -1,7 +1,12 @@
 import { IDBPDatabase } from "idb";
-import { Store } from "../types";
-import { addCategory, addColor, addInvItem, addItem, updateStore } from "./idb";
+import { Color, Store } from "../types";
+import { addCategory, addInvItem, addItem, getFromIndex, updateStore } from "./idb";
 import * as math from 'mathjs'
+import INDICES from './indices'
+
+async function getColorByBrickLinkId(db: IDBPDatabase, brickLinkId: string): Promise<Color> {
+  return getFromIndex(db, INDICES.COLOR_BY_BRICKLINK_ID, brickLinkId)
+}
 
 export async function getBrickLinkPrices(db: IDBPDatabase, store: Store) {
     const response = await fetch(`https://store.bricklink.com/ajax/clone/store/searchitems.ajax?sort=6&pgSize=100&pg=${store.fetchPageIndex}&showHomeItems=0&sid=${store.sId}`, {
@@ -53,10 +58,10 @@ export async function getBrickLinkPrices(db: IDBPDatabase, store: Store) {
     for (let j = 0; j < group.items.length; j++) {
       const invItem = group.items[j]
       try {
-        await addColor(db, invItem.colorID, invItem.colorName)
+        const color: Color = await getColorByBrickLinkId(db, invItem.colorID)
         await addItem(
           invItem.categoryString,
-          invItem.colorID,
+          color?.id || invItem.colorID,
           invItem.itemID,
           invItem.itemName,
           invItem.itemNo,

@@ -2,7 +2,7 @@
 import ColorsButton from '../components/ColorsButton.vue';
 import HomeButton from '../components/HomeButton.vue';
 import PartButton from '../components/PartButton.vue';
-import { getUiColor } from '../idb/idb'
+import { getColorPageColor } from '../idb/idb'
 
 import { useRoute } from 'vue-router'
 import { ColorPageColor, ColorPageInvItem } from '../types';
@@ -10,7 +10,7 @@ import StoreButton from '../components/StoreButton.vue';
 const route = useRoute()
 const color = ref<ColorPageColor | undefined>(undefined)
 onMounted(async () => {
-  color.value = await getUiColor(route.params.id)
+  color.value = await getColorPageColor(route.params.id)
 })
 function getImageSrc(invItem: ColorPageInvItem) {
   const variant = invItem.variant
@@ -27,6 +27,10 @@ function getImageSrc(invItem: ColorPageInvItem) {
     <ColorsButton />
     <h4>{{ color.name }}</h4>
     <div>Id: {{ color.id }}</div>
+    <div>Lego Id: {{ color.legoId }}</div>
+    <div>Lego Name: {{ color.legoName }}</div>
+    <div>BrickLink Id: {{ color.brickLinkId }}</div>
+    <div>BrickLink Name: {{ color.brickLinkName }}</div>
     <h4>Part variants</h4>
     <h4>Shop list items</h4>
     <h4>Inventory items {{ color.invItems?.length }}</h4>
@@ -45,7 +49,6 @@ function getImageSrc(invItem: ColorPageInvItem) {
         <tr v-for="item in color.invItems" :key="item.invId">
           <td><img
             :src="getImageSrc(item)"
-            @click="goVariant(item)"
           ></td>
           <td>
             <PartButton :part="item.item" />
