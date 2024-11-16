@@ -3,6 +3,7 @@ import { Color } from '../types';
 import { Crumbs } from '../idb/constants';
 import { useRouter } from 'vue-router'
 import {PropType} from 'vue'
+import NameIdLabel from './NameIdLabel.vue';
 const { color } = defineProps({
   color: Object as PropType<Color>
 })
@@ -18,6 +19,6 @@ const href = computed(() => {
 
 <template>
   <button v-if="color" @click="router.push(href)">
-    {{ color?.name }} ({{ color?.id }})
+    <NameIdLabel :name="color.name" :id="color.id" />
   </button>
 </template>

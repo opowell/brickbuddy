@@ -9,8 +9,9 @@ import ColorButton from '../components/ColorButton.vue';
 import ActiveSearchButton from '../components/ActiveSearchButton.vue';
 import { IDBPDatabase } from 'idb';
 import { formatAmount, formatInteger } from '../utils';
+import CategoryButton from '../components/CategoryButton.vue';
 const route = useRoute()
-const store = ref<UiStore | undefined>(undefined)
+const store = ref<StorePageStore | undefined>(undefined)
 const search = ref<ActiveSearch | undefined>(undefined)
 const db = ref<IDBPDatabase | undefined>(undefined)
 onMounted(async () => {
@@ -62,6 +63,7 @@ const url = computed(() => {
           <th>Name</th>
           <th v-if="search && search.conditions.ids.length < 1">Condition</th>
           <th>Color</th>
+          <th>Category</th>
           <th>Quantity</th>
           <th>Price</th>
         </tr>
@@ -77,6 +79,7 @@ const url = computed(() => {
           </td>
           <td v-if="search && search.conditions.ids.length < 1">{{ item.condition }}</td>
           <td><ColorButton :color="{ id: item.color, name: item.colorName }" /></td>
+          <td><CategoryButton :category="item.category" /></td>
           <td>{{ formatInteger(item.quantity) }}</td>
           <td>{{ formatAmount(item.price*store.priceAdjustment/100) }}</td>
         </tr>

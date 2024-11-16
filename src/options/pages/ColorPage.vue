@@ -7,6 +7,7 @@ import { formatAmount } from '../utils';
 import { useRoute } from 'vue-router'
 import { ColorPageColor, ColorPageInvItem } from '../types';
 import StoreButton from '../components/StoreButton.vue';
+import NameIdLabel from '../components/NameIdLabel.vue';
 const route = useRoute()
 const color = ref<ColorPageColor | undefined>(undefined)
 onMounted(async () => {
@@ -25,9 +26,9 @@ function getImageSrc(invItem: ColorPageInvItem) {
   <div v-if="color">
     <HomeButton />
     <ColorsButton />
-    <h4>{{ color.name }} ({{ color.id }})</h4>
-    <div>Lego: {{ color.legoName }} ({{ color.legoId }})</div>
-    <div>BrickLink: {{ color.brickLinkName }} ({{ color.brickLinkId }})</div>
+    <h4><NameIdLabel :name="color.name" :id="color.id" /></h4>
+    <div>Lego: <NameIdLabel is-span :name="color.legoName" :id="color.legoId" /></div>
+    <div>BrickLink: <NameIdLabel is-span :name="color.brickLinkName" :id="color.brickLinkId" /></div>
     <h4>Part variants</h4>
     <h4>Shop list items</h4>
     <h4>Inventory items ({{ color.invItems?.length }})</h4>

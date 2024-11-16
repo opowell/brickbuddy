@@ -78,7 +78,7 @@ export async function getLegoPrices(db: IDBPDatabase, store: Store) {
         await updateCategory(db, category)
       }
       await addLegoItem(
-        legoInvItem.facets.category.key,
+        category.id,
         colorId,
         item.itemId,
         legoInvItem.name,

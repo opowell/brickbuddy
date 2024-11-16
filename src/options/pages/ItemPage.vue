@@ -3,9 +3,10 @@ import HomeButton from '../components/HomeButton.vue';
 import PartsButton from '../components/PartsButton.vue';
 import PartVariantButton from '../components/PartVariantButton.vue';
 import { getPartPagePart } from '../idb/idb';
-import type { UiInvItem, UiItem, UiItemVariant } from '../types'
+import type { ItemVariant, PartPagePart, PartPageVariant, PartPageVariantInvItem, UiInvItem, UiItem, UiItemVariant } from '../types'
 import ActiveSearchButton from '../components/ActiveSearchButton.vue';
-interface PartVariantWithPriceQuantity extends UiItemVariant {
+import CategoryButton from '../components/CategoryButton.vue';
+interface VariantWithPriceQuantity extends ItemVariant {
   price: number
   maxPrice: number
   quantity: number
@@ -13,17 +14,17 @@ interface PartVariantWithPriceQuantity extends UiItemVariant {
 import { useRoute } from 'vue-router'
 const route = useRoute()
 
-const item = ref<UiItem | undefined>(undefined)
+const item = ref<PartPagePart | undefined>(undefined)
 onMounted(async () => {
   item.value = await getPartPagePart(route.params.id)
 })
 const maxPrice = ref<number | undefined>(Number.POSITIVE_INFINITY)
 const minQuantity = ref(0)
-const variants = computed<PartVariantWithPriceQuantity[]>(() => {
+const variants = computed<VariantWithPriceQuantity[]>(() => {
   if (!item.value) {
     return []
   }
-  return item.value.variants.map((variant: UiItemVariant) => {
+  return item.value.variants.map((variant: PartPageVariant) => {
     let price = Number.POSITIVE_INFINITY
     let varMaxPrice = 0
     let quantity = 0
@@ -52,13 +53,13 @@ const variants = computed<PartVariantWithPriceQuantity[]>(() => {
       maxPrice: varMaxPrice,
       quantity
     }
-  }).filter((variant: PartVariantWithPriceQuantity) => {
+  }).filter((variant: VariantWithPriceQuantity) => {
     return variant.price < Number.POSITIVE_INFINITY && variant.quantity > 0
   })
-    .sort((a: PartVariantWithPriceQuantity, b: PartVariantWithPriceQuantity) => a.price - b.price)
+    .sort((a: VariantWithPriceQuantity, b: VariantWithPriceQuantity) => a.price - b.price)
 })
 const condition = ref<string>('New')
-const invItems = computed<UiInvItem[] | undefined>(() => {
+const invItems = computed<PartPageVariantInvItem[] | undefined>(() => {
   return item.value?.variants.flatMap(variant => {
     return variant.invItems.map(invItem => {
       return {
@@ -76,10 +77,13 @@ const invItems = computed<UiInvItem[] | undefined>(() => {
     <HomeButton />
     <PartsButton />
     <ActiveSearchButton />
-    <h4>{{ item.itemName }}</h4>
+    <h4>{{ item.itemName }} ({{ item.itemId }})</h4>
+    <div>Bricklink: {{ item.brickLinkName }} ({{ item.brickLinkId }})</div>
+    <div>Lego: {{ item.legoName }} ({{ item.legoPartId }})</div>
+    <div>Min quantity:<input v-model="minQuantity" type="number"></div>
     <div>Min quantity:<input v-model="minQuantity" type="number"></div>
     <div>Max price:<input v-model="maxPrice" type="number"></div>
-    <div>Category: {{ item.categoryString }}</div>
+    <div>Category: <CategoryButton :category="item.category" /></div>
     <div>
       Condition:<select v-model="condition">
         <option value="New">

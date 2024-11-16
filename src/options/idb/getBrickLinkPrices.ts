@@ -43,16 +43,6 @@ export async function getBrickLinkPrices(db: IDBPDatabase, store: Store) {
   }
   store.fetchMaxPageIndex = Math.ceil(json.result.totalLotCnt / 100) + 1
   updateStore(db, store)
-  for (let i = 0; i < json.result.categories.length; i++) {
-    const category = json.result.categories[i]
-    if (category.type !== 'P') {
-      continue
-    }
-    for (let j = 0; j < category.categories.length; j++) {
-      const cat = category.categories[j]
-      await addCategory(db, cat.catstr, cat.name)
-    }
-  }
   const partCategories = json.result.categories.find(c => c.type === 'P')
   const blCategories = {}
   if (partCategories) {

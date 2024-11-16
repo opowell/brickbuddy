@@ -18,6 +18,7 @@ import CategoryButton from '../components/CategoryButton.vue';
 import HomeButton from '../components/HomeButton.vue';
 import { getCategoriesPageCategories } from '../idb/idb';
 import ActiveSearchButton from '../components/ActiveSearchButton.vue';
+import NameIdLabel from '../components/NameIdLabel.vue';
 </script>
 
 <template>
@@ -50,10 +51,10 @@ import ActiveSearchButton from '../components/ActiveSearchButton.vue';
             <CategoryButton :category="category" />
           </td>
           <td>
-            {{ category.brickLinkName }} ({{ category.brickLinkId }})
+            <NameIdLabel :name="category.brickLinkName" :id="category.brickLinkId" />
           </td>
           <td>
-            {{ category.legoName }} ({{ category.legoId }})
+            <NameIdLabel :name="category.legoName" :id="category.legoId" />
           </td>
           <td>
             {{ category.numParts }}

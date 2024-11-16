@@ -11,6 +11,7 @@ const route = useRoute()
 import { useRouter } from 'vue-router'
 import ActiveSearchButton from '../components/ActiveSearchButton.vue';
 import PartButton from '../components/PartButton.vue';
+import NameIdLabel from '../components/NameIdLabel.vue';
 const router = useRouter()
 const category = ref<CategoryPageCategory | undefined>(undefined)
 onMounted(async () => {
@@ -26,16 +27,13 @@ onMounted(async () => {
     <h4>{{ category.name }}</h4>
     <ExcludeCategoryButton :category="category" @exclude="router.push(Crumbs.categories.href)"/>
     <div>Id: {{ category.id }}</div>
-    <div>BrickLink Id: {{ category.brickLinkId }}</div>
-    <div>BrickLink Name: {{ category.brickLinkName }}</div>
-    <div>Lego Id: {{ category.legoId }}</div>
-    <div>Lego Name: {{ category.legoName }}</div>
+    <div>Bricklink: <NameIdLabel is-span :id="category.brickLinkId" :name="category.brickLinkName" /></div>
+    <div>Lego: <NameIdLabel is-span :id="category.legoId" :name="category.legoName" /></div>
     <h4>Parts</h4>
     <table>
       <thead>
         <tr>
           <th>Image</th>
-          <th>Id</th>
           <th>Name</th>
           <th>Colors</th>
           <th>Inv. items</th>
@@ -44,7 +42,6 @@ onMounted(async () => {
       <tbody>
         <tr v-for="item in category.parts" :key="item.itemId">
           <td><img v-if="item.variants?.length" :src="item.variants[0].image"></td>
-          <td>{{ item.itemId }}</td>
           <td>
             <PartButton :part="item" />
           </td>

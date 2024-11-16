@@ -3,6 +3,7 @@ import { Category } from '../types';
 import { Crumbs } from '../idb/constants';
 import { useRouter } from 'vue-router'
 import {PropType} from 'vue'
+import NameIdLabel from './NameIdLabel.vue';
 const { category } = defineProps({
   category: Object as PropType<Category>
 })
@@ -17,6 +18,6 @@ const href = computed(() => {
 
 <template>
   <button v-if="category" @click="router.push(href)">
-    {{ category.name }} ({{ category.id }})
+    <NameIdLabel :name="category.name" :id="category.id" />
   </button>
 </template>
