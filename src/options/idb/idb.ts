@@ -1288,6 +1288,51 @@ export async function loadCategories(db: IDBPDatabase) {
   }
 }
 
+const partDetails = []
+let partDetailsScrapePage = 1
+let partScrapingInterval
+let stopPartScraping = false
+let partDetailsMaxPage = 100
+export function stopPartScrapingFn() {
+  stopPartScraping = true
+}
+export async function startPartScraping() {
+  scrapePartDetails()
+  partScrapingInterval = setInterval(() => {
+    if (stopPartScraping || partDetailsScrapePage > partDetailsMaxPage) {
+      clearInterval(partScrapingInterval)
+      return
+    }
+    scrapePartDetails()
+  }, 30000)
+}
+async function scrapePartDetails() {
+  const response = await fetch(`https://rebrickable.com/api/v3/lego/parts/?inc_part_details=1&inc_color_details=0&page_size=1000&page=${partDetailsScrapePage}&key=ec4ddb3b958aaa4edf379059e5f87d2e`, {
+    "headers": {
+      "accept": "application/json",
+      "accept-language": "en,de;q=0.9,es;q=0.8,en-US;q=0.7",
+      "cache-control": "no-cache",
+      "pragma": "no-cache",
+      "priority": "u=1, i",
+      "sec-ch-ua": "\"Chromium\";v=\"130\", \"Google Chrome\";v=\"130\", \"Not?A_Brand\";v=\"99\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"macOS\"",
+      "sec-fetch-dest": "empty",
+      "sec-fetch-mode": "cors",
+      "sec-fetch-site": "cross-site"
+    },
+    "referrerPolicy": "strict-origin-when-cross-origin",
+    "body": null,
+    "method": "GET",
+    "mode": "cors",
+    "credentials": "omit"
+  });
+    partDetailsScrapePage++
+    const json = await response.json()
+    partDetailsMaxPage = Math.ceil(json.count / 1000) + 1
+  partDetails.push(...json.results)
+  console.log(partDetails)
+}
 export async function loadShopLists() {
   const db = await getDbConnection()
   const x = await db.getAll(STORES.SHOP_LISTS.name)

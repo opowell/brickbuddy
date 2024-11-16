@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { getPartsPageParts } from '../idb/idb';
+import { getPartsPageParts, startPartScraping, stopPartScrapingFn } from '../idb/idb';
 import type { UiItem } from '../types';
 import PartButton from '../components/PartButton.vue';
 const search = ref('')
@@ -26,6 +26,8 @@ import ActiveSearchButton from '../components/ActiveSearchButton.vue';
     <HomeButton />
     <ActiveSearchButton />
     <h4>Parts ({{ filteredParts.length }} / {{ items.length }})</h4>
+    <div>Scrape details from Rebrickable: <button @click="startPartScraping">Start</button></div>
+    <div><button @click="stopPartScrapingFn">Stop</button></div>
     <div>Search: <input v-model="search"></div>
     <table>
       <thead>
