@@ -3,7 +3,6 @@ import INDICES from './indices'
 import { ActiveSearchButtonActiveSearch, ActiveSearchPageCondition, ConditionsPageCondition, UiCategory, UiSearch, UiShopList, UiStore } from "../types";
 import { countFromIndex, getActiveSearch, getDbConnection } from "./idb";
 
-export const openCategory = ref<UiCategory | null>(null)
 export const openSearch = ref<UiSearch | null>(null)
 export const openStore = ref<UiStore | null>(null)
 

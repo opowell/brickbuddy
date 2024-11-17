@@ -157,7 +157,7 @@ const partsView = ref('images')
               {{ item.itemName }}
             </button>
           </td>
-          <td>{{ item.categoryString }}</td>
+          <td>{{ item.categoryId }}</td>
           <td>{{ item.variants.length }}</td>
         </tr>
       </tbody>

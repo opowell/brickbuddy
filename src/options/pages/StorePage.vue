@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import HomeButton from '../components/HomeButton.vue';
 import StoresButton from '../components/StoresButton.vue';
-import { ActiveSearch, type UiInvItem, type UiStore } from '../types';
+import { ActiveSearch, StorePageInvItem, StorePageStore, type UiInvItem } from '../types';
 import { useRoute } from 'vue-router'
 import { getActiveSearch, getDbConnection, getStorePageStore, getStorePrices } from '../idb/idb';
 import PartButton from '../components/PartButton.vue';
@@ -10,6 +10,7 @@ import ActiveSearchButton from '../components/ActiveSearchButton.vue';
 import { IDBPDatabase } from 'idb';
 import { formatAmount, formatInteger } from '../utils';
 import CategoryButton from '../components/CategoryButton.vue';
+import ConditionButton from '../components/ConditionButton.vue';
 const route = useRoute()
 const store = ref<StorePageStore | undefined>(undefined)
 const search = ref<ActiveSearch | undefined>(undefined)
@@ -20,18 +21,18 @@ onMounted(async () => {
   search.value = getActiveSearch()
 })
 
-function getImageSrc(invItem: UiInvItem) {
+function getImageSrc(invItem: StorePageInvItem) {
   const variant = getVariant(invItem)
   if (!variant) {
     return
   }
   return variant.image
 }
-function goVariant(invItem: UiInvItem) {
+function goVariant(invItem: StorePageInvItem) {
 
 }
-function getVariant(invItem: UiInvItem) {
-  return invItem.item.variants.find(v => v.colorId === invItem.color)
+function getVariant(invItem: StorePageInvItem) {
+  return invItem.item.variants.find(v => v.colorId === invItem.colorId)
 }
 // URL for shipping terms:
 // https://store.bricklink.com/ajax/clone/store/policy.ajax?sid=2066952
@@ -45,10 +46,10 @@ const url = computed(() => {
 
 
 <template>
+  <HomeButton />
+  <StoresButton />
+  <ActiveSearchButton />
   <div v-if="store">
-    <HomeButton />
-    <StoresButton />
-    <ActiveSearchButton />
     <h4>{{ store.name }}</h4>
     <div v-if="db"><button @click="getStorePrices(db, store)">Scrape</button></div>
     <div>Fetch index: {{ store.fetchPageIndex }} / {{ store.fetchMaxPageIndex }}</div>
@@ -77,8 +78,8 @@ const url = computed(() => {
           <td>
             <PartButton :part="item.item" />
           </td>
-          <td v-if="search && search.conditions.ids.length < 1">{{ item.condition }}</td>
-          <td><ColorButton :color="{ id: item.color, name: item.colorName }" /></td>
+          <td v-if="search && search.conditions.ids.length < 1"><ConditionButton :condition="item.condition" /></td>
+          <td><ColorButton :color="{ id: item.colorId, name: item.colorName }" /></td>
           <td><CategoryButton :category="item.category" /></td>
           <td>{{ formatInteger(item.quantity) }}</td>
           <td>{{ formatAmount(item.price*store.priceAdjustment/100) }}</td>

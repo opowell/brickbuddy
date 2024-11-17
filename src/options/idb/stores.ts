@@ -13,6 +13,8 @@ const stores: {
   INVENTORY_ITEMS: StoreDefinition
   PART_VARIANTS: StoreDefinition
   PARTS: StoreDefinition
+  PARTS_BRICK_LINK: StoreDefinition
+  PARTS_LEGO: StoreDefinition
   SEARCHES: StoreDefinition
   SHOP_LISTS: StoreDefinition
   SHOP_LIST_ITEMS: StoreDefinition
@@ -45,6 +47,14 @@ const stores: {
   PARTS: {
     name: 'parts',
     keyPath: 'itemId'
+  },
+  PARTS_BRICK_LINK: {
+    name: 'partsBrickLink',
+    keyPath: 'brickLinkId'
+  },
+  PARTS_LEGO: {
+    name: 'partsLego',
+    keyPath: 'legoId'
   },
   SEARCHES: {
     name: 'searches',

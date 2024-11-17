@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { PropType } from 'vue';
 import { ActiveSearch, type UiInvItem } from '../options/types'
-import { formatAmount } from '@/options/utils';
+import { formatAmount, formatInteger } from '@/options/utils';
 import PartVariantButton from '@/options/components/PartVariantButton.vue';
 import StoreButton from '@/options/components/StoreButton.vue';
 import { getActiveSearch } from '@/options/idb/idb';
 import ColorButton from '@/options/components/ColorButton.vue';
+import ConditionButton from '@/options/components/ConditionButton.vue';
 const { items, showColor = false } = defineProps({
   showColor: Boolean,
   items: Object as PropType<UiInvItem[]>,
@@ -70,10 +71,10 @@ const sortedItems = computed<StoreItemsTableInvItem[]>(() => {
           <StoreButton :store="invItem.store" />
         </td>
         <td v-if="showColor"><ColorButton :color="invItem.variant.color" /></td>
-        <td v-if="search && search.conditions.ids.length < 1">{{ invItem.condition }}</td>
+        <td v-if="search && search.conditions.ids.length < 1"><ConditionButton :condition="invItem.condition" /></td>
         <td>{{ formatAmount(invItem.price) }}</td>
         <td>{{ formatAmount(invItem.priceScore) }}</td>
-        <td>{{ invItem.quantity }}</td>
+        <td>{{ formatInteger(invItem.quantity) }}</td>
       </tr>
     </tbody>
   </table>

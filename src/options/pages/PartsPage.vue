@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { getPartsPageParts, startPartScraping, stopPartScrapingFn, importRbPartsToMemory } from '../idb/idb';
+import { getPartsPageParts, startPartScraping, stopPartScrapingFn, importRbParts } from '../idb/idb';
 import type { UiItem } from '../types';
 import PartButton from '../components/PartButton.vue';
 const search = ref('')
@@ -16,6 +16,7 @@ const filteredParts = computed(() => {
 import HomeButton from '../components/HomeButton.vue'
 import CategoryButton from '../components/CategoryButton.vue';
 import ActiveSearchButton from '../components/ActiveSearchButton.vue';
+import NameIdLabel from '../components/NameIdLabel.vue';
 </script>
 
 <template>
@@ -27,7 +28,7 @@ import ActiveSearchButton from '../components/ActiveSearchButton.vue';
     <ActiveSearchButton />
     <h4>Parts ({{ filteredParts.length }} / {{ items.length }})</h4>
     <div>Scrape details from Rebrickable: <button @click="startPartScraping">Start</button><button @click="stopPartScrapingFn">Stop</button></div>
-    <div><button @click="importRbPartsToMemory">Import from Rb JSON</button></div>
+    <div><button @click="importRbParts">Import from Rb JSON</button></div>
     <div>Search: <input v-model="search"></div>
     <table>
       <thead>
@@ -36,8 +37,8 @@ import ActiveSearchButton from '../components/ActiveSearchButton.vue';
           <th>Name</th>
           <th>Category</th>
           <th>Colors</th>
-          <th>BrickLink Id</th>
-          <th>Lego Id</th>
+          <th>BrickLink</th>
+          <th>Lego</th>
         </tr>
       </thead>
       <tbody>
@@ -48,8 +49,8 @@ import ActiveSearchButton from '../components/ActiveSearchButton.vue';
           </td>
           <td><CategoryButton :category="item.category" /></td>
           <td>{{ item.variants.length }}</td>
-          <td>{{ item.brickLinkId }}</td>
-          <td>{{ item.legoPartId }}</td>
+          <td><NameIdLabel :id="item.brickLinkIds?.join(',')" /></td>
+          <td><NameIdLabel :id="item.legoPartIds?.join(',')" /></td>
         </tr>
       </tbody>
     </table>

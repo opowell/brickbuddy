@@ -1,6 +1,6 @@
 import { IDBPDatabase } from "idb";
-import { Category, Color, Item, Store } from "../types";
-import { addBrickLinkItem, addCategory, addInvItem, addItem, getCategory, getFromIndex, getPart, getPartByBrickLinkId, updateCategory, updatePart, updateStore } from "./idb";
+import { BrickLinkItem, Category, Color, Item, Store } from "../types";
+import { addBrickLinkItem, addCategory, addInvItem, addItem, getBrickLinkItem, getCategory, getFromIndex, getPart, getPartByBrickLinkId, updateCategory, updatePart, updateStore } from "./idb";
 import * as math from 'mathjs'
 import INDICES from './indices'
 
@@ -9,7 +9,7 @@ async function getColorByBrickLinkId(db: IDBPDatabase, brickLinkId: string): Pro
 }
 
 export async function getBrickLinkPrices(db: IDBPDatabase, store: Store) {
-    const response = await fetch(`https://store.bricklink.com/ajax/clone/store/searchitems.ajax?sort=6&pgSize=100&pg=${store.fetchPageIndex}&showHomeItems=0&sid=${store.sId}`, {
+    const response = await fetch(`https://store.bricklink.com/ajax/clone/store/searchitems.ajax?sort=6&pgSize=25&pg=${store.fetchPageIndex}&showHomeItems=0&sid=${store.sId}`, {
   "headers": {
     "accept": "application/json, text/javascript, */*; q=0.01",
     "accept-language": "en,de;q=0.9,es;q=0.8,en-US;q=0.7",
@@ -54,50 +54,55 @@ export async function getBrickLinkPrices(db: IDBPDatabase, store: Store) {
   for (let i = 0; i < json.result.groups.length; i++) {
     const group = json.result.groups[i]
     for (let j = 0; j < group.items.length; j++) {
-      const blItem = group.items[j]
+      const resultItem = group.items[j]
       try {
-        const color: Color = await getColorByBrickLinkId(db, blItem.colorID)
+        const color: Color = await getColorByBrickLinkId(db, resultItem.colorID)
         if (!color) {
-          console.log('no color!!', blItem.colorID, blItem)
+          console.log('no color!!', resultItem.colorID, resultItem)
           continue
         }
-        const item: Item = await getPartByBrickLinkId(db, blItem.itemNo)
+        const blItem: BrickLinkItem | undefined = await getBrickLinkItem(db, resultItem.itemNo)
+        if (!blItem) {
+          continue
+        }
+        const item = blItem.part
+        delete blItem.part
+        blItem.name = resultItem.itemName
         if (!item) {
           continue
         }
-        item.brickLinkId = blItem.itemNo
-        item.brickLinkName = blItem.itemName
-        await updatePart(db, item)
-        const category: Category = await getCategory(db, item.categoryString)
+        const category: Category = await getCategory(db, item.categoryId)
         if (category) {
-          const blCategoryName = blCategories[blItem.categoryString]
-          category.brickLinkId = blItem.categoryString + ''
+          const blCategoryName = blCategories[resultItem.categoryString]
+          category.brickLinkId = resultItem.categoryString + ''
           if (!blCategoryName) {
-            console.log('NO BL NAME!', category, blItem, blCategories, blItem.categoryString)
+            console.log('NO BL NAME!', category, blItem, blCategories, resultItem.categoryString)
           }
           category.brickLinkName = blCategoryName
+          console.log(category, item.categoryId, blCategoryName, resultItem.categoryString)
           await updateCategory(db, category)
         }
-        // await addBrickLinkItem(
-        //   blItem.categoryString,
-        //   color?.id || blItem.colorID,
-        //   item.itemId,
-        //   blItem.itemName,
-        //   blItem.newThumb1Img,
-        //   db
-        // )
+        await addBrickLinkItem(
+          item.categoryId + '',
+          color.id + '',
+          blItem,
+          item,
+          resultItem.itemName,
+          resultItem.newThumb1Img,
+          db
+        )
         await addInvItem(
           db,
-          blItem.invID,
+          resultItem.invID + '',
           store,
-          color.id,
-          blItem.invNew,
-          blItem.invQty,
-          math.number(math.multiply(math.bignumber(100), math.bignumber(blItem.rawConvertedPrice))),
-          item.itemId,
+          color.id + '',
+          resultItem.invNew,
+          resultItem.invQty,
+          math.number(math.multiply(math.bignumber(100), math.bignumber(resultItem.rawConvertedPrice))),
+          item.itemId + '',
         )
       } catch (e) {
-        console.log('error adding item', blItem, e)
+        console.log('error adding item', resultItem, e)
       }
     }
   }

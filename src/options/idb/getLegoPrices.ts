@@ -3,6 +3,7 @@ import { Category, Color, Item, Store } from "../types";
 import { addCategory, addColor, addInvItem, addItem, addLegoItem, getCategory, getFromIndex, getPartByLegoId, updateCategory, updateStore } from "./idb";
 import * as math from 'mathjs'
 import INDICES from './indices'
+import stores from "./stores";
 
 async function getColorByLegoId(db: IDBPDatabase, legoId: string | number): Promise<Color> {
   legoId = legoId.toString()
@@ -71,7 +72,7 @@ export async function getLegoPrices(db: IDBPDatabase, store: Store) {
         console.log('no item, skipping', legoInvItem, legoInvItem.designId)
         continue
       }
-      const category: Category = await getCategory(db, item.categoryString)
+      const category: Category = await getCategory(db, item.categoryId)
       if (category) {
         category.legoId = legoInvItem.facets.subcategory.key
         category.legoName = legoInvItem.facets.subcategory.name
@@ -79,21 +80,21 @@ export async function getLegoPrices(db: IDBPDatabase, store: Store) {
       }
       await addLegoItem(
         category.id,
-        colorId,
-        item.itemId,
+        colorId + '',
+        item,
         legoInvItem.name,
         '//www.lego.com/cdn/product-assets/element.img.photoreal.192x192/' + legoInvItem.id + '.jpg',
         db
       )
       await addInvItem(
         db,
-        legoInvItem.id,
+        legoInvItem.id + '',
         store,
-        colorId,
+        colorId + '',
         'New',
         1000000,
         legoInvItem.price.centAmount,
-        legoInvItem.designId,
+        item.itemId + '',
       )
     } catch (e) {
       console.log('error adding item', legoInvItem, e)

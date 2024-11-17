@@ -6,12 +6,13 @@ export interface IndexDefinition {
   keyPath: string | string[]
 }
 const indices: {
-  STORES_BY_LAST_SCRAPED: IndexDefinition
+  STORES_BY_LAST_SCRAPED_AND_TYPE: IndexDefinition
   PARTS_BY_CATEGORY: IndexDefinition
   PARTS_BY_BRICKLINK_ID: IndexDefinition
   PARTS_BY_LEGO_ID: IndexDefinition
   PART_VARIANTS_BY_PART: IndexDefinition
   PART_VARIANTS_BY_COLOR: IndexDefinition
+  PART_VARIANTS_BY_PART_AND_COLOR: IndexDefinition
   INV_ITEMS_BY_ITEM: IndexDefinition
   INV_ITEMS_BY_ITEM_AND_COLOR: IndexDefinition
   INV_ITEMS_BY_STORE: IndexDefinition
@@ -21,10 +22,10 @@ const indices: {
   COLOR_BY_BRICKLINK_ID: IndexDefinition
   COLOR_BY_LEGO_ID: IndexDefinition
 } = {
-  STORES_BY_LAST_SCRAPED: {
+  STORES_BY_LAST_SCRAPED_AND_TYPE: {
     store: stores.STORES.name,
-    name: 'lastScraped',
-    keyPath: 'lastScraped'
+    name: 'lastScrapedType',
+    keyPath: ['lastScraped', 'type']
   },
   INV_ITEMS_BY_STORE: {
     store: stores.INVENTORY_ITEMS.name,
@@ -34,7 +35,7 @@ const indices: {
   PARTS_BY_CATEGORY: {
     store: stores.PARTS.name,
     name: 'category',
-    keyPath: 'categoryString'
+    keyPath: 'categoryId'
   },
   PARTS_BY_BRICKLINK_ID: {
     store: stores.PARTS.name,
@@ -51,6 +52,11 @@ const indices: {
     name: 'part',
     keyPath: 'itemId'
   },
+  PART_VARIANTS_BY_PART_AND_COLOR: {
+    store: stores.PART_VARIANTS.name,
+    name: 'partColor',
+    keyPath: ['itemId', 'colorId']
+  },
   PART_VARIANTS_BY_COLOR: {
     store: stores.PART_VARIANTS.name,
     name: 'color',
@@ -64,12 +70,12 @@ const indices: {
   INV_ITEMS_BY_ITEM_AND_COLOR: {
     store: stores.INVENTORY_ITEMS.name,
     name: 'itemColor',
-    keyPath: ['itemId', 'color']
+    keyPath: ['itemId', 'colorId']
   },
   INV_ITEMS_BY_COLORS: {
     store: stores.INVENTORY_ITEMS.name,
     name: 'color',
-    keyPath: 'color'
+    keyPath: 'colorId'
   },
   INV_ITEMS_BY_CONDITION: {
     store: stores.INVENTORY_ITEMS.name,

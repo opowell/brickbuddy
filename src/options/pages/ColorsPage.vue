@@ -18,6 +18,7 @@ import ActiveSearchButton from '../components/ActiveSearchButton.vue';
 import ColorButton from '../components/ColorButton.vue';
 import HomeButton from '../components/HomeButton.vue';
 import { ColorsPageColor } from '../types';
+import NameIdLabel from '../components/NameIdLabel.vue';
 </script>
 
 <template>
@@ -32,10 +33,8 @@ import { ColorsPageColor } from '../types';
           <th>Id</th>
           <th>Name</th>
           <th>Inventory Items</th>
-          <th>BrickLink Id</th>
-          <th>BrickLink Name</th>
-          <th>Lego Id</th>
-          <th>Lego Name</th>
+          <th>BrickLink</th>
+          <th>Lego</th>
         </tr>
       </thead>
       <tbody>
@@ -53,16 +52,10 @@ import { ColorsPageColor } from '../types';
             </button>            
           </td>
           <td>
-            {{ color.brickLinkId }}
+            <NameIdLabel :id="color.brickLinkId" :name="color.brickLinkName" />
           </td>
           <td>
-            {{ color.brickLinkName }}
-          </td>
-          <td>
-            {{ color.legoId }}
-          </td>
-          <td>
-            {{ color.legoName }}
+            <NameIdLabel :id="color.legoId" :name="color.legoName" />
           </td>
         </tr>
       </tbody>

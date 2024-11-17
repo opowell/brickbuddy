@@ -1,7 +1,7 @@
 import { IDBPDatabase, openDB } from "idb";
 import STORES, { StoreDefinition } from './stores'
 import INDICES, { IndexDefinition } from './indices'
-import { ActiveSearch, ActiveSearchButtonActiveSearch, ActiveSearchPageSearch, AddNewStore, CategoriesPageCategory, Category, CategoryPageCategory, CategoryPagePart, Color, ColorPageColor, ColorPageInvItem, ColorsPageColor, InvItem, Item, ItemVariant, ObjectCache, PartPagePart, PartPageVariant, PartPageVariantInvItem, RbColor, Search, SearchBase, SearchesPageSearch, ShippingCost, ShopListItem, Store, StorePageInvItem, StorePagePart, StorePageStore, StoresPageStore, StoreType, UiCategory, UiColor, UiInvItem, UiItem, UiItemVariant, UiSearch, UiShopList, UiStore } from "../types";
+import { ActiveSearch, ActiveSearchButtonActiveSearch, ActiveSearchPageSearch, AddNewStore, BrickLinkItem, CategoriesPageCategory, Category, CategoryPageCategory, CategoryPagePart, Color, ColorPageColor, ColorPageInvItem, ColorsPageColor, InvItem, Item, ItemVariant, LegoItem, ObjectCache, PartPagePart, PartPageVariant, PartPageVariantInvItem, PartsPagePart, PartsPageVariant, PartsPageVariantInvItem, RbColor, Search, SearchBase, SearchesPageSearch, ShippingCost, ShopListItem, Store, StorePageInvItem, StorePageInvItemItem, StorePagePart, StorePageStore, StoresPageStore, StoreType, UiCategory, UiColor, UiInvItem, UiItem, UiItemVariant, UiSearch, UiShopList, UiStore } from "../types";
 import { DB_NAME } from "./constants";
 import { toDataURL } from "../utils";
 import { getCondition } from "./condition";
@@ -13,18 +13,21 @@ export const colors = ref({})
 export const searches = ref<UiSearch[]>([])
 export const shopLists = ref<UiShopList[]>([])
 
-export const openCategory = ref<UiCategory | null>(null)
 export const openSearch = ref<UiSearch | null>(null)
 export const openStore = ref<UiStore | null>(null)
 
 async function getPrices() {
   const db = await getDbConnection()
-  const store: Store = await getFetchStore(db)
-  if (!store) {
-    return
+  const blStore: Store = await getBrickLinkFetchStore(db)
+  if (blStore) {
+    getBrickLinkPrices(db, blStore)
   }
-  await getStorePrices(db, store)
+  const legoStore: Store = await getLegoFetchStore(db)
+  if (legoStore) {
+    getLegoPrices(db, legoStore)
+  }
 }
+
 export async function getStorePrices(db: IDBPDatabase, store: Store) {
   switch (store.type) {
     case StoreType.Lego:
@@ -36,6 +39,7 @@ export async function getStorePrices(db: IDBPDatabase, store: Store) {
       break
   }
 }
+
 let stopFetch: boolean = false
 export const fetchingStoreInventory = ref(false)
 export function stopFetching() {
@@ -66,31 +70,31 @@ function partExcluded(part: Item, search: ActiveSearch) {
   if (
     categories.excluded
   ) {
-    if (categories.ids.includes(part.categoryString)) {
+    if (categories.ids.includes(part.categoryId)) {
       return true
     }
   } else {
     if (
       categories.ids.length > 0 &&
-      !categories.ids.includes(part.categoryString)
+      !categories.ids.includes(part.categoryId)
     ) {
       return true
     }   
   }
   return false
 }
-export async function getPartsPageParts(): Promise<UiItem[]> {
+export async function getPartsPageParts(): Promise<PartsPagePart[]> {
   const db = await getDbConnection()
   const items: Item[] = await db.getAll(STORES.PARTS.name)
   const activeSearch: ActiveSearch = getActiveSearch()
-  const uiItems: UiItem[] = []
+  const uiItems: PartsPagePart[] = []
   for (let i = 0; i < items.length; i++) {
     const part = items[i]
     if (partExcluded(part, activeSearch)) {
       console.log('excluded')
       continue
     }
-    const variants = await loadItemVariants(db, part)
+    const variants = await getPartsPageVariants(db, part)
     if (variants.length === 0) {
       console.log('no variants')
       continue
@@ -98,7 +102,7 @@ export async function getPartsPageParts(): Promise<UiItem[]> {
     uiItems.push({
       ...part,
       variants,
-      category: await getCategory(db, part.categoryString)
+      category: await getCategory(db, part.categoryId)
     })
   }
   return uiItems
@@ -148,7 +152,7 @@ export async function getActiveSearchButtonActiveSearch(): Promise<ActiveSearchB
 async function getCategories(ids: string[]): Promise<Category[]> {
   const db = await getDbConnection()
   return await Promise.all(ids.map(id => {
-     return db.get(STORES.CATEGORIES.name, id)
+     return get(db, STORES.CATEGORIES, id)
   }))
 }
 
@@ -199,8 +203,13 @@ export const excludedCategories = ref<Category[]>([])
 export async function getExcludedCategories(): Promise<Category[] | undefined> {
   return excludedCategories.value
 }
-async function getFetchStore(db: IDBPDatabase): Promise<Store> {
-  const stores = await getAllFromIndex(db, INDICES.STORES_BY_LAST_SCRAPED, undefined, 1)
+async function getBrickLinkFetchStore(db: IDBPDatabase): Promise<Store> {
+  const stores = await getAllFromIndex(db, INDICES.STORES_BY_LAST_SCRAPED_AND_TYPE, [undefined, StoreType.BrickLink], 1)
+  return stores[0]
+}
+
+async function getLegoFetchStore(db: IDBPDatabase): Promise<Store> {
+  const stores = await getAllFromIndex(db, INDICES.STORES_BY_LAST_SCRAPED_AND_TYPE, [undefined, StoreType.Lego], 1)
   return stores[0]
 }
 
@@ -226,20 +235,24 @@ export async function getCategoryImage(db: IDBPDatabase, id: string): Promise<st
     return
   }
   const variant: ItemVariant = await getFromIndex(db, INDICES.PART_VARIANTS_BY_PART, part.itemId)
+  if (!variant) {
+    return
+  }
   return variant.image
 }
 export async function get(db: IDBPDatabase, store: StoreDefinition, query: IDBKeyRange | IDBValidKey) {
   return await db.get(store.name, query)
 }
 
-async function getNumInvItems(db: IDBPDatabase, part: Item): Promise<number> {
-  const items = await getAllFromIndex(db, INDICES.INV_ITEMS_BY_ITEM, part.itemId)
-  return items.length
+async function getNumInvItemsByPart(db: IDBPDatabase, part: Item): Promise<number> {
+  const x = await countFromIndex(db, INDICES.INV_ITEMS_BY_ITEM, part.itemId + '')
+  console.log(part, part.itemId, x)
+  return await countFromIndex(db, INDICES.INV_ITEMS_BY_ITEM, part.itemId + '')
 }
 
 async function getCategoryPagePart(db: IDBPDatabase, part: Item): Promise<CategoryPagePart> {
   const p = await getUiPartFromPart(db, part)
-  const numInvItems = await getNumInvItems(db, part)
+  const numInvItems = await getNumInvItemsByPart(db, part)
   return {
     ...p,
     numInvItems
@@ -312,7 +325,7 @@ export async function getUiPartVariant(partId: number, colorId: number): Promise
     const invItem: InvItem = invItems[i]
     const store = await get(db, STORES.STORES, invItem.storeId)
     const uiItem: UiItem | undefined = await getUiPart(invItem.itemId + '')
-    const color: Color | undefined = await getColor(db, invItem.color)
+    const color: Color | undefined = await getColor(db, invItem.colorId)
     if (!uiItem || !color) {
       continue
     }
@@ -346,9 +359,11 @@ export async function getUiPartVariants(db: IDBPDatabase, id: string, objectCach
 }
 export async function getPartPageVariants(db: IDBPDatabase, id: string, objectCache?: ObjectCache): Promise<PartPageVariant[]> {
   const variants: ItemVariant[] = await getAllFromIndex(db, INDICES.PART_VARIANTS_BY_PART, id)
+  console.log('getPartPageVariants', variants, id)
   const partPageVariants: PartPageVariant[] = []
   for (let i = 0; i < variants.length; i++) {
     const variant = variants[i]
+    console.log(i, variant)
     const partPageVariant = {
       ...variant,
       color: await getColor(db, variant.colorId + ''),
@@ -358,18 +373,37 @@ export async function getPartPageVariants(db: IDBPDatabase, id: string, objectCa
   }
   return partPageVariants
 }
+async function getPartPageInvItems(db: IDBPDatabase, itemId: string): Promise<PartPageVariantInvItem[]> {
+  const invItems = await getAllFromIndex(
+    db,
+    INDICES.INV_ITEMS_BY_ITEM,
+    itemId + ''
+  )
+  const partPageInvItems = []
+  for (let i = 0; i < invItems.length; i++) {
+    const invItem: InvItem = invItems[i]
+    const partPageVariantInvItem: PartPageVariantInvItem = {
+      ...invItem,
+      color: await getColor(db, invItem.colorId + ''),
+      store: await getStore(db, invItem.storeId + '')
+    }
+    partPageInvItems.push(partPageVariantInvItem)
+  }
+  return partPageInvItems
+}
 async function getPartPageVariantInvItems(db: IDBPDatabase, variant: ItemVariant): Promise<PartPageVariantInvItem[]> {
   const invItems = await getAllFromIndex(
     db,
     INDICES.INV_ITEMS_BY_ITEM_AND_COLOR,
     [variant.itemId + '', variant.colorId + '']
   )
+  console.log('getPartPageVariantInvItems', variant.itemId, variant.colorId)
   const partPageVariantInvItems = []
   for (let i = 0; i < invItems.length; i++) {
     const invItem: InvItem = invItems[i]
     const partPageVariantInvItem: PartPageVariantInvItem = {
       ...invItem,
-      colorObject: await getColor(db, invItem.color + ''),
+      color: await getColor(db, invItem.colorId + ''),
       store: await getStore(db, invItem.storeId + '')
     }
     partPageVariantInvItems.push(partPageVariantInvItem)
@@ -385,15 +419,18 @@ export async function getStorePageInvItems(db: IDBPDatabase, id: string): Promis
   const uiInvItems: StorePageInvItem[] = []
   for (let i = 0; i < invItems.length; i++) {
     const invItem = invItems[i]
-    const part = await getStorePagePart(invItem.itemId, objectCache)
+    const part: StorePageInvItemItem | undefined = await getStorePagePart(invItem.itemId, objectCache)
     if (!part) {
       continue
     }
-    const uiInvItem: UiInvItem = {
+    const color = await getColor(db, invItem.colorId)
+    const variant = await getFromIndex(db, INDICES.PART_VARIANTS_BY_PART_AND_COLOR, [part.itemId, color.id])
+    const uiInvItem: StorePageInvItem = {
       ...invItem,
       item: part,
-      colorName: colors.value[invItem.color]?.name,
-      category: await getCategory(db, part.categoryString)
+      colorName: color?.name,
+      category: await getCategory(db, part.categoryId),
+      variant
     }
     uiInvItems.push(uiInvItem)
   }
@@ -406,7 +443,7 @@ export async function getUiPart(id: string, objectCache?: ObjectCache): Promise<
   const uiPart = await getUiPartFromPart(db, part, objectCache)
   return uiPart
 }
-export async function getStorePagePart(id: string, objectCache?: ObjectCache): Promise<StorePagePart | undefined> {
+export async function getStorePagePart(id: string, objectCache?: ObjectCache): Promise<StorePageInvItemItem | undefined> {
   id = id + ''
   const db = await getDbConnection()
   const part: Item = await get(db, STORES.PARTS, id)
@@ -414,7 +451,7 @@ export async function getStorePagePart(id: string, objectCache?: ObjectCache): P
     console.log('getUiPartFromPart: error, no part', part)
     return
   }
-  const variants: UiItemVariant[] = await getAllFromIndex(db, INDICES.PART_VARIANTS_BY_PART, part.itemId + '')
+  const variants: ItemVariant[] = await getAllFromIndex(db, INDICES.PART_VARIANTS_BY_PART, part.itemId + '')
   for (let i = 0; i < variants.length; i++) {
     const variant = variants[i]
     variant.color = await getColor(db, variant.colorId + '')
@@ -427,7 +464,7 @@ export async function getStorePagePart(id: string, objectCache?: ObjectCache): P
   return {
     ...part,
     variants,
-    category: await getCategory(db, part.categoryString)
+    category: await getCategory(db, part.categoryId)
   }
 }
 async function getStore(db: IDBPDatabase, storeId: string): Promise<Store> {
@@ -436,14 +473,17 @@ async function getStore(db: IDBPDatabase, storeId: string): Promise<Store> {
 export async function getPartPagePart(id: string): Promise<PartPagePart | undefined> {
   const db = await getDbConnection()
   const part: Item = await get(db, STORES.PARTS, id)
+  console.log('getPartPagePart', id, part)
   if (!part) {
     return
   }
   const variants: PartPageVariant[] = await getPartPageVariants(db, part.itemId + '')
+  const invItems: PartPageVariantInvItem[] = await getPartPageInvItems(db, part.itemId + '')
   return {
     ...part,
     variants,
-    category: await getCategory(db, part.categoryString)
+    invItems,
+    category: await getCategory(db, part.categoryId)
   }
 }
 
@@ -473,7 +513,7 @@ export async function getInvItemsWithColor(db: IDBPDatabase, id: number): Promis
   for (let i = 0; i < invItems.length; i++) {
     const invItem = invItems[i]
     const part = await getPart(db, Number.parseInt(invItem.itemId))
-    const color = await getColor(db, invItem.color)
+    const color = await getColor(db, invItem.colorId)
     const variant: ItemVariant = await getItemVariant(db, invItem.itemId, id)
     colorPageInvItems.push({
       ...invItem,
@@ -505,7 +545,7 @@ export async function getColorPageColor(id: string): Promise<ColorPageColor> {
   for (let i = 0; i < invItems.length; i++) {
     const invItem = invItems[i]
     const part = await getPart(db, invItem.itemId)
-    const color = await getColor(db, invItem.color)
+    const color = await getColor(db, invItem.colorId)
     const variant: ItemVariant = await getItemVariant(db, invItem.itemId, id)
     const store: Store = await getStore(db, invItem.storeId)
     colorPageInvItems.push({
@@ -529,8 +569,10 @@ export async function getColorsPageColors(): Promise<ColorsPageColor[]> {
   for (let i = 0; i < colors.length; i++) {
     const color = colors[i]
     const numInvItems = await countInvItemsWithColor(db, color.id)
+    if (numInvItems === 0) {
+      continue
+    }
     const invItem: ItemVariant = await getFromIndex(db, INDICES.PART_VARIANTS_BY_COLOR, color.id)
-    // console.log(invItem, color.id)
     const image = invItem?.image
     uiColors.push({
       ...color,
@@ -808,43 +850,39 @@ async function createInitialColors(db: IDBPDatabase) {
 import rbParts from '../rbPartMappings.json'
 export const rbPartsLegoId = {}
 export const rbPartsBrickLinkId = {}
-export async function importRbPartsToMemory() {
-  return await importRbParts()
-}
-async function importRbParts() {
-  console.log('importRbParts')
+export async function importRbParts() {
   for (let i = 0; i < rbParts.length; i++) {
-    // for (let i = 0; i < 30000; i++) {
-      const rbPart = rbParts[i]
-      let legoPartId
-      if (rbPart.external_ids.LEGO) {
-        legoPartId = rbPart.external_ids.LEGO[0]
-      }
-      let brickLinkId
-      if (rbPart.external_ids.BrickLink) {
-        brickLinkId = rbPart.external_ids.BrickLink[0]
-      }
-      const part: Item = {
-        itemId: rbPart.part_num,
-        categoryString: rbPart.part_cat_id,
-        itemName: rbPart.name,
-      legoPartId,
-      brickLinkId,
+    const rbPart = rbParts[i]
+    let legoPartIds: string[] | undefined
+    if (rbPart.external_ids.LEGO) {
+      legoPartIds = rbPart.external_ids.LEGO
     }
-    // console.log(rbPart, part)
-    // await put(db, STORES.PARTS, part)
-    if (legoPartId) {
-      rbPartsLegoId[legoPartId] = part
+    let brickLinkIds: string[] | undefined
+    if (rbPart.external_ids.BrickLink) {
+      brickLinkIds = rbPart.external_ids.BrickLink
     }
-    if (brickLinkId) {
-      rbPartsBrickLinkId[brickLinkId] = part
+    const part: Item = {
+      itemId: rbPart.part_num,
+      categoryId: rbPart.part_cat_id,
+      itemName: rbPart.name,
+      legoPartIds,
+      brickLinkIds,
+    }
+    if (legoPartIds) {
+      legoPartIds.forEach(legoPartId => {
+        rbPartsLegoId[legoPartId] = part
+      })
+    }
+    if (brickLinkIds) {
+      brickLinkIds.forEach(brickLinkId => {
+        rbPartsBrickLinkId[brickLinkId] = part
+      })
     }
   }
 }
 
 import rbCategories from '../rbCategories.json'
 export async function importRbCategories() {
-  console.log('importRbCategories')
   const db = await getDbConnection()
   for (let i = 0; i < rbCategories.length; i++) {
     const rbCategory = rbCategories[i]
@@ -858,6 +896,7 @@ export async function importRbCategories() {
 
 async function createInitialData(db: IDBPDatabase) {
   console.log('createInitialData')
+  await importRbCategories(db)
   await createInitialColors(db)  
   await createInitialStores(db)  
   await addShopListDb("Board games 2024", db)
@@ -867,23 +906,15 @@ async function createInitialData(db: IDBPDatabase) {
 
 async function addItemNoVariant(
   db: IDBPDatabase,
-  categoryString: string,
+  categoryId: string,
   itemId: string,
   itemName: string,
-  itemNo?: string,
-  itemSeq?: number,
-  itemStatus?: string,
-  itemType?: string,
 ) {
   const existingItem = await get(db, STORES.PARTS, itemId)
   let newItem: Item = {
-    categoryString,
+    categoryId,
     itemId,
     itemName,
-    itemNo,
-    itemSeq,
-    itemStatus,
-    itemType,
   }
   if (existingItem) {
     newItem = {
@@ -895,44 +926,31 @@ async function addItemNoVariant(
   return newItem
 }
 export async function addLegoItem(
-  categoryString: string,
-  colorId: number,
-  itemId: string,
-  itemName: string,
+  categoryId: string,
+  colorId: string,
+  item: Item,
+  legoName: string,
   newThumb1Img: string,
   db: IDBPDatabase
 ) {
-  const newItem = await addItemNoVariant(
-    db,
-    categoryString,
-    itemId,
-    itemName,
-  )
-  let variant: ItemVariant = await getItemVariant(db, itemId, colorId)
+  item.legoName = legoName
+  item.categoryId = categoryId
+  await put(db, STORES.PARTS, item)
+
+  let variant: ItemVariant = await getItemVariant(db, item.itemId + '', colorId)
   if (!variant) {
     const image: string = await toDataURL('https:' + newThumb1Img)
     variant = {
-      itemId,
+      itemId: item.itemId + '',
       colorId,
       image
     }
   }
   await db.put(STORES.PART_VARIANTS.name, variant)
-  const uiItem = await getUiPart(Number.parseInt(itemId))
-  if (!uiItem) {
-    return
-  }
-  const uiVariant: UiItemVariant = {
-    ...variant,
-    color: colors.value[variant.colorId],
-    invItems: await getVariantInvItems(db, variant, newItem),
-    item: uiItem
-  }
-  return uiVariant
 }
 
 export async function addItem(
-  categoryString: string,
+  categoryId: string,
   colorId: number,
   itemId: string | number,
   itemName: string,
@@ -946,7 +964,7 @@ export async function addItem(
   itemId = itemId + ''
   const newItem = await addItemNoVariant(
     db,
-    categoryString,
+    categoryId,
     itemId,
     itemName,
   )
@@ -973,18 +991,46 @@ export async function addItem(
   return uiVariant
 }
 
-export async function getPartByBrickLinkId(db: IDBPDatabase, brickLinkId: string): Promise<Item> {
+async function storeItem(db: IDBPDatabase, item: Item) {
+  await put(db, STORES.PARTS, item)
+  if (item.brickLinkIds) {
+    for (let i = 0; i < item.brickLinkIds.length; i++) {
+      const blItem: BrickLinkItem = {
+        brickLinkId: item.brickLinkIds[i],
+        name: '',
+        partId: item.itemId
+      }
+      await put(db, STORES.PARTS_BRICK_LINK, blItem)
+    }
+  }
+  if (item.legoPartIds) {
+    for (let i = 0; i < item.legoPartIds.length; i++) {
+      const legoItem: LegoItem = {
+        legoId: item.legoPartIds[i],
+        name: '',
+        partId: item.itemId
+      }
+      await put(db, STORES.PARTS_LEGO, legoItem)
+    }
+  }
+}
+export async function getBrickLinkItem(db: IDBPDatabase, brickLinkId: string): Promise<BrickLinkItem | undefined> {
   brickLinkId = brickLinkId + ''
-  let item = await getFromIndex(db, INDICES.PARTS_BY_BRICKLINK_ID, brickLinkId)
-  if (!item) {
-    item = rbPartsBrickLinkId[brickLinkId]
+  let blItem: BrickLinkItem = await get(db, STORES.PARTS_BRICK_LINK, brickLinkId)
+  if (!blItem) {
+    const item: Item = rbPartsBrickLinkId[brickLinkId]
     if (item) {
-      await put(db, STORES.PARTS, item)
+      await storeItem(db, item)
     } else {
       console.log('no item', brickLinkId, item, Object.keys(rbPartsBrickLinkId).includes(brickLinkId))
     }
   }
-  return item
+  blItem = await get(db, STORES.PARTS_BRICK_LINK, brickLinkId)
+  if (!blItem) {
+    return
+  }
+  blItem.part = await getPart(db, blItem.partId)
+  return blItem
 }
 
 export async function getPartByLegoId(db: IDBPDatabase, legoId: string): Promise<Item> {
@@ -1002,40 +1048,29 @@ export async function getPartByLegoId(db: IDBPDatabase, legoId: string): Promise
 }
 
 export async function addBrickLinkItem(
-  categoryString: string,
+  categoryId: string,
   colorId: string,
-  itemId: string,
-  itemName: string,
+  blItem: BrickLinkItem,
+  item: Item,
+  brickLinkName: string,
   newThumb1Img: string,
   db: IDBPDatabase
 ) {
-  const newItem = await addItemNoVariant(
-    db,
-    categoryString,
-    itemId,
-    itemName,
-  )
-  let variant: ItemVariant = await getItemVariant(db, itemId, colorId)
+  blItem.name = brickLinkName
+  await put(db, STORES.PARTS_BRICK_LINK, blItem)
+  item.categoryId = categoryId
+  await put(db, STORES.PARTS, item)
+
+  let variant: ItemVariant = await getItemVariant(db, item.itemId, colorId)
   if (!variant) {
     const image: string = await toDataURL('https:' + newThumb1Img)
     variant = {
-      itemId,
+      itemId: item.itemId,
       colorId,
       image
     }
+    await put(db, STORES.PART_VARIANTS, variant)
   }
-  await db.put(STORES.PART_VARIANTS.name, variant)
-  const uiItem = await getUiPart(itemId)
-  if (!uiItem) {
-    return
-  }
-  const uiVariant: UiItemVariant = {
-    ...variant,
-    color: colors.value[variant.colorId],
-    invItems: await getVariantInvItems(db, variant, newItem),
-    item: uiItem
-  }
-  return uiVariant
 }
 
 export async function getDbConnection(): Promise<IDBPDatabase> {
@@ -1187,13 +1222,12 @@ export async function addInvItem(
   db: IDBPDatabase,
   invId: string,
   store: Store,
-  color: string,
+  colorId: string,
   condition: string,
   quantity: number,
   price: number,
   itemId: string,
 ) {
-  color = color + ''
   itemId = itemId + ''
   const invItem: InvItem = {
     storeId: store.sId,
@@ -1202,7 +1236,7 @@ export async function addInvItem(
     condition,
     quantity,
     price,
-    color,
+    colorId,
     condition_New: condition === 'New' ? 1 : 0,
     condition_Used: condition === 'Used' ? 1 : 0,
   }
@@ -1272,7 +1306,7 @@ export async function updateCategory(
   db: IDBPDatabase,
   category: Category
 ) {
-  await db.put(STORES.CATEGORIES.name, category)
+  await put(db, STORES.CATEGORIES, category)
 }
 
 export async function updatePart(
@@ -1339,10 +1373,10 @@ export async function loadModels() {
 export async function getItemVariant(
   db: IDBPDatabase,
   itemId: string,
-  color: string
+  colorId: string
 ) {
-  console.log('getItemVariant', itemId, color)
-  return await get(db, STORES.PART_VARIANTS, [itemId + '', color + ''])
+  console.log('getItemVariant', itemId, colorId)
+  return await get(db, STORES.PART_VARIANTS, [itemId, colorId])
 }
 
 export async function getStoresPageStores(): Promise<StoresPageStore[]> {
@@ -1416,6 +1450,42 @@ async function getVariantInvItems(db: IDBPDatabase, variant: ItemVariant, item: 
     console.log('error getting variant inventory items', e, variant)
   }
 
+  return []
+}
+
+async function getPartsPageVariantInvItems(db: IDBPDatabase, variant: ItemVariant): Promise<PartsPageVariantInvItem[]> {
+  const search = getActiveSearch()
+  const conditions = search.conditions
+  const uiInvItems: PartsPageVariantInvItem[] = []
+  try {
+    const storeItems: InvItem[] = await getAllFromIndex(
+      db,
+      INDICES.INV_ITEMS_BY_ITEM_AND_COLOR,
+      [variant.itemId, variant.colorId]
+    )
+    for (let i = 0; i < storeItems.length; i++) {
+      const storeItem = storeItems[i]
+      if (conditions.excluded) {
+        if (conditions.ids.includes(storeItem.condition)) {
+          continue
+        }
+      } else {
+        if (conditions.ids.length > 0 && !conditions.ids.includes(storeItem.condition)) {
+          continue
+        }
+      }
+      const color = await getColor(db, variant.colorId)
+      if (!color) {
+        continue
+      }
+      uiInvItems.push({
+        ...storeItem,
+      })
+    }
+    return uiInvItems
+  } catch (e) {
+    console.log('error getting variant inventory items', e, variant)
+  }
   return []
 }
 
@@ -1523,7 +1593,7 @@ export async function getSearchesPagesSearches(): Promise<SearchesPageSearch[]> 
 }
 
 export async function getCategory(db: IDBPDatabase, id: string): Promise<Category> {
-  return await get(db, STORES.CATEGORIES, id + '')
+  return await get(db, STORES.CATEGORIES, id)
 }
 
 async function loadItemVariants(db: IDBPDatabase, item: Item) {
@@ -1554,7 +1624,36 @@ async function loadItemVariants(db: IDBPDatabase, item: Item) {
   return []
 }
 
-async function getAllFromIndex(db: IDBPDatabase, index: IndexDefinition, query?: string | (string | number)[] | number, count?: number) {
+async function getPartsPageVariants(db: IDBPDatabase, item: Item): Promise<PartsPageVariant[]> {
+  try {
+    const variants: ItemVariant[] = await getAllFromIndex(
+      db,
+      INDICES.PART_VARIANTS_BY_PART,
+      item.itemId
+    )
+    const partsPageVariants: PartsPageVariant[] = []
+    for (let i = 0; i < variants.length; i++) {
+      const variant = variants[i]
+      const invItems = await getPartsPageVariantInvItems(db, variant)
+      console.log(i, variant, invItems)
+      if (invItems.length === 0) {
+        continue
+      }
+      partsPageVariants.push({
+        ...variant,
+        item,
+        color: await getColor(db, variant.colorId),
+        invItems
+      })
+    }
+    return partsPageVariants
+  } catch (e) {
+    console.log('error getting store items', e, item.itemId)
+  }
+  return []
+}
+
+async function getAllFromIndex(db: IDBPDatabase, index: IndexDefinition, query?: string | (string | number | undefined)[] | number, count?: number) {
   return db.getAllFromIndex(index.store, index.name, query, count)
 }
 

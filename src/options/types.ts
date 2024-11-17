@@ -26,19 +26,36 @@ export interface Store extends AddNewStore {
   type: StoreType
 }
 
+export interface BrickLinkItem {
+  brickLinkId: string
+  name: string
+  partId: string
+  part?: Item
+}
+export interface LegoItem {
+  legoId: string
+  name: string
+  partId: string
+}
 export interface Item {
-  categoryString: string
+  categoryId: string
   itemId: string
   itemName: string
-  legoPartId?: string
-  legoName?: string
-  brickLinkId?: string
-  brickLinkName?: string
+  legoPartIds?: string[]
+  brickLinkIds?: string[]
+}
+export interface StorePageInvItemItem extends Item {
+  variants: ItemVariant[]
 }
 export interface ItemVariant {
   itemId: string
   colorId: string
   image: string
+}
+export interface PartsPageVariant extends ItemVariant {
+  item: Item
+  color: Color
+  invItems: PartsPageVariantInvItem[]
 }
 
 export interface ObjectCache {
@@ -62,10 +79,14 @@ export interface PartPageVariant extends ItemVariant {
 }
 export interface PartPageVariantInvItem extends InvItem {
   store: Store
-  colorObject: Color
+  color: Color
 }
 export interface UiItem extends Item {
   variants: UiItemVariant[]
+  category?: Category
+}
+export interface PartsPagePart extends Item {
+  variants: PartsPageVariant[]
   category?: Category
 }
 export interface StorePagePart extends Item {
@@ -74,6 +95,7 @@ export interface StorePagePart extends Item {
 }
 export interface PartPagePart extends Item {
   variants: PartPageVariant[]
+  invItems: PartPageVariantInvItem[]
   category: Category
 }
 export interface InvItem {
@@ -83,7 +105,7 @@ export interface InvItem {
   condition: string
   quantity: number
   price: number
-  color: string
+  colorId: string
   condition_New: number
   condition_Used: number
 }
@@ -94,11 +116,14 @@ export interface UiInvItem extends InvItem {
   colorName: string
 }
 
+export interface PartsPageVariantInvItem extends InvItem {
+}
+
 export interface StorePageInvItem extends InvItem {
-  item: Item
-  store: Store
+  item: StorePageInvItemItem
   colorName: string
   category: Category
+  variant: ItemVariant
 }
 
 export interface ColorPageInvItem extends InvItem {

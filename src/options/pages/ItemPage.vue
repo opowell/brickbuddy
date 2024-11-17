@@ -3,15 +3,17 @@ import HomeButton from '../components/HomeButton.vue';
 import PartsButton from '../components/PartsButton.vue';
 import PartVariantButton from '../components/PartVariantButton.vue';
 import { getPartPagePart } from '../idb/idb';
-import type { ItemVariant, PartPagePart, PartPageVariant, PartPageVariantInvItem, UiInvItem, UiItem, UiItemVariant } from '../types'
+import type { PartPagePart, PartPageVariant, PartPageVariantInvItem, UiInvItem, UiItem, UiItemVariant } from '../types'
 import ActiveSearchButton from '../components/ActiveSearchButton.vue';
 import CategoryButton from '../components/CategoryButton.vue';
-interface VariantWithPriceQuantity extends ItemVariant {
+import { formatInteger } from '../utils';
+interface VariantWithPriceQuantity extends PartPageVariant {
   price: number
   maxPrice: number
   quantity: number
 }
 import { useRoute } from 'vue-router'
+import ColorButton from '../components/ColorButton.vue';
 const route = useRoute()
 
 const item = ref<PartPagePart | undefined>(undefined)
@@ -105,6 +107,7 @@ const invItems = computed<PartPageVariantInvItem[] | undefined>(() => {
           <th>Color</th>
           <th>Price</th>
           <th>Quantity</th>
+          <th>Inv. Items</th>
         </tr>
       </thead>
       <tbody>
@@ -115,16 +118,15 @@ const invItems = computed<PartPageVariantInvItem[] | undefined>(() => {
             </PartVariantButton>
           </td>
           <td>
-            <button @click="$emit('goColor', variant.color)">
-              {{ variant.color?.name }}
-            </button>
+            <ColorButton :color="variant.color" />
           </td>
           <td v-if="variant.price === variant.maxPrice">{{ variant.price }}</td>
           <td v-else>{{ variant.price }}&nbsp;-&nbsp;{{ variant.maxPrice }}</td>
-          <td>{{ variant.quantity }}</td>
+          <td>{{ formatInteger(variant.quantity) }}</td>
+          <td>{{ formatInteger(variant.invItems.length) }}</td>
         </tr>
       </tbody>
     </table>
-    <StoreItemsTable :items="invItems" show-color />
+    <StoreItemsTable v-if="invItems" :items="invItems" show-color />
   </div>
 </template>
