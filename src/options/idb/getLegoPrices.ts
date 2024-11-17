@@ -1,6 +1,6 @@
 import { IDBPDatabase } from "idb";
-import { Category, Color, Item, Store } from "../types";
-import { addCategory, addColor, addInvItem, addItem, addLegoItem, getCategory, getFromIndex, getPartByLegoId, updateCategory, updateStore } from "./idb";
+import { Category, Color, Item, LegoItem, Store } from "../types";
+import { addCategory, addColor, addInvItem, addItem, addLegoItem, getCategory, getFromIndex, getLegoItem, getPartByLegoId, updateCategory, updateStore } from "./idb";
 import * as math from 'mathjs'
 import INDICES from './indices'
 import stores from "./stores";
@@ -67,7 +67,12 @@ export async function getLegoPrices(db: IDBPDatabase, store: Store) {
         console.log('no color?!', legoInvItem.facets.color.key)
       }
       const colorId = color?.id || legoInvItem.facets.color.key
-      const item: Item = await getPartByLegoId(db, legoInvItem.designId)
+      const legoItem: LegoItem | undefined = await getLegoItem(db, legoInvItem.designId)
+      if (!legoItem) {
+        continue
+      }
+      const item = legoItem.part
+      delete legoItem.part
       if (!item) {
         console.log('no item, skipping', legoInvItem, legoInvItem.designId)
         continue
@@ -79,8 +84,9 @@ export async function getLegoPrices(db: IDBPDatabase, store: Store) {
         await updateCategory(db, category)
       }
       await addLegoItem(
-        category.id,
+        item.categoryId + '',
         colorId + '',
+        legoItem,
         item,
         legoInvItem.name,
         '//www.lego.com/cdn/product-assets/element.img.photoreal.192x192/' + legoInvItem.id + '.jpg',

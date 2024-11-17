@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { getPartsPageParts, startPartScraping, stopPartScrapingFn, importRbParts } from '../idb/idb';
+import { getPartsPageParts, startPartScraping, stopPartScrapingFn, importRbPartsToMemoery } from '../idb/idb';
 import type { UiItem } from '../types';
 import PartButton from '../components/PartButton.vue';
 const search = ref('')
@@ -28,7 +28,7 @@ import NameIdLabel from '../components/NameIdLabel.vue';
     <ActiveSearchButton />
     <h4>Parts ({{ filteredParts.length }} / {{ items.length }})</h4>
     <div>Scrape details from Rebrickable: <button @click="startPartScraping">Start</button><button @click="stopPartScrapingFn">Stop</button></div>
-    <div><button @click="importRbParts">Import from Rb JSON</button></div>
+    <div><button @click="importRbPartsToMemoery">Import from Rb JSON</button></div>
     <div>Search: <input v-model="search"></div>
     <table>
       <thead>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import HomeButton from '../components/HomeButton.vue';
 import StoresButton from '../components/StoresButton.vue';
-import { ActiveSearch, StorePageInvItem, StorePageStore, type UiInvItem } from '../types';
+import { ActiveSearch, StorePageInvItem, StorePageStore, StoreType, type UiInvItem } from '../types';
 import { useRoute } from 'vue-router'
 import { getActiveSearch, getDbConnection, getStorePageStore, getStorePrices } from '../idb/idb';
 import PartButton from '../components/PartButton.vue';
@@ -40,7 +40,13 @@ function getVariant(invItem: StorePageInvItem) {
 // URL for cart, includes weights:
 // https://store.bricklink.com/ajax/clone/cart/list.ajax?sid=2066952&sum=0&_=1730928837742
 const url = computed(() => {
-  return 'https://store.bricklink.com/' + store.value?.slug
+  if (!store.value) {
+    return
+  }
+  if (store.value.type === StoreType.BrickLink) {
+    return 'https://store.bricklink.com/' + store.value?.slug
+  }
+  return store.value.slug
 })
 </script>
 
