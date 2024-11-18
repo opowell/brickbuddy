@@ -209,8 +209,8 @@ async function getBrickLinkFetchStore(db: IDBPDatabase): Promise<Store> {
 
   const stores = await getAllFromIndex(
     db,
-    INDICES.STORES_BY_LAST_SCRAPED_AND_TYPE,
-    IDBKeyRange.bound([oneYearAgo, StoreType.BrickLink], [new Date(), StoreType.BrickLink]),
+    INDICES.STORES_BY_TYPE_AND_LAST_SCRAPED,
+    IDBKeyRange.bound([StoreType.BrickLink, oneYearAgo], [StoreType.BrickLink, new Date()]),
     1
   )
   return stores[0]
@@ -222,8 +222,8 @@ async function getLegoFetchStore(db: IDBPDatabase): Promise<Store> {
 
   const stores = await getAllFromIndex(
     db,
-    INDICES.STORES_BY_LAST_SCRAPED_AND_TYPE,
-    IDBKeyRange.bound([oneYearAgo, StoreType.Lego], [new Date(), StoreType.Lego]),
+    INDICES.STORES_BY_TYPE_AND_LAST_SCRAPED,
+    IDBKeyRange.bound([StoreType.Lego, oneYearAgo], [StoreType.Lego, new Date()]),
     1
   )
   return stores[0]
@@ -375,11 +375,9 @@ export async function getUiPartVariants(db: IDBPDatabase, id: string, objectCach
 }
 export async function getPartPageVariants(db: IDBPDatabase, id: string, objectCache?: ObjectCache): Promise<PartPageVariant[]> {
   const variants: ItemVariant[] = await getAllFromIndex(db, INDICES.PART_VARIANTS_BY_PART, id)
-  console.log('getPartPageVariants', variants, id)
   const partPageVariants: PartPageVariant[] = []
   for (let i = 0; i < variants.length; i++) {
     const variant = variants[i]
-    console.log(i, variant)
     const partPageVariant = {
       ...variant,
       color: await getColor(db, variant.colorId + ''),
@@ -413,7 +411,6 @@ async function getPartPageVariantInvItems(db: IDBPDatabase, variant: ItemVariant
     INDICES.INV_ITEMS_BY_ITEM_AND_COLOR,
     [variant.itemId + '', variant.colorId + '']
   )
-  console.log('getPartPageVariantInvItems', variant.itemId, variant.colorId)
   const partPageVariantInvItems = []
   for (let i = 0; i < invItems.length; i++) {
     const invItem: InvItem = invItems[i]
@@ -869,7 +866,7 @@ async function createInitialColors(db: IDBPDatabase) {
 import rbParts from '../rbPartMappings.json'
 export const rbPartsLegoId = {}
 export const rbPartsBrickLinkId = {}
-export async function importRbPartsToMemoery() {
+export async function importRbPartsToMemory() {
   for (let i = 0; i < rbParts.length; i++) {
     const rbPart = rbParts[i]
     let legoPartIds: string[] | undefined
@@ -1060,7 +1057,7 @@ export async function getLegoItem(db: IDBPDatabase, legoId: string): Promise<Leg
     if (item) {
       await storeItem(db, item)
     } else {
-      console.log('no item', legoId, item, Object.keys(rbPartsLegoId).includes(legoId))
+      // console.log('no item', legoId, item, Object.keys(rbPartsLegoId).includes(legoId))
     }
   }
   blItem = await get(db, STORES.PARTS_LEGO, legoId)
@@ -1194,7 +1191,7 @@ export async function updateStore(db: IDBPDatabase, store: Store | UiStore) {
       slug: store.slug,
       type: store.type
     }
-    db.put(STORES.STORES.name, storeObj)
+    await db.put(STORES.STORES.name, storeObj)
   } catch (e) {
     console.log(store, e)
   }
@@ -1672,7 +1669,6 @@ async function getPartsPageVariants(db: IDBPDatabase, item: Item): Promise<Parts
     for (let i = 0; i < variants.length; i++) {
       const variant = variants[i]
       const invItems = await getPartsPageVariantInvItems(db, variant)
-      console.log(i, variant, invItems)
       if (invItems.length === 0) {
         continue
       }

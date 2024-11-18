@@ -1,7 +1,7 @@
 # Brick Buddy
 
 ## TODO
-- matching of BL/LG colors.
+- sort lists by name.
 - active search: include/exclude stores/colors/categories/parts.
 - parallelization of db calls
 - paging of lists

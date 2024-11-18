@@ -6,7 +6,7 @@ export interface IndexDefinition {
   keyPath: string | string[]
 }
 const indices: {
-  STORES_BY_LAST_SCRAPED_AND_TYPE: IndexDefinition
+  STORES_BY_TYPE_AND_LAST_SCRAPED: IndexDefinition
   PARTS_BY_CATEGORY: IndexDefinition
   PARTS_BY_BRICKLINK_ID: IndexDefinition
   PARTS_BY_LEGO_ID: IndexDefinition
@@ -22,10 +22,10 @@ const indices: {
   COLOR_BY_BRICKLINK_ID: IndexDefinition
   COLOR_BY_LEGO_ID: IndexDefinition
 } = {
-  STORES_BY_LAST_SCRAPED_AND_TYPE: {
+  STORES_BY_TYPE_AND_LAST_SCRAPED: {
     store: stores.STORES.name,
-    name: 'lastScrapedType',
-    keyPath: ['lastScraped', 'type']
+    name: 'typeLastScraped',
+    keyPath: ['type', 'lastScraped']
   },
   INV_ITEMS_BY_STORE: {
     store: stores.INVENTORY_ITEMS.name,

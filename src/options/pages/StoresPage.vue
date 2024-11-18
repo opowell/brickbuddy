@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { StoresPageStore } from '../types';
+import { StoreType, type StoresPageStore } from '../types';
 import StoreButton from '../components/StoreButton.vue';
 import { stopFetching, startFetching, addNewStore, getStoresPageStores } from '../idb/idb'
 const newStoreId = ref('')
@@ -43,6 +43,7 @@ import ActiveSearchButton from '../components/ActiveSearchButton.vue';
     <table>
       <thead>
         <tr>
+          <th>Type</th>
           <th>Name</th>
           <th>Inventory</th>
           <th>Fetch Index</th>
@@ -51,6 +52,7 @@ import ActiveSearchButton from '../components/ActiveSearchButton.vue';
       </thead>
       <tbody>
         <tr v-for="store in stores" :key="store.sId">
+          <td>{{ store.type === StoreType.BrickLink ? 'BrickLink' : 'Lego' }}</td>
           <td>
             <StoreButton :store="store" />
           </td>

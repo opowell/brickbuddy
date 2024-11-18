@@ -38,11 +38,11 @@ export async function getBrickLinkPrices(db: IDBPDatabase, store: Store) {
   }
   const json = await response.json()
   if (!json?.result) {
-    updateStore(db, store)
+    await updateStore(db, store)
     return
   }
   store.fetchMaxPageIndex = Math.ceil(json.result.totalLotCnt / 100) + 1
-  updateStore(db, store)
+  await updateStore(db, store)
   const partCategories = json.result.categories.find(c => c.type === 'P')
   const blCategories = {}
   if (partCategories) {
@@ -79,7 +79,6 @@ export async function getBrickLinkPrices(db: IDBPDatabase, store: Store) {
             console.log('NO BL NAME!', category, blItem, blCategories, resultItem.categoryString)
           }
           category.brickLinkName = blCategoryName
-          console.log(category, item.categoryId, blCategoryName, resultItem.categoryString)
           await updateCategory(db, category)
         }
         await addBrickLinkItem(
@@ -91,7 +90,6 @@ export async function getBrickLinkPrices(db: IDBPDatabase, store: Store) {
           resultItem.newThumb1Img,
           db
         )
-        console.log(i, j, 'add inv', store, resultItem.invID, color.id)
         await addInvItem(
           db,
           resultItem.invID + '',

@@ -53,11 +53,11 @@ export async function getLegoPrices(db: IDBPDatabase, store: Store) {
   const json = await response.json()
   const searchElements = json?.data?.searchElements
   if (!searchElements) {
-    updateStore(db, store)
+    await updateStore(db, store)
     return
   }
   store.fetchMaxPageIndex = Math.ceil(searchElements.total / 400) + 1
-  updateStore(db, store)
+  await updateStore(db, store)
   const results = searchElements.results
   for (let i = 0; i < results.length; i++) {
     const legoInvItem = results[i]
