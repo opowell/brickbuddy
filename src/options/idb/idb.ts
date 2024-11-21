@@ -1,3 +1,5 @@
+import { categories } from './idb';
+import { StorePageInvItem } from './../types';
 import { IDBPDatabase, openDB } from "idb";
 import STORES, { StoreDefinition } from './stores'
 import INDICES, { IndexDefinition } from './indices'
@@ -106,6 +108,7 @@ function partExcluded(part: Item, search: ActiveSearch) {
 }
 export async function getPartsPageParts(): Promise<PartsPagePart[]> {
   const db = await getDbConnection()
+  const objectCache = new ObjectCacheClass(db)
   const items: Item[] = await db.getAll(STORES.PARTS.name)
   const activeSearch: ActiveSearch = getActiveSearch()
   const uiItems: PartsPagePart[] = []
@@ -115,7 +118,7 @@ export async function getPartsPageParts(): Promise<PartsPagePart[]> {
       console.log('excluded')
       continue
     }
-    const variants = await getPartsPageVariants(db, part)
+    const variants = await getPartsPageVariants(db, part, objectCache)
     if (variants.length === 0) {
       console.log('no variants')
       continue
@@ -123,7 +126,7 @@ export async function getPartsPageParts(): Promise<PartsPagePart[]> {
     uiItems.push({
       ...part,
       variants,
-      category: await getCategory(db, part.categoryId)
+      category: await objectCache.getCategory(part.categoryId)
     })
   }
   return uiItems
@@ -447,33 +450,32 @@ async function getPartPageVariantInvItems(db: IDBPDatabase, variant: ItemVariant
   return partPageVariantInvItems
 }
 export async function getStorePageInvItems(db: IDBPDatabase, id: string): Promise<StorePageInvItem[]> {
+  console.log('getStorePageInvItems')
   const search = getActiveSearch()
-  const objectCache: ObjectCache = {
-    colors: new Map<string, UiColor>,
-  }
+  const objectCache = new ObjectCacheClass(db)
   const invItems: InvItem[] = await getAllFromIndex(db, INDICES.INV_ITEMS_BY_STORE, id)
-  const uiInvItems: StorePageInvItem[] = []
-  for (let i = 0; i < invItems.length; i++) {
-    const invItem = invItems[i]
-    const part: StorePageInvItemItem | undefined = await getStorePagePart(invItem.itemId, objectCache)
+  return (await Promise.all(invItems.map(async invItem => {
+    const part = await objectCache.getStorePagePart(invItem.itemId)
     if (!part) {
-      continue
+      return
     }
-    const color = await getColor(db, invItem.colorId)
+    const color = await objectCache.getColor(invItem.colorId)
     if (!color) {
-      continue
+      return
+    }
+    const category = await objectCache.getCategory(part.categoryId)
+    if (!category) {
+      return
     }
     const variant = await getFromIndex(db, INDICES.PART_VARIANTS_BY_PART_AND_COLOR, [part.itemId, color.id])
-    const uiInvItem: StorePageInvItem = {
+    return {
       ...invItem,
       item: part,
       colorName: color?.name,
-      category: await getCategory(db, part.categoryId),
+      category,
       variant
     }
-    uiInvItems.push(uiInvItem)
-  }
-  return uiInvItems
+  }))).filter(i => i !== undefined)
 }
 export async function getUiPart(id: string, objectCache?: ObjectCache): Promise<UiItem | undefined> {
   id = id + ''
@@ -482,7 +484,7 @@ export async function getUiPart(id: string, objectCache?: ObjectCache): Promise<
   const uiPart = await getUiPartFromPart(db, part, objectCache)
   return uiPart
 }
-export async function getStorePagePart(id: string, objectCache?: ObjectCache): Promise<StorePageInvItemItem | undefined> {
+export async function getStorePagePart(id: string, objectCache?: ObjectCacheClass): Promise<StorePageInvItemItem | undefined> {
   id = id + ''
   const db = await getDbConnection()
   const part: Item = await get(db, STORES.PARTS, id)
@@ -490,10 +492,13 @@ export async function getStorePagePart(id: string, objectCache?: ObjectCache): P
     console.log('getUiPartFromPart: error, no part', part)
     return
   }
+  if (!objectCache) {
+    objectCache = new ObjectCacheClass(db)
+  }
   const variants: ItemVariant[] = await getAllFromIndex(db, INDICES.PART_VARIANTS_BY_PART, part.itemId + '')
   for (let i = 0; i < variants.length; i++) {
     const variant = variants[i]
-    variant.color = await getColor(db, variant.colorId + '')
+    variant.color = await objectCache.getColor(variant.colorId + '')
     variant.invItems = await getAllFromIndex(
       db,
       INDICES.INV_ITEMS_BY_ITEM_AND_COLOR,
@@ -503,7 +508,7 @@ export async function getStorePagePart(id: string, objectCache?: ObjectCache): P
   return {
     ...part,
     variants,
-    category: await getCategory(db, part.categoryId)
+    category: await objectCache.getCategory(part.categoryId)
   }
 }
 async function getStore(db: IDBPDatabase, storeId: string): Promise<Store> {
@@ -640,6 +645,7 @@ export async function getUiColors(): Promise<UiColor[]> {
   return uiColors
 }
 export async function getStorePageStore(id: string): Promise<StorePageStore | undefined> {
+  console.log('getStorePageStore')
   const db = await getDbConnection()
   id = id + ''
   const store: Store = await get(db, STORES.STORES, id)
@@ -651,6 +657,7 @@ export async function getStorePageStore(id: string): Promise<StorePageStore | un
     ...store,
     items: invItems
   }
+  console.log('getStorePageStore finished')
   return uiStore
 }
 export async function getDbCreateInitialStores() {
@@ -921,6 +928,7 @@ export async function importRbPartsToMemory() {
 }
 
 import rbCategories from '../rbCategories.json'
+import ObjectCacheClass from './ObjectCache';
 export async function importRbCategories() {
   const db = await getDbConnection()
   for (let i = 0; i < rbCategories.length; i++) {
@@ -1516,8 +1524,11 @@ async function getVariantInvItems(db: IDBPDatabase, variant: ItemVariant, item: 
   return []
 }
 
-async function getPartsPageVariantInvItems(db: IDBPDatabase, variant: ItemVariant): Promise<PartsPageVariantInvItem[]> {
+async function getPartsPageVariantInvItems(db: IDBPDatabase, variant: ItemVariant, objectCache?: ObjectCacheClass): Promise<PartsPageVariantInvItem[]> {
   const search = getActiveSearch()
+  if (!objectCache) {
+    objectCache = new ObjectCacheClass(db)
+  }
   const conditions = search.conditions
   const uiInvItems: PartsPageVariantInvItem[] = []
   try {
@@ -1537,7 +1548,7 @@ async function getPartsPageVariantInvItems(db: IDBPDatabase, variant: ItemVarian
           continue
         }
       }
-      const color = await getColor(db, variant.colorId)
+      const color = await objectCache.getColor(variant.colorId)
       if (!color) {
         continue
       }
@@ -1687,7 +1698,10 @@ async function loadItemVariants(db: IDBPDatabase, item: Item) {
   return []
 }
 
-async function getPartsPageVariants(db: IDBPDatabase, item: Item): Promise<PartsPageVariant[]> {
+async function getPartsPageVariants(db: IDBPDatabase, item: Item, objectCache?: ObjectCacheClass): Promise<PartsPageVariant[]> {
+  if (!objectCache) {
+    objectCache = new ObjectCacheClass(db)
+  }
   try {
     const variants: ItemVariant[] = await getAllFromIndex(
       db,
@@ -1697,14 +1711,14 @@ async function getPartsPageVariants(db: IDBPDatabase, item: Item): Promise<Parts
     const partsPageVariants: PartsPageVariant[] = []
     for (let i = 0; i < variants.length; i++) {
       const variant = variants[i]
-      const invItems = await getPartsPageVariantInvItems(db, variant)
+      const invItems = await getPartsPageVariantInvItems(db, variant, objectCache)
       if (invItems.length === 0) {
         continue
       }
       partsPageVariants.push({
         ...variant,
         item,
-        color: await getColor(db, variant.colorId),
+        color: await objectCache.getColor(variant.colorId),
         invItems
       })
     }

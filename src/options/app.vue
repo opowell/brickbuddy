@@ -3,7 +3,7 @@ import { startFetching, loadModels, importRbPartsToMemory, importRbCategories } 
 onMounted(async () => {
   await importRbPartsToMemory()
   await loadModels()
-  startFetching()
+  // startFetching()
 })
 </script>
 <template>

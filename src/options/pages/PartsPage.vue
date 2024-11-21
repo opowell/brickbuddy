@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { getPartsPageParts, startPartScraping, stopPartScrapingFn, importRbPartsToMemory } from '../idb/idb';
-import type { UiItem } from '../types';
+import type { PartsPagePart, UiItem } from '../types';
 import PartButton from '../components/PartButton.vue';
 const search = ref('')
-const items = ref<UiItem[] | undefined>(undefined)
+const items = ref<PartsPagePart[] | undefined>(undefined)
 onMounted(async () => {
   items.value = await getPartsPageParts()
 })
@@ -11,7 +11,7 @@ const filteredParts = computed(() => {
   if (!items.value) {
     return []
   }
-  return items.value.filter((item: UiItem) => item.itemName.includes(search.value))
+  return items.value.filter((item: PartsPagePart) => item.itemName.includes(search.value))
 })
 import HomeButton from '../components/HomeButton.vue'
 import CategoryButton from '../components/CategoryButton.vue';

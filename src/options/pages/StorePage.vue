@@ -48,6 +48,17 @@ const url = computed(() => {
   }
   return store.value.slug
 })
+const items = computed(() => {
+  if (!store.value) {
+    return []
+  }
+  return store.value.items.map((item) => {
+    return {
+      ...item,
+      priceScore: 1
+    }
+  })
+})
 </script>
 
 
@@ -73,10 +84,12 @@ const url = computed(() => {
           <th>Category</th>
           <th>Quantity</th>
           <th>Price</th>
+          <th>Price Score</th>
+          <th>Actions</th>
         </tr>
       </thead>
       <tbody>
-        <tr v-for="item in store.items" :key="item.invId">
+        <tr v-for="item in items" :key="item.invId">
           <td><img
             :src="getImageSrc(item)"
             @click="goVariant(item)"
@@ -89,6 +102,8 @@ const url = computed(() => {
           <td><CategoryButton :category="item.category" /></td>
           <td>{{ formatInteger(item.quantity) }}</td>
           <td>{{ formatAmount(item.price*store.priceAdjustment/100) }}</td>
+          <td>{{ item.priceScore }}</td>
+          <td><input type="number"><button>Add to cart</button></td>
         </tr>
       </tbody>
     </table>
@@ -97,3 +112,8 @@ const url = computed(() => {
     Loading...
   </div>
 </template>
+
+<style lang="css" scoped>
+input {
+  width: 70px;
+}</style>
