@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import HomeButton from '../components/HomeButton.vue';
-import { getActiveSearchPageSearch } from '../idb/idb';
+import { getActiveSearchPageSearch, setPriceScoreQuantity } from '../idb/idb';
 
 import { ActiveSearchPageSearch } from '../types';
 const search = ref<ActiveSearchPageSearch | undefined>(undefined)
+const priceScoreQuantity = ref<number>(100)
 onMounted(async () => {
   search.value = await getActiveSearchPageSearch()
+  priceScoreQuantity.value = search.value.priceScoreQuantity
 })
 import CategoryButton from '../components/CategoryButton.vue';
 import ConditionButton from '../components/ConditionButton.vue';
@@ -15,6 +17,8 @@ import ConditionButton from '../components/ConditionButton.vue';
   <div v-if="search">
     <HomeButton />
     <h4>Active Search</h4>
+    <div>Price score quantity: <input v-model="priceScoreQuantity" type="number">
+    <button @click="setPriceScoreQuantity(priceScoreQuantity)">Set</button></div>
     <template v-if="search.categories.ids.length">
       <div>Categories {{ '(' + search.categories.ids.length + ')' }}</div>
       <table>

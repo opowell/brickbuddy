@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { UiShopList } from '../types'
-import { shopLists } from '../idb/idb'
+import { lists } from '../idb/idb'
 import HomeButton from '../components/HomeButton.vue';
 const newListName = ref('')
 function open(list: UiShopList) {
@@ -23,7 +23,7 @@ function add(name: string) {
         </tr>
       </thead>
       <tbody>
-        <tr v-for="list in shopLists" :key="list.id">
+        <tr v-for="list in lists" :key="list.id">
           <td>
             <button @click="open(list)">
               {{ list.name }}

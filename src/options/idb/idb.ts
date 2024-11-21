@@ -1,7 +1,7 @@
 import { IDBPDatabase, openDB } from "idb";
 import STORES, { StoreDefinition } from './stores'
 import INDICES, { IndexDefinition } from './indices'
-import { ActiveSearch, ActiveSearchButtonActiveSearch, ActiveSearchPageSearch, AddNewStore, BrickLinkItem, CategoriesPageCategory, Category, CategoryPageCategory, CategoryPagePart, Color, ColorPageColor, ColorPageInvItem, ColorsPageColor, InvItem, Item, ItemVariant, LegoItem, ObjectCache, PartPagePart, PartPageVariant, PartPageVariantInvItem, PartsPagePart, PartsPageVariant, PartsPageVariantInvItem, RbColor, Search, SearchBase, SearchesPageSearch, ShippingCost, ShopListItem, Store, StorePageInvItem, StorePageInvItemItem, StorePagePart, StorePageStore, StoresPageStore, StoreType, UiCategory, UiColor, UiInvItem, UiItem, UiItemVariant, UiSearch, UiShopList, UiStore } from "../types";
+import { ActiveSearch, ActiveSearchButtonActiveSearch, ActiveSearchPageSearch, AddNewStore, BrickLinkItem, CategoriesPageCategory, Category, CategoryPageCategory, CategoryPagePart, Color, ColorPageColor, ColorPageInvItem, ColorsPageColor, HomeData, InvItem, Item, ItemVariant, LegoItem, ObjectCache, PartPagePart, PartPageVariant, PartPageVariantInvItem, PartsPagePart, PartsPageVariant, PartsPageVariantInvItem, RbColor, Search, SearchBase, SearchesPageSearch, ShippingCost, ShopListItem, Store, StorePageInvItem, StorePageInvItemItem, StorePagePart, StorePageStore, StoresPageStore, StoreType, UiCategory, UiColor, UiInvItem, UiItem, UiItemVariant, UiSearch, UiShopList, UiStore } from "../types";
 import { DB_NAME } from "./constants";
 import { toDataURL } from "../utils";
 import { getCondition } from "./condition";
@@ -11,7 +11,7 @@ import { getLegoPrices } from "./getLegoPrices";
 export const categories = ref<Map<string, UiCategory>>(new Map<string, UiCategory>())
 export const colors = ref({})
 export const searches = ref<UiSearch[]>([])
-export const shopLists = ref<UiShopList[]>([])
+export const lists = ref<UiShopList[]>([])
 
 export const openSearch = ref<UiSearch | null>(null)
 export const openStore = ref<UiStore | null>(null)
@@ -65,6 +65,27 @@ export async function startFetching() {
   }, 30000 + Math.floor(Math.random() * 30000))
 }
 
+async function count(db: IDBPDatabase, storeDefinition: StoreDefinition) {
+  return await db.count(storeDefinition.name)
+}
+export async function setPriceScoreQuantity(quantity: number) {
+  const search = getActiveSearch()
+  search.priceScoreQuantity = quantity
+  storeActiveSearch(search)
+}
+export async function getHomeData(): Promise<HomeData> {
+  const db = await getDbConnection()
+  return {
+    stores: await count(db, STORES.STORES),
+    colors: await count(db, STORES.COLORS),
+    categories: await count(db, STORES.CATEGORIES),
+    parts: await count(db, STORES.PARTS),
+    conditions: 2,
+    lists: await count(db, STORES.LISTS),
+    searches: await count(db, STORES.SEARCHES),
+    carts: await count(db, STORES.CARTS),
+  }
+}
 function partExcluded(part: Item, search: ActiveSearch) {
   const categories = search.categories
   if (
@@ -128,7 +149,8 @@ export function getActiveSearch(): ActiveSearch {
     parts: {
       ids: [],
       excluded: false
-    }
+    },
+    priceScoreQuantity: 100
   }
   let storageValue = localStorage.getItem('activeSearch')
   if (storageValue) {
@@ -185,7 +207,7 @@ export async function excludeCategory(category: Category) {
   activeSearch.categories.ids.push(category.id)
   storeActiveSearch(activeSearch)
 }
-export function storeActiveSearch(activeSearch: ActiveSearchButtonActiveSearch) {
+export function storeActiveSearch(activeSearch: ActiveSearch) {
   const toStore: ActiveSearch = {
     categories: {
       ids: activeSearch.categories.ids,
@@ -194,7 +216,8 @@ export function storeActiveSearch(activeSearch: ActiveSearchButtonActiveSearch) 
     colors: activeSearch.colors,
     parts: activeSearch.parts,
     conditions: activeSearch.conditions,
-    stores: activeSearch.stores
+    stores: activeSearch.stores,
+    priceScoreQuantity: activeSearch.priceScoreQuantity
   }
   localStorage.setItem('activeSearch', JSON.stringify(toStore))
 }
@@ -917,7 +940,7 @@ async function createInitialData(db: IDBPDatabase) {
   await createInitialStores(db)  
   await addShopListDb("Board games 2024", db)
   
-  shopLists.value = []
+  lists.value = []
 }
 
 async function addItemNoVariant(
@@ -1227,7 +1250,7 @@ export async function itemVariantPageAddToList(item: object) {
 }
 
 async function addShopListItem(
-  shopListId: number,
+  listId: number,
   itemId: string,
   condition: string,
   minQuantity: number,
@@ -1236,13 +1259,13 @@ async function addShopListItem(
   colors: string,
   db: IDBPDatabase
 ) {
-  const shopList = shopLists.value.find(list => list.id === shopListId)
-  console.log('addShopListItem', shopList, shopListId)
+  const shopList = lists.value.find(list => list.id === listId)
+  console.log('addShopListItem', shopList, listId)
   if (!shopList) {
     return
   }
   const item: ShopListItem = {
-    shopListId,
+    listId,
     itemId,
     condition,
     minQuantity,
@@ -1250,8 +1273,11 @@ async function addShopListItem(
     maxPrice,
     colors: colors.toString().split(',')
   }
-  await db.put(STORES.SHOP_LIST_ITEMS.name, item)
+  await db.put(STORES.LIST_ITEMS.name, item)
   shopList.items.push(item)
+}
+async function getInvItem(db: IDBPDatabase, storeId: string, itemId: string, condition: string, colorId: string): Promise<InvItem | undefined> {
+  return await db.get(STORES.INVENTORY_ITEMS.name, [storeId, itemId, condition, colorId])
 }
 export async function addInvItem(
   db: IDBPDatabase,
@@ -1263,18 +1289,21 @@ export async function addInvItem(
   price: number,
   itemId: string,
 ) {
-  itemId = itemId + ''
-  const invItem: InvItem = {
-    storeId: store.sId,
-    invId,
-    itemId,
-    condition,
-    quantity,
-    price,
-    colorId,
-    condition_New: condition === 'New' ? 1 : 0,
-    condition_Used: condition === 'Used' ? 1 : 0,
+  let invItem: InvItem | undefined = await getInvItem(db, store.sId, itemId, condition, colorId)
+  if (!invItem) {
+    invItem = {
+      storeId: store.sId,
+      invIds: [invId],
+      itemId,
+      condition,
+      quantity: 0,
+      price,
+      colorId,
+      condition_New: condition === 'New' ? 1 : 0,
+      condition_Used: condition === 'Used' ? 1 : 0,
+    }
   }
+  invItem.quantity += quantity
   await db.put(STORES.INVENTORY_ITEMS.name, invItem)
 }
 
@@ -1363,7 +1392,7 @@ async function addUiCategory(db: IDBPDatabase, category: Category) {
   }
 }
 
-export async function addNewShopListItem(item) {
+export async function addNewListItem(item) {
   const db = await getDbConnection()
   await addShopListItem(
     item.listId,
@@ -1533,7 +1562,7 @@ export async function loadSearches() {
       stores: []
     }
     if (search.shoppingListId) {
-      uiSearch.shoppingList = shopLists.value.find(list => list.id === search.shoppingListId)
+      uiSearch.shoppingList = lists.value.find(list => list.id === search.shoppingListId)
     }
     for (let j = 0; j < search.storeIds.length; j++) {
       const storeId = search.storeIds[j]
@@ -1605,11 +1634,11 @@ async function scrapePartDetails() {
 }
 export async function loadShopLists() {
   const db = await getDbConnection()
-  const x = await db.getAll(STORES.SHOP_LISTS.name)
+  const x = await db.getAll(STORES.LISTS.name)
   for (let i = 0; i < x.length; i++) {
     const list = x[i]
     list.items = await loadShopListItems(db, list.id)
-    shopLists.value.push(list)
+    lists.value.push(list)
   }
 }
 
@@ -1690,21 +1719,21 @@ async function getAllFromIndex(db: IDBPDatabase, index: IndexDefinition, query?:
   return db.getAllFromIndex(index.store, index.name, query, count)
 }
 
-async function loadShopListItems(db: IDBPDatabase, shopListId: string) {
+async function loadShopListItems(db: IDBPDatabase, listId: string) {
   try {
-    const shopListItems = await getAllFromIndex(
+    const listItems = await getAllFromIndex(
       db,
       INDICES.SHOP_LIST_ITEMS_BY_SHOP_LIST,
-      shopListId
+      listId
     )
-    for (let i = 0; i < shopListItems.length; i++) {
-      const shopListItem = shopListItems[i]
+    for (let i = 0; i < listItems.length; i++) {
+      const shopListItem = listItems[i]
       shopListItem.item = items.value.find(item => item.itemId === shopListItem.itemId)
       shopListItem.colorNames = shopListItem.colors.map(colorId => colors.value[colorId])
     }
-    return shopListItems
+    return listItems
   } catch (e) {
-    console.log('error getting shop list items', e, shopListId)
+    console.log('error getting shop list items', e, listId)
   }
   return []
 }
@@ -1751,7 +1780,7 @@ export async function setSearchShopList(listId: number) {
   if (!openSearch.value) {
     return
   }
-  openSearch.value.shoppingList = shopLists.value?.find(list => list.id === listId)
+  openSearch.value.shoppingList = lists.value?.find(list => list.id === listId)
   openSearch.value.shoppingListId = listId
   const db = await getDbConnection()
   const search: Search = {
@@ -1763,7 +1792,7 @@ export async function setSearchShopList(listId: number) {
   await db.put(STORES.SEARCHES.name, search)
 }
 async function addShopListDb(name: string, db: IDBPDatabase) {
-  const id = await db.put(STORES.SHOP_LISTS.name, { name })
+  const id = await db.put(STORES.LISTS.name, { name })
   if (!id) {
     return
   }
@@ -1772,5 +1801,5 @@ async function addShopListDb(name: string, db: IDBPDatabase) {
     name,
     items: []
   }
-  shopLists.value.push(list)
+  lists.value.push(list)
 }

@@ -1,48 +1,77 @@
 <script setup lang="ts">
 import { PropType } from 'vue';
 import { ActiveSearch, type UiInvItem } from '../options/types'
-import { formatAmount, formatInteger } from '@/options/utils';
+import { formatAmount, formatInteger, formatFloat } from '@/options/utils';
 import PartVariantButton from '@/options/components/PartVariantButton.vue';
 import StoreButton from '@/options/components/StoreButton.vue';
 import { getActiveSearch } from '@/options/idb/idb';
 import ColorButton from '@/options/components/ColorButton.vue';
 import ConditionButton from '@/options/components/ConditionButton.vue';
+import * as math from 'mathjs'
 const { items, showColor = false } = defineProps({
   showColor: Boolean,
   items: Object as PropType<UiInvItem[]>,
 })
 
 interface StoreItemsTableInvItem extends UiInvItem {
-  priceScore: number
+  priceScore: string
 }
 const search = ref<ActiveSearch | undefined>(undefined)
 onMounted(async () => {
   search.value = getActiveSearch()
 })
 
+const costOfCheapest = computed<number | undefined>(() => {
+  if (!search.value) {
+    return
+  }
+  const targetQ = search.value.priceScoreQuantity
+  let cost = 0
+  let quantity = 0
+  for (let i = 0; i < sortedItems.value.length; i++) {
+    const item = sortedItems.value[i]
+    const toTake = Math.min(item.quantity, targetQ - quantity)
+    quantity += toTake
+    cost += math.number(math.multiply(math.bignumber(item.price), math.bignumber(toTake)))
+    if (toTake >= targetQ) {
+      break
+    }
+  }
+  return cost / targetQ
+})
+
 const sortedItems = computed<StoreItemsTableInvItem[]>(() => {
   if (!items) {
     return []
   }
-  const out = items
-    .sort((a: UiInvItem, b: UiInvItem) => a.price - b.price)
-    .map(i => {
-      return {
-        ...i
-      }
-    })
-  const prevItems = []
+  return items.sort((a: UiInvItem, b: UiInvItem) => a.price - b.price)
+})
+
+const viewedItems = computed<StoreItemsTableInvItem[]>(() => {
+  const out = sortedItems.value.map(i => {
+    return {
+      ...i
+    }
+  })
   const out2: StoreItemsTableInvItem[] = []
   for (let i = 0; i < out.length; i++) {
+    const item = out[i]
     let priceScore = 0
-    prevItems.forEach(item => {
-      priceScore += item.quantity * (out[i].price - item.price)
-    })
+    let cost
+    let priceScoreString = ''
+    if (search.value && costOfCheapest.value) {
+      priceScore = math.number(math.divide(math.bignumber(item.price), math.bignumber(costOfCheapest.value)))
+      const percent = math.number(math.multiply(100, math.number(math.subtract(priceScore, 1))))
+      let sign = ''
+      if (percent > 0) {
+        sign = '+'
+      }
+      priceScoreString = sign + percent.toFixed(2) + '%'
+    }
     out2.push({
       ...out[i],
-      priceScore: priceScore / out[i].price
+      priceScore: priceScoreString,
     })
-    prevItems.push(out[i])
   }
   return out2
 })
@@ -63,7 +92,7 @@ const sortedItems = computed<StoreItemsTableInvItem[]>(() => {
       </tr>
     </thead>
     <tbody>
-      <tr v-for="(invItem, index) in sortedItems" :key="index">
+      <tr v-for="(invItem, index) in viewedItems" :key="index">
         <PartVariantButton :part="invItem.item" :variant="invItem.variant">
           <img v-if="invItem.variant" :src="invItem.variant.image">
         </PartVariantButton>
@@ -73,7 +102,7 @@ const sortedItems = computed<StoreItemsTableInvItem[]>(() => {
         <td v-if="showColor"><ColorButton :color="invItem.variant.color" /></td>
         <td v-if="search && search.conditions.ids.length < 1"><ConditionButton :condition="invItem.condition" /></td>
         <td>{{ formatAmount(invItem.price) }}</td>
-        <td>{{ formatAmount(invItem.priceScore) }}</td>
+        <td>{{ invItem.priceScore }}</td>
         <td>{{ formatInteger(invItem.quantity) }}</td>
       </tr>
     </tbody>

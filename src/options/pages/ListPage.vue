@@ -1,32 +1,32 @@
 <script setup lang="ts">
-import type { UiItem, UiShopListItem } from '../types'
+import type { UiItem, UiListItem } from '../types'
 const { list, parts } = defineProps({
   list: Object,
   parts: Array<UiItem>
 })
 const emits = defineEmits(['goHome', 'open', 'addItem', 'goItem', 'goShopLists'])
-const newShopListItemItemId = ref('')
-const newShopListItemCondition = ref('')
-const newShopListItemMinQuantity = ref<number>(0)
-const newShopListItemMaxQuantity = ref<number>(0)
-const newShopListItemMaxPrice = ref<number>(0)
-const newShopListItemColors = ref<number | null>(null)
+const newListItemItemId = ref('')
+const newListItemCondition = ref('')
+const newListItemMinQuantity = ref<number>(0)
+const newListItemMaxQuantity = ref<number>(0)
+const newListItemMaxPrice = ref<number>(0)
+const newListItemColors = ref<number | null>(null)
 
-function addNewShopListItem() {
+function addNewListItem() {
   if (!list) {
     return
   }
   emits('addItem', {
     listId: list.id,
-    itemId: newShopListItemItemId.value,
-    condition: newShopListItemCondition.value,
-    minQ: newShopListItemMinQuantity.value,
-    maxQ: newShopListItemMaxQuantity.value,
-    maxP: newShopListItemMaxPrice.value,
-    colors: newShopListItemColors.value,
+    itemId: newListItemItemId.value,
+    condition: newListItemCondition.value,
+    minQ: newListItemMinQuantity.value,
+    maxQ: newListItemMaxQuantity.value,
+    maxP: newListItemMaxPrice.value,
+    colors: newListItemColors.value,
   })
 }
-function getColorNames(item: UiShopListItem) {
+function getColorNames(item: UiListItem) {
   if (!item || !item.colorNames) {
     return item.colors
   }
@@ -43,7 +43,7 @@ const sortedParts = computed(() => {
 const filterString = ref('')
 const filteredParts = computed(() => {
   const lowCaseFilter = filterString.value.toLowerCase()
-  const lowCaseIdFilter = String(newShopListItemItemId.value).toLowerCase()
+  const lowCaseIdFilter = String(newListItemItemId.value).toLowerCase()
   return sortedParts.value.filter(a => {
     return (
       a.itemName.toLowerCase().includes(lowCaseFilter)
@@ -99,9 +99,9 @@ const partsView = ref('images')
       <button @click="partsView = 'table'" :disabled="partsView === 'table'">Table</button>
     </div>
     <div>Item name:<input v-model="filterString"></div>
-    <div>Item Id:<input v-model="newShopListItemItemId" type="text"></div>
+    <div>Item Id:<input v-model="newListItemItemId" type="text"></div>
     <div>
-      Condition:<select v-model="newShopListItemCondition">
+      Condition:<select v-model="newListItemCondition">
         <option value="New">
           New
         </option>
@@ -113,17 +113,17 @@ const partsView = ref('images')
         </option>
       </select>
     </div>
-    <div>Min quantity:<input v-model="newShopListItemMinQuantity" type="number"></div>
-    <div>Max quantity:<input v-model="newShopListItemMaxQuantity" type="number"></div>
-    <div>Max price:<input v-model="newShopListItemMaxPrice" type="number"></div>
-    <div>Colors:<input v-model="newShopListItemColors" type="number"></div>
-    <button @click="addNewShopListItem">
+    <div>Min quantity:<input v-model="newListItemMinQuantity" type="number"></div>
+    <div>Max quantity:<input v-model="newListItemMaxQuantity" type="number"></div>
+    <div>Max price:<input v-model="newListItemMaxPrice" type="number"></div>
+    <div>Colors:<input v-model="newListItemColors" type="number"></div>
+    <button @click="addNewListItem">
       Add
     </button>
     <div v-if="partsView === 'images'" class="parts">
       <template v-if="filteredParts.length === 1">
         <div v-for="variant in filteredParts[0].variants" :key="variant.colorId" class="part">
-          <img @click="newShopListItemColors = variant.colorId" :src="variant.image" :title="variant.color.name + ' (' + variant.colorId + ')'">
+          <img @click="newListItemColors = variant.colorId" :src="variant.image" :title="variant.color.name + ' (' + variant.colorId + ')'">
           <span>{{ variant.colorId }}</span>
         </div>
       </template>
@@ -133,7 +133,7 @@ const partsView = ref('images')
         :key="item.itemId"
         class="part"
       >
-        <img @click="newShopListItemItemId = item.itemId" v-if="item.variants.length" :src="item.variants[0].image" :title="item.itemName + ' (' + item.itemId + ')'">
+        <img @click="newListItemItemId = item.itemId" v-if="item.variants.length" :src="item.variants[0].image" :title="item.itemName + ' (' + item.itemId + ')'">
         <span>{{ item.itemId }}</span>
         <span>{{ item.itemName }}</span>
       </div>

@@ -12,7 +12,6 @@ const addToListMaxQ = ref<number>(100)
 const addToListMaxP = ref<number>(0)
 
 import { useRoute } from 'vue-router'
-import StoreButton from '../components/StoreButton.vue';
 import ActiveSearchButton from '../components/ActiveSearchButton.vue';
 const route = useRoute()
 
@@ -103,7 +102,7 @@ watch(() => lists, () => {
         </tr>
       </thead>
       <tbody>
-        <tr v-for="(shopListItem, index) in variant.shopListItems" :key="index">
+        <tr v-for="(shopListItem, index) in variant.listItems" :key="index">
           <td>
             <button @click="$emit('goShopList', shopListItem.shopList)">
               {{ shopListItem.shopList.name }}

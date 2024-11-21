@@ -83,9 +83,9 @@ const indices: {
     keyPath: 'condition'
   },
   SHOP_LIST_ITEMS_BY_SHOP_LIST: {
-    store: stores.SHOP_LIST_ITEMS.name,
+    store: stores.LIST_ITEMS.name,
     name: 'shopList',
-    keyPath: 'shopListId'
+    keyPath: 'listId'
   },
   COLOR_BY_BRICKLINK_ID: {
     store: stores.COLORS.name,

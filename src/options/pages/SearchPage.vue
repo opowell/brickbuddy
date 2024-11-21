@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import type { UiShopList, UiStore } from '../types'
-const { search, shopLists, stores } = defineProps({
+const { search, lists, stores } = defineProps({
   search: Object,
-  shopLists: Array<UiShopList>,
+  lists: Array<UiShopList>,
   stores: Array<UiStore>
 })
 const emits = defineEmits([
@@ -46,7 +46,7 @@ watch(listId, () => {
     <div>
       List:<select v-model="listId">
         <option
-          v-for="list in shopLists"
+          v-for="list in lists"
           :key="list.id"
           :value="list.id"
         >

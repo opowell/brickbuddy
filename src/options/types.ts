@@ -12,6 +12,16 @@ export interface AddNewStore {
   name: string
 }
 
+export interface HomeData {
+  stores: number
+  categories: number
+  colors: number
+  parts: number
+  conditions: number
+  lists: number
+  searches: number
+  carts: number
+}
 export enum StoreType {
   BrickLink,
   Lego
@@ -36,6 +46,7 @@ export interface LegoItem {
   legoId: string
   name: string
   partId: string
+  part?: Item
 }
 export interface Item {
   categoryId: string
@@ -152,7 +163,7 @@ export interface ShopList {
 }
 export interface ShopListItem {
   id?: number
-  shopListId: number
+  listId: number
   itemId: string
   condition: string
   minQuantity: number
@@ -181,6 +192,7 @@ export interface SearchBase {
     ids: number[]
     excluded: boolean
   }
+  priceScoreQuantity: number
 }
 export interface Search extends SearchBase {
   id: number
@@ -214,16 +226,16 @@ export interface ActiveSearchPageSearch extends ActiveSearch {
   categoryObjects: CategoriesPageCategory[] 
   colorObjects: UiColor[] 
   partObjects: ActiveSearchPagePart[] 
-  storeObjects: ActiveSearchPageStore[] 
+  storeObjects: ActiveSearchPageStore[]
 }
 export interface UiSearch extends Search {
   shoppingList?: UiShopList
-  shopListItems?: UiShopListItem[]
+  listItems?: UiListItem[]
 }
 export interface SearchesPageSearch extends Search {
 
 }
-export interface UiShopListItem extends ShopListItem {
+export interface UiListItem extends ShopListItem {
   item?: UiItem
   colorNames?: Color[]
   shopList?: UiShopList

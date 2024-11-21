@@ -3,7 +3,7 @@ import ColorsPage from './pages/ColorsPage.vue'
 import HomePage from './pages/HomePage.vue'
 import PartsPage from './pages/PartsPage.vue'
 import SearchesPage from './pages/SearchesPage.vue'
-import ShoppingListsPage from './pages/ShoppingListsPage.vue'
+import ListsPage from './pages/ListsPage.vue'
 import StoresPage from './pages/StoresPage.vue'
 import { LINKS, Routes } from './idb/constants'
 import ItemPage from './pages/ItemPage.vue'
@@ -25,9 +25,9 @@ export default [
     component: StoresPage
   },
   {
-    name: 'shopping lists',
-    path: '/shopping-lists',
-    component: ShoppingListsPage
+    name: 'lists',
+    path: '/lists',
+    component: ListsPage
   },
   {
     name: 'colors',
