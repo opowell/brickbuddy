@@ -3,10 +3,11 @@ import HomeButton from '../components/HomeButton.vue';
 import StoresButton from '../components/StoresButton.vue';
 import { ActiveSearch, StorePageInvItem, StorePageStore, StoreType, type UiInvItem } from '../types';
 import { useRoute } from 'vue-router'
-import { getActiveSearch, getDbConnection, getStorePageInvItem, getStorePageStore, getStorePrices } from '../idb/idb';
+import { getActiveSearch, getDbConnection, getStorePageInvItem, getStorePageStore, getStorePrices, setCartQuantity } from '../idb/idb';
 import PartButton from '../components/PartButton.vue';
 import ColorButton from '../components/ColorButton.vue';
 import ActiveSearchButton from '../components/ActiveSearchButton.vue';
+import ActiveCartButton from '../components/ActiveCartButton.vue';
 import { IDBPDatabase } from 'idb';
 import { formatAmount, formatInteger } from '../utils';
 import CategoryButton from '../components/CategoryButton.vue';
@@ -16,7 +17,7 @@ const route = useRoute()
 const store = ref<StorePageStore | undefined>(undefined)
 const search = ref<ActiveSearch | undefined>(undefined)
 const db = ref<IDBPDatabase | undefined>(undefined)
-const items = ref([])
+const items = ref<StorePageInvItem[]>([])
 onMounted(async () => {
   search.value = getActiveSearch()
   db.value = await getDbConnection()
@@ -61,6 +62,18 @@ const url = computed(() => {
   }
   return store.value.slug
 })
+
+async function updateCartQuantity(item: StorePageInvItem) {
+  const response = await setCartQuantity(store.value, item)
+  if (response) {
+    item.cartQuantity = item.newCartQuantity
+  }
+  if (cartButton.value) {
+    cartButton.value.refresh()
+  }
+}
+
+const cartButton = ref<typeof ActiveCartButton | undefined>(undefined)
 </script>
 
 
@@ -68,6 +81,7 @@ const url = computed(() => {
   <HomeButton />
   <StoresButton />
   <ActiveSearchButton />
+  <ActiveCartButton ref="cartButton" />
   <div v-if="store">
     <h4>{{ store.name }}</h4>
     <div v-if="db"><button @click="getStorePrices(db, store)">Scrape</button></div>
@@ -87,7 +101,7 @@ const url = computed(() => {
           <th>Quantity</th>
           <th>Price</th>
           <th>Price Score</th>
-          <th>Actions</th>
+          <th>Cart</th>
         </tr>
       </thead>
       <tbody>
@@ -105,7 +119,11 @@ const url = computed(() => {
           <td>{{ formatInteger(item.quantity) }}</td>
           <td>{{ formatAmount(item.price*store.priceAdjustment/100) }}</td>
           <td>{{ item.priceScore }}</td>
-          <td><input type="number"><button>Add to cart</button></td>
+          <td>
+            {{ item.cartQuantity }}
+            <input v-model="item.newCartQuantity" type="number" min="0" :max="item.quantity">
+            <button :disabled="item.newCartQuantity > item.quantity || item.newCartQuantity === '' || item.newCartQuantity < 0" @click="updateCartQuantity(item)">Set</button>
+          </td>
         </tr>
       </tbody>
     </table>

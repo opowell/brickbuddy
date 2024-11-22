@@ -12,6 +12,7 @@ import ItemVariantPage from './pages/ItemVariantPage.vue'
 import ColorPage from './pages/ColorPage.vue'
 import CategoryPage from './pages/CategoryPage.vue'
 import ActiveSearchPage from './pages/ActiveSearchPage.vue'
+import ActiveCartPage from './pages/ActiveCartPage.vue'
 import ConditionsPage from './pages/ConditionsPage.vue'
 export default [
   {
@@ -83,5 +84,10 @@ export default [
     name: 'activeSearch',
     path: Routes.activeSearch,
     component: ActiveSearchPage
+  },
+  {
+    name: 'activeCart',
+    path: Routes.activeCart,
+    component: ActiveCartPage
   },
 ]

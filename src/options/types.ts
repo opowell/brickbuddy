@@ -1,4 +1,32 @@
-import { ActiveSearchPageSearch, PartPageVariant } from './types';
+export interface Cart {
+  id: number
+  name: string
+}
+
+export interface CartWithItems extends Cart {
+  cartItems: CartItem[]
+}
+
+export interface CartItem {
+  cartId: number
+  storeId: string
+  invItemId: string
+  quantity: number
+  price: number
+}
+
+export interface CartPageCartItem extends CartItem {
+  id: string
+  store: Store
+  priceScore: number
+  image: string
+  part: Item
+  condition: string
+  color: Color
+  maxQuantity: number
+  category: Category
+}
+
 export interface ShippingCost {
   region?: string
   minOrderPrice?: number
@@ -136,6 +164,9 @@ export interface StorePageInvItem extends InvItem {
   colorName: string
   category: Category
   variant: ItemVariant
+  cartQuantity: number
+  newCartQuantity: number
+  priceScore: number
 }
 
 export interface ColorPageInvItem extends InvItem {
@@ -195,6 +226,7 @@ export interface SearchBase {
     excluded: boolean
   }
   priceScoreQuantity: number
+  priceScoreIgnoreColor: boolean
 }
 export interface Search extends SearchBase {
   id: number
@@ -205,6 +237,11 @@ export interface Search extends SearchBase {
 }
 export interface ActiveSearch extends SearchBase {
   linkedSearch?: string
+}
+export interface ActiveCartButtonCart extends Cart {
+  totalCost: number
+  totalItems: number
+  totalQuantity: number
 }
 export interface ActiveSearchButtonActiveSearch extends ActiveSearch {
   categories: {

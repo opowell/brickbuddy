@@ -1,5 +1,5 @@
 import { categories } from './idb';
-import { StorePageInvItem } from './../types';
+import { ActiveCartButtonCart, Cart, CartItem, CartWithItems, StorePageInvItem } from './../types';
 import { IDBPDatabase, openDB } from "idb";
 import STORES, { StoreDefinition } from './stores'
 import INDICES, { IndexDefinition } from './indices'
@@ -132,6 +132,18 @@ export async function getPartsPageParts(): Promise<PartsPagePart[]> {
   }
   return uiItems
 }
+export function getActiveCart(): CartWithItems {
+  let activeCart: CartWithItems = {
+    id: -1,
+    name: 'Active cart',
+    cartItems: []
+  }
+  let storageValue = localStorage.getItem('activeCart')
+  if (storageValue) {
+    activeCart = JSON.parse(storageValue)
+  }
+  return activeCart
+}
 export function getActiveSearch(): ActiveSearch {
   let activeSearch: ActiveSearch = {
     categories: {
@@ -154,7 +166,8 @@ export function getActiveSearch(): ActiveSearch {
       ids: [],
       excluded: false
     },
-    priceScoreQuantity: 100
+    priceScoreQuantity: 100,
+    priceScoreIgnoreColor: true
   }
   let storageValue = localStorage.getItem('activeSearch')
   if (storageValue) {
@@ -173,6 +186,24 @@ export async function getActiveSearchButtonActiveSearch(): Promise<ActiveSearchB
     }
   }
   return activeSearch
+}
+
+export async function getActiveCartButtonCart(): Promise<ActiveCartButtonCart> {
+  const cart = getActiveCart()
+  let totalCost = 0
+  let totalQuantity = 0
+  cart.cartItems.forEach((i) => {
+    totalCost += i.price * i.quantity
+    totalQuantity += i.quantity
+  })
+  totalCost = totalCost / 100
+  const activeCart: ActiveCartButtonCart = {
+    ...cart,
+    totalCost,
+    totalItems: cart.cartItems.length,
+    totalQuantity
+  }
+  return activeCart
 }
 
 async function getCategories(ids: string[]): Promise<Category[]> {
@@ -221,9 +252,13 @@ export function storeActiveSearch(activeSearch: ActiveSearch) {
     parts: activeSearch.parts,
     conditions: activeSearch.conditions,
     stores: activeSearch.stores,
-    priceScoreQuantity: activeSearch.priceScoreQuantity
+    priceScoreQuantity: activeSearch.priceScoreQuantity,
+    priceScoreIgnoreColor: activeSearch.priceScoreIgnoreColor
   }
   localStorage.setItem('activeSearch', JSON.stringify(toStore))
+}
+export function storeActiveCart(activeCart: Cart) {
+  localStorage.setItem('activeCart', JSON.stringify(activeCart))
 }
 
 export const excludedCategories = ref<Category[]>([])
@@ -456,7 +491,7 @@ export async function getStorePageInvItems(db: IDBPDatabase, id: string): Promis
   const invItems: InvItem[] = await getAllFromIndex(db, INDICES.INV_ITEMS_BY_STORE, id)
   return invItems
 }
-export async function getStorePageInvItem(objectCache: ObjectCacheClass, invItem: InvItem) {
+export async function getStorePageInvItem(objectCache: ObjectCacheClass, invItem: InvItem): Promise<StorePageInvItem | undefined> {
   const search = getActiveSearch()
   const part = await objectCache.getStorePagePart(invItem.itemId)
   if (!part) {
@@ -471,7 +506,12 @@ export async function getStorePageInvItem(objectCache: ObjectCacheClass, invItem
     return
   }
   const variant = await getFromIndex(objectCache.db, INDICES.PART_VARIANTS_BY_PART_AND_COLOR, [part.itemId, color.id])
-  const allMatchingInvItems = await getAllFromIndex(objectCache.db, INDICES.INV_ITEMS_BY_ITEM_AND_COLOR, [part.itemId, color.id])
+  let allMatchingInvItems
+  if (search.priceScoreIgnoreColor) {
+    allMatchingInvItems= await getAllFromIndex(objectCache.db, INDICES.INV_ITEMS_BY_ITEM, part.itemId)
+  } else {
+    allMatchingInvItems= await getAllFromIndex(objectCache.db, INDICES.INV_ITEMS_BY_ITEM_AND_COLOR, [part.itemId, color.id])
+  } 
   if (!search) {
     return
   }
@@ -482,13 +522,17 @@ export async function getStorePageInvItem(objectCache: ObjectCacheClass, invItem
   for (let i = 0; i < sortedItems.length; i++) {
     const item = sortedItems[i]
     const toTake = Math.min(item.quantity, targetQ - quantity)
-    quantity += toTake
-    cost += math.number(math.multiply(math.bignumber(item.price), math.bignumber(toTake)))
+    try {
+      quantity += toTake
+      cost += math.number(math.multiply(math.bignumber(item.price), math.bignumber(toTake)))
+    } catch (e) {
+      console.log(e)
+    }
     if (toTake >= targetQ) {
       break
     }
   }
-  const cheapestPrice = cost / targetQ
+  const cheapestPrice = cost / quantity
   const priceScore = math.number(math.divide(math.bignumber(invItem.price), math.bignumber(cheapestPrice)))
   const percent = math.number(math.multiply(100, math.number(math.subtract(priceScore, 1))))
   let sign = ''
@@ -496,15 +540,42 @@ export async function getStorePageInvItem(objectCache: ObjectCacheClass, invItem
     sign = '+'
   }
   const priceScoreString = sign + percent.toFixed(2) + '%'
-
+  const cartQuantity = getCartQuantity(objectCache.getActiveCart(), invItem)
   return {
     ...invItem,
     item: part,
     colorName: color?.name,
     category,
     variant,
-    priceScore: priceScoreString
+    priceScore: priceScoreString,
+    cartQuantity,
   }
+}
+
+function getCartQuantity(cart: CartWithItems, invItem: InvItem): number {
+  const cartItem = cart.cartItems.find(i => i.invItemId === invItem.invId && i.storeId === invItem.storeId)
+  if (!cartItem) {
+    return 0
+  }
+  return cartItem.quantity
+}
+
+export async function setCartQuantity(store: Store, invItem: StorePageInvItem): Promise<boolean> {
+  const activeCart = getActiveCart()
+  let foundItem: CartItem | undefined = activeCart.cartItems.find(i => i.storeId === store.sId && i.invItemId === invItem.invId)
+  if (!foundItem) {
+    foundItem = {
+      cartId: activeCart.id,
+      invItemId: invItem.invId,
+      storeId: store.sId,
+      quantity: 0,
+      price: invItem.price
+    }
+    activeCart.cartItems.push(foundItem)
+  }
+  foundItem.quantity = invItem.newCartQuantity
+  storeActiveCart(activeCart)
+  return true
 }
 export async function getUiPart(id: string, objectCache?: ObjectCache): Promise<UiItem | undefined> {
   id = id + ''

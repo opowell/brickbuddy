@@ -22,7 +22,10 @@ const text = computed(() => {
   if (!search) {
     return ''
   }
-  const texts: string[] = ['Price score quantity: ' + search.priceScoreQuantity]
+  const texts: string[] = [
+    'Price score: quantity: ' + search.priceScoreQuantity,
+    'ignore color: ' + search.priceScoreIgnoreColor,
+  ]
   const fields = ['categories', 'colors', 'parts', 'conditions']
   fields.forEach(field => {
     const searchField: { ids: string[], excluded: boolean } = search[field]
