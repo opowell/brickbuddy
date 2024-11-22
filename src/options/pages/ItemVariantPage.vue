@@ -19,7 +19,7 @@ const variant = ref<UiItemVariant | undefined>(undefined)
 const lists = ref<UiShopList[] | undefined>(undefined)
 const search = ref<ActiveSearch | undefined>(undefined)
 onMounted(async () => {
-  variant.value = await getUiPartVariant(route.params.partId - 0, route.params.colorId - 0)
+  variant.value = await getUiPartVariant(route.params.partId, route.params.colorId)
   search.value = getActiveSearch()
 })
 

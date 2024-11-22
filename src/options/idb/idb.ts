@@ -9,6 +9,7 @@ import { toDataURL } from "../utils";
 import { getCondition } from "./condition";
 import { getBrickLinkPrices } from "./getBrickLinkPrices";
 import { getLegoPrices } from "./getLegoPrices";
+import * as math from 'mathjs'
 
 export const categories = ref<Map<string, UiCategory>>(new Map<string, UiCategory>())
 export const colors = ref({})
@@ -353,7 +354,7 @@ export async function getCategoriesPageCategories(): Promise<CategoriesPageCateg
 export async function getPart(db: IDBPDatabase, partId: string): Promise<Item> {
   return await get(db, STORES.PARTS, partId)
 }
-export async function getUiPartVariant(partId: number, colorId: number): Promise<UiItemVariant> {
+export async function getUiPartVariant(partId: string, colorId: string): Promise<UiItemVariant> {
   const db = await getDbConnection()
   const variant: ItemVariant = await get(db, STORES.PART_VARIANTS, [partId, colorId])
   const invItems: InvItem[] = await getAllFromIndex(
@@ -366,7 +367,7 @@ export async function getUiPartVariant(partId: number, colorId: number): Promise
   for (let i = 0; i < invItems.length; i++) {
     const invItem: InvItem = invItems[i]
     const store = await get(db, STORES.STORES, invItem.storeId)
-    const uiItem: UiItem | undefined = await getUiPart(invItem.itemId + '')
+    const uiItem: UiItem | undefined = await getUiPart(invItem.itemId)
     const color: Color | undefined = await getColor(db, invItem.colorId)
     if (!uiItem || !color) {
       continue
@@ -449,33 +450,61 @@ async function getPartPageVariantInvItems(db: IDBPDatabase, variant: ItemVariant
   }
   return partPageVariantInvItems
 }
-export async function getStorePageInvItems(db: IDBPDatabase, id: string): Promise<StorePageInvItem[]> {
+export async function getStorePageInvItems(db: IDBPDatabase, id: string): Promise<InvItem[]> {
   console.log('getStorePageInvItems')
   const search = getActiveSearch()
-  const objectCache = new ObjectCacheClass(db)
   const invItems: InvItem[] = await getAllFromIndex(db, INDICES.INV_ITEMS_BY_STORE, id)
-  return (await Promise.all(invItems.map(async invItem => {
-    const part = await objectCache.getStorePagePart(invItem.itemId)
-    if (!part) {
-      return
+  return invItems
+}
+export async function getStorePageInvItem(objectCache: ObjectCacheClass, invItem: InvItem) {
+  const search = getActiveSearch()
+  const part = await objectCache.getStorePagePart(invItem.itemId)
+  if (!part) {
+    return
+  }
+  const color = await objectCache.getColor(invItem.colorId)
+  if (!color) {
+    return
+  }
+  const category = await objectCache.getCategory(part.categoryId)
+  if (!category) {
+    return
+  }
+  const variant = await getFromIndex(objectCache.db, INDICES.PART_VARIANTS_BY_PART_AND_COLOR, [part.itemId, color.id])
+  const allMatchingInvItems = await getAllFromIndex(objectCache.db, INDICES.INV_ITEMS_BY_ITEM_AND_COLOR, [part.itemId, color.id])
+  if (!search) {
+    return
+  }
+  const sortedItems = allMatchingInvItems.sort((a, b) => a.price - b.price)
+  const targetQ = search.priceScoreQuantity
+  let cost = 0
+  let quantity = 0
+  for (let i = 0; i < sortedItems.length; i++) {
+    const item = sortedItems[i]
+    const toTake = Math.min(item.quantity, targetQ - quantity)
+    quantity += toTake
+    cost += math.number(math.multiply(math.bignumber(item.price), math.bignumber(toTake)))
+    if (toTake >= targetQ) {
+      break
     }
-    const color = await objectCache.getColor(invItem.colorId)
-    if (!color) {
-      return
-    }
-    const category = await objectCache.getCategory(part.categoryId)
-    if (!category) {
-      return
-    }
-    const variant = await getFromIndex(db, INDICES.PART_VARIANTS_BY_PART_AND_COLOR, [part.itemId, color.id])
-    return {
-      ...invItem,
-      item: part,
-      colorName: color?.name,
-      category,
-      variant
-    }
-  }))).filter(i => i !== undefined)
+  }
+  const cheapestPrice = cost / targetQ
+  const priceScore = math.number(math.divide(math.bignumber(invItem.price), math.bignumber(cheapestPrice)))
+  const percent = math.number(math.multiply(100, math.number(math.subtract(priceScore, 1))))
+  let sign = ''
+  if (percent > 0) {
+    sign = '+'
+  }
+  const priceScoreString = sign + percent.toFixed(2) + '%'
+
+  return {
+    ...invItem,
+    item: part,
+    colorName: color?.name,
+    category,
+    variant,
+    priceScore: priceScoreString
+  }
 }
 export async function getUiPart(id: string, objectCache?: ObjectCache): Promise<UiItem | undefined> {
   id = id + ''
@@ -645,20 +674,18 @@ export async function getUiColors(): Promise<UiColor[]> {
   return uiColors
 }
 export async function getStorePageStore(id: string): Promise<StorePageStore | undefined> {
-  console.log('getStorePageStore')
   const db = await getDbConnection()
-  id = id + ''
   const store: Store = await get(db, STORES.STORES, id)
   if (!store) {
     return
   }
-  const invItems: StorePageInvItem[] = await getStorePageInvItems(db, id)
-  const uiStore = {
+  const objectCache = new ObjectCacheClass(db)
+  const invItems: InvItem[] = await getStorePageInvItems(db, id)
+  return {
     ...store,
-    items: invItems
+    items: invItems,
+    objectCache
   }
-  console.log('getStorePageStore finished')
-  return uiStore
 }
 export async function getDbCreateInitialStores() {
   const db = await getDbConnection()

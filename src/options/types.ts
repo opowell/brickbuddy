@@ -70,6 +70,7 @@ export interface PartsPageVariant extends ItemVariant {
 }
 
 export interface ObjectCache {
+  categories: Map<string, Category>
   colors: Map<string, UiColor>
 }
 
@@ -155,7 +156,8 @@ export interface UiStore extends Store {
   items: UiInvItem[]
 }
 export interface StorePageStore extends Store {
-  items: StorePageInvItem[]
+  items: InvItem[]
+  objectCache: ObjectCache
 }
 export interface ShopList {
   id?: number

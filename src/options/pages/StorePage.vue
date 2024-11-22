@@ -3,7 +3,7 @@ import HomeButton from '../components/HomeButton.vue';
 import StoresButton from '../components/StoresButton.vue';
 import { ActiveSearch, StorePageInvItem, StorePageStore, StoreType, type UiInvItem } from '../types';
 import { useRoute } from 'vue-router'
-import { getActiveSearch, getDbConnection, getStorePageStore, getStorePrices } from '../idb/idb';
+import { getActiveSearch, getDbConnection, getStorePageInvItem, getStorePageStore, getStorePrices } from '../idb/idb';
 import PartButton from '../components/PartButton.vue';
 import ColorButton from '../components/ColorButton.vue';
 import ActiveSearchButton from '../components/ActiveSearchButton.vue';
@@ -11,14 +11,27 @@ import { IDBPDatabase } from 'idb';
 import { formatAmount, formatInteger } from '../utils';
 import CategoryButton from '../components/CategoryButton.vue';
 import ConditionButton from '../components/ConditionButton.vue';
+import ObjectCache from '../idb/ObjectCache';
 const route = useRoute()
 const store = ref<StorePageStore | undefined>(undefined)
 const search = ref<ActiveSearch | undefined>(undefined)
 const db = ref<IDBPDatabase | undefined>(undefined)
+const items = ref([])
 onMounted(async () => {
-  db.value = await getDbConnection()
-  store.value = await getStorePageStore(route.params.id)
   search.value = getActiveSearch()
+  db.value = await getDbConnection()
+  const objectCache = new ObjectCache(db.value)
+  store.value = await getStorePageStore(route.params.id)
+  if (!store.value) {
+    return
+  }
+  for (let i = 0; i < store.value.items.length; i++) {
+    const storePageInvItem = await getStorePageInvItem(objectCache, store.value.items[i])
+    if (!storePageInvItem) {
+      continue
+    }
+    items.value.push(storePageInvItem)
+  }
 })
 
 function getImageSrc(invItem: StorePageInvItem) {
@@ -48,17 +61,6 @@ const url = computed(() => {
   }
   return store.value.slug
 })
-const items = computed(() => {
-  if (!store.value) {
-    return []
-  }
-  return store.value.items.map((item) => {
-    return {
-      ...item,
-      priceScore: 1
-    }
-  })
-})
 </script>
 
 
@@ -73,7 +75,7 @@ const items = computed(() => {
     <div>Last scraped: {{ store.lastScraped.toISOString() }}</div>
     <div>Price adjustment: {{ store.priceAdjustment }}%</div>
     <div>Link: <a target="_blank" :href="url">{{ url }}</a></div>
-    <h4>Inventory ({{ store.items.length }})</h4>
+    <h4>Inventory ({{ items.length }} / {{ store.items.length }})</h4>
     <table>
       <thead>
         <tr>
