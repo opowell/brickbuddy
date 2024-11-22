@@ -99,7 +99,7 @@ const invItems = computed<PartPageVariantInvItem[] | undefined>(() => {
         </option>
       </select>
     </div>
-    <h4>Variants</h4>
+    <h4>Variants ({{ variants.length }})</h4>
     <table>
       <thead>
         <tr>
