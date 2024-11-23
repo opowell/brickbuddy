@@ -1,7 +1,6 @@
 # Brick Buddy
 
 ## TODO
-- fix active search page.
 - show active cart.
 - saved carts.
 - scrape in background?
@@ -12,6 +11,7 @@
 - add global quantity minimum.
 - sort lists by name.
 - import BrickLink stores dynamically.
+  - fetch + parse https://www.bricklink.com/browseStores.asp?countryID=AT&groupState=Y
 - scrape prio based on "freshness" of latest scrape results.
 - active search: include/exclude stores/colors/categories/parts.
 - combine similar lots.
