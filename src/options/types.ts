@@ -303,8 +303,10 @@ export interface ActiveSearchPageCondition {
   numInvItems: number
 }
 export interface ActiveSearchPageSearch extends ActiveSearch {
-  conditionObjects: ActiveSearchPageCondition[] 
-  categoryObjects: CategoriesPageCategory[] 
+  includedConditionObjects: ActiveSearchPageCondition[] 
+  excludedConditionObjects: ActiveSearchPageCondition[] 
+  includedCategoryObjects: CategoriesPageCategory[] 
+  excludedCategoryObjects: CategoriesPageCategory[] 
   colorObjects: UiColor[] 
   partObjects: ActiveSearchPagePart[] 
   storeObjects: ActiveSearchPageStore[]

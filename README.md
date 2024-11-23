@@ -22,3 +22,7 @@
 
 - copy of idb for each search
 - UI improvements
+- show categories / props from different sources:
+  - BrickLink category
+  - Lego category
+  - etc.

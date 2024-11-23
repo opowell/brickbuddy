@@ -27,8 +27,6 @@ import NameIdLabel from '../components/NameIdLabel.vue';
     <HomeButton />
     <ActiveSearchButton />
     <h4>Parts ({{ filteredParts.length }} / {{ items.length }})</h4>
-    <div>Scrape details from Rebrickable: <button @click="startPartScraping">Start</button><button @click="stopPartScrapingFn">Stop</button></div>
-    <div><button @click="importRbPartsToMemory">Import from Rb JSON</button></div>
     <div>Search: <input v-model="search"></div>
     <table>
       <thead>

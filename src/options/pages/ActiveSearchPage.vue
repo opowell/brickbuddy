@@ -9,8 +9,8 @@ onMounted(async () => {
   search.value = await getActiveSearchPageSearch()
   priceScoreQuantity.value = search.value.priceScoreQuantity
 })
-import CategoryButton from '../components/CategoryButton.vue';
-import ConditionButton from '../components/ConditionButton.vue';
+import CategoriesTable from '../components/CategoriesTable.vue';
+import ConditionsTable from '../components/ConditionsTable.vue';
 </script>
 
 <template>
@@ -19,61 +19,25 @@ import ConditionButton from '../components/ConditionButton.vue';
     <h4>Active Search</h4>
     <div>Price score quantity: <input v-model="priceScoreQuantity" type="number">
     <button @click="setPriceScoreQuantity(priceScoreQuantity)">Set</button></div>
-    <template v-if="search.categories.ids.length">
-      <div>Categories {{ '(' + search.categories.ids.length + ')' }}</div>
-      <table>
-        <thead>
-          <tr>
-            <th>Actions</th>
-            <th>Image</th>
-            <th>Id</th>
-            <th>Name</th>
-            <th>Parts</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="category in search.categoryObjects" :key="category.id">
-            <td>
-              <button>x</button>
-            </td>
-            <td><img v-if="category.image" :src="category.image"></td>
-            <td>
-              {{ category.id }}
-            </td>
-            <td>
-              <CategoryButton :category="category" />
-            </td>
-            <td>
-              {{ category.numParts }}
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <template v-if="search.categories.included.length">
+      <div>Included Categories {{ '(' + search.categories.included.length + ')' }}</div>
+      <CategoriesTable
+        :categories="search.includedCategoryObjects"
+      />
     </template>
-    <template v-if="search.conditions.ids.length">
-      <div>Conditions {{ '(' + search.conditions.ids.length + ')' }}</div>
-      <table>
-        <thead>
-          <tr>
-            <th>Actions</th>
-            <th>Name</th>
-            <th>Inv. Items</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="condition in search.conditionObjects" :key="condition.id">
-            <td>
-              <button>x</button>
-            </td>
-            <td>
-              <ConditionButton :condition="condition.id" />
-            </td>
-            <td>
-              {{ condition.numInvItems }}
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <template v-if="search.categories.excluded.length">
+      <div>Excluded Categories {{ '(' + search.categories.excluded.length + ')' }}</div>
+      <CategoriesTable
+        :categories="search.excludedCategoryObjects"
+      />
+    </template>
+    <template v-if="search.conditions.included.length">
+      <div>Conditions {{ '(' + search.conditions.included.length + ')' }}</div>
+      <ConditionsTable :conditions="search.conditions.included" />
+    </template>
+    <template v-if="search.conditions.excluded.length">
+      <div>Conditions {{ '(' + search.conditions.excluded.length + ')' }}</div>
+      <ConditionsTable :conditions="search.conditions.excluded" />
     </template>
   </div>
 </template>

@@ -91,20 +91,17 @@ export async function getHomeData(): Promise<HomeData> {
 }
 function partExcluded(part: Item, search: ActiveSearch) {
   const categories = search.categories
-  if (
-    categories.excluded
-  ) {
-    if (categories.ids.includes(part.categoryId)) {
+  if (categories.excluded.length) {
+    if (categories.excluded.includes(part.categoryId)) {
       return true
     }
-  } else {
-    if (
-      categories.ids.length > 0 &&
-      !categories.ids.includes(part.categoryId)
-    ) {
-      return true
-    }   
   }
+  if (
+    categories.included.length > 0 &&
+    !categories.included.includes(part.categoryId)
+  ) {
+    return true
+  }   
   return false
 }
 export async function getPartsPageParts(): Promise<PartsPagePart[]> {
@@ -242,22 +239,34 @@ export async function getActiveSearchPageSearch(): Promise<ActiveSearchPageSearc
   const search: ActiveSearch = await getActiveSearch()
   const activeSearchPageSearch: ActiveSearchPageSearch = {
     ...search,
-    conditionObjects: [],
-    categoryObjects: [],
+    includedConditionObjects: [],
+    excludedConditionObjects: [],
+    includedCategoryObjects: [],
+    excludedCategoryObjects: [],
     colorObjects: [],
     partObjects: [],
     storeObjects: []
   }
   const db = await getDbConnection()
-  for (let i = 0; i < search.categories.ids.length; i++) {
-    const id = search.categories.ids[i]
+  for (let i = 0; i < search.categories.included.length; i++) {
+    const id = search.categories.included[i]
     const category = await getCategory(db, id)
-    activeSearchPageSearch.categoryObjects.push(await getCategoriesPageCategory(db, category))
+    activeSearchPageSearch.includedCategoryObjects.push(await getCategoriesPageCategory(db, category))
   }
-  for (let i = 0; i < search.conditions.ids.length; i++) {
-    const id = search.conditions.ids[i]
+  for (let i = 0; i < search.categories.excluded.length; i++) {
+    const id = search.categories.excluded[i]
+    const category = await getCategory(db, id)
+    activeSearchPageSearch.excludedCategoryObjects.push(await getCategoriesPageCategory(db, category))
+  }
+  for (let i = 0; i < search.conditions.included.length; i++) {
+    const id = search.conditions.included[i]
     const conditionObject = await getCondition(db, id)
-    activeSearchPageSearch.conditionObjects.push(conditionObject)
+    activeSearchPageSearch.includedConditionObjects.push(conditionObject)
+  }
+  for (let i = 0; i < search.conditions.excluded.length; i++) {
+    const id = search.conditions.excluded[i]
+    const conditionObject = await getCondition(db, id)
+    activeSearchPageSearch.excludedConditionObjects.push(conditionObject)
   }
   return activeSearchPageSearch
 }
@@ -1720,14 +1729,13 @@ async function getPartsPageVariantInvItems(db: IDBPDatabase, variant: ItemVarian
     )
     for (let i = 0; i < storeItems.length; i++) {
       const storeItem = storeItems[i]
-      if (conditions.excluded) {
-        if (conditions.ids.includes(storeItem.condition)) {
+      if (conditions.excluded.length) {
+        if (conditions.excluded.includes(storeItem.condition)) {
           continue
         }
-      } else {
-        if (conditions.ids.length > 0 && !conditions.ids.includes(storeItem.condition)) {
-          continue
-        }
+      }
+      if (conditions.included.length > 0 && !conditions.included.includes(storeItem.condition)) {
+        continue
       }
       const color = await objectCache.getColor(variant.colorId)
       if (!color) {
