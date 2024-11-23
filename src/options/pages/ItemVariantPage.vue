@@ -2,9 +2,11 @@
 import HomeButton from '../components/HomeButton.vue';
 import PartsButton from '../components/PartsButton.vue';
 import PartButton from '../components/PartButton.vue';
-import { ActiveSearch, UiShopList, type UiInvItem, type UiItemVariant } from '../types'
-import { getActiveSearch, getUiPartVariant } from '../idb/idb';
+import { ActiveSearch, UiShopList, VariantPageVariant, type UiItemVariant } from '../types'
+import { getActiveSearch, getVariantPageVariant } from '../idb/idb';
 import StoreItemsTable from '@/components/StoreItemsTable.vue';
+import ActiveCartButton from '../components/ActiveCartButton.vue';
+
 const addToListId = ref<number | undefined>()
 const addToListCondition = ref<string>('New')
 const addToListMinQ = ref<number>(1)
@@ -15,11 +17,11 @@ import { useRoute } from 'vue-router'
 import ActiveSearchButton from '../components/ActiveSearchButton.vue';
 const route = useRoute()
 
-const variant = ref<UiItemVariant | undefined>(undefined)
+const variant = ref<VariantPageVariant | undefined>(undefined)
 const lists = ref<UiShopList[] | undefined>(undefined)
 const search = ref<ActiveSearch | undefined>(undefined)
 onMounted(async () => {
-  variant.value = await getUiPartVariant(route.params.partId, route.params.colorId)
+  variant.value = await getVariantPageVariant(route.params.partId, route.params.colorId)
   search.value = getActiveSearch()
 })
 
@@ -49,6 +51,12 @@ watch(() => lists, () => {
   deep: true,
   immediate: true
 })
+const cartButton = ref<typeof ActiveCartButton | undefined>(undefined)
+function refreshCartButton() {
+  if (cartButton.value) {
+    cartButton.value.refresh()
+  }
+}
 </script>
 
 <template>
@@ -57,6 +65,7 @@ watch(() => lists, () => {
     <PartsButton />
     <PartButton :part="variant.item" />
     <ActiveSearchButton />
+    <ActiveCartButton ref="cartButton" />
     <h4>{{ variant.item.itemName }}, {{ variant.color.name }}</h4>
     <img :src="variant.image">
     <h4>Add to shopping list</h4>
@@ -90,7 +99,7 @@ watch(() => lists, () => {
     <button @click="$emit('addToList', addToListItem)">
       Add
     </button>
-    <StoreItemsTable :items="variant.invItems" />
+    <StoreItemsTable :items="variant.invItems" hide-variant @refresh-cart-button="refreshCartButton" />
     <h4>Shopping lists</h4>
     <table>
       <thead>

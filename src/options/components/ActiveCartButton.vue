@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { ActiveCartButtonCart } from '../types';
 import { getActiveCartButtonCart } from '../idb/idb';
 import { formatAmount, formatInteger } from '../utils';
+
 const router = useRouter()
 const activeCart = ref<ActiveCartButtonCart | undefined>(undefined)
 onMounted(async () => {

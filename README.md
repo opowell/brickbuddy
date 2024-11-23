@@ -1,17 +1,24 @@
 # Brick Buddy
 
 ## TODO
-- fix part variant page.
+- fix active search page.
+- show active cart.
+- saved carts.
 - scrape in background?
   - https://developer.chrome.com/docs/extensions/develop/migrate/to-service-workers#convert-timers
+- search: remove item names, just show amounts:
+  - "Colors: 3 excluded, 1 included"
 - remove old inventory.
 - add global quantity minimum.
 - sort lists by name.
+- import BrickLink stores dynamically.
 - scrape prio based on "freshness" of latest scrape results.
 - active search: include/exclude stores/colors/categories/parts.
 - combine similar lots.
-
-- shop order cost.
+- alert if scraping not working.
+- "buy" a list
+  - shop order cost.
 - scrape more often on first initialization.
-- copy of idb for each search?
+
+- copy of idb for each search
 - UI improvements

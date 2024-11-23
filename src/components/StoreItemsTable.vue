@@ -4,16 +4,23 @@ import { ActiveSearch, type UiInvItem } from '../options/types'
 import { formatAmount, formatInteger, formatFloat } from '@/options/utils';
 import PartVariantButton from '@/options/components/PartVariantButton.vue';
 import StoreButton from '@/options/components/StoreButton.vue';
-import { getActiveSearch } from '@/options/idb/idb';
+import { getActiveSearch, setCartQuantity } from '@/options/idb/idb';
 import ColorButton from '@/options/components/ColorButton.vue';
 import ConditionButton from '@/options/components/ConditionButton.vue';
 import * as math from 'mathjs'
-const { items, showColor = false } = defineProps({
+import QuantityInput from '@/options/components/QuantityInput.vue';
+
+const { hideVariant = false, items, showColor = false } = defineProps({
+  hideVariant: Boolean,
   showColor: Boolean,
   items: Object as PropType<UiInvItem[]>,
 })
+const emits = defineEmits([
+  'refreshCartButton'
+])
 
 interface StoreItemsTableInvItem extends UiInvItem {
+  cartQuantity: number | undefined;
   priceScore: string
 }
 const search = ref<ActiveSearch | undefined>(undefined)
@@ -74,6 +81,18 @@ const viewedItems = computed<StoreItemsTableInvItem[]>(() => {
   }
   return out2
 })
+async function updateCartQuantity(item: StoreItemsTableInvItem, newQuantity: number) {
+  console.log(item, newQuantity)
+  if (!item.store) {
+    return
+  }
+  const response = await setCartQuantity(item.store, item, newQuantity)
+  if (response) {
+    item.cartQuantity = newQuantity
+  }
+  emits('refreshCartButton')
+}
+
 </script>
 
 <template>
@@ -81,18 +100,19 @@ const viewedItems = computed<StoreItemsTableInvItem[]>(() => {
   <table>
     <thead>
       <tr>
-        <th>Variant</th>
+        <th v-if="!hideVariant">Variant</th>
         <th>Store</th>
         <th v-if="showColor">Color</th>
         <th v-if="search && search.conditions.excluded.length < 1">Condition</th>
         <th>Price</th>
         <th>Price Score</th>
         <th>Quantity</th>
+        <th>Cart</th>
       </tr>
     </thead>
     <tbody>
       <tr v-for="(invItem, index) in viewedItems" :key="index">
-        <PartVariantButton :part="invItem.item" :variant="invItem.variant">
+        <PartVariantButton  v-if="!hideVariant" :part="invItem.item" :variant="invItem.variant">
           <img v-if="invItem.variant" :src="invItem.variant.image">
         </PartVariantButton>
         <td>
@@ -103,6 +123,13 @@ const viewedItems = computed<StoreItemsTableInvItem[]>(() => {
         <td>{{ formatAmount(invItem.price) }}</td>
         <td>{{ invItem.priceScore }}</td>
         <td>{{ formatInteger(invItem.quantity) }}</td>
+        <td>
+          <QuantityInput
+            :current="invItem.cartQuantity"
+            :max="invItem.quantity"
+            @update-quantity="updateCartQuantity(invItem, $event)"
+          />
+        </td>
       </tr>
     </tbody>
   </table>

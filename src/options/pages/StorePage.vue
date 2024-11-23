@@ -14,6 +14,7 @@ import CategoryButton from '../components/CategoryButton.vue';
 import ConditionButton from '../components/ConditionButton.vue';
 import ObjectCache from '../idb/ObjectCache';
 import PartVariantButton from '../components/PartVariantButton.vue';
+import QuantityInput from '../components/QuantityInput.vue';
 const route = useRoute()
 const store = ref<StorePageStore | undefined>(undefined)
 const search = ref<ActiveSearch | undefined>(undefined)
@@ -61,13 +62,13 @@ const url = computed(() => {
   return store.value.slug
 })
 
-async function updateCartQuantity(item: StorePageInvItem) {
+async function updateCartQuantity(item: StorePageInvItem, newQuantity: number) {
   if (!store.value) {
     return
   }
-  const response = await setCartQuantity(store.value, item)
+  const response = await setCartQuantity(store.value, item, newQuantity)
   if (response) {
-    item.cartQuantity = item.newCartQuantity
+    item.cartQuantity = newQuantity
   }
   if (cartButton.value) {
     cartButton.value.refresh()
@@ -122,9 +123,10 @@ const cartButton = ref<typeof ActiveCartButton | undefined>(undefined)
           <td>{{ formatAmount(item.price*store.priceAdjustment/100) }}</td>
           <td>{{ item.priceScore }}</td>
           <td>
-            {{ item.cartQuantity }}
-            <input v-model="item.newCartQuantity" type="number" min="0" :max="item.quantity">
-            <button :disabled="item.newCartQuantity > item.quantity || item.newCartQuantity === '' || item.newCartQuantity < 0" @click="updateCartQuantity(item)">Set</button>
+            <QuantityInput
+              :current="item.quantity"
+              @update-quantity="updateCartQuantity(item, $event)"
+            />
           </td>
         </tr>
       </tbody>

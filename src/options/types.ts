@@ -107,6 +107,16 @@ export interface UiItemVariant extends ItemVariant {
   invItems: UiInvItem[]
   item?: UiItem
 }
+export interface VariantPageVariant extends ItemVariant {
+  color: Color
+  invItems: VariantPageInvItem[]
+  item?: VariantPagePart
+}
+export interface VariantPageInvItem extends InvItem {
+  store: Store
+  item: Item
+  cartQuantity: number
+}
 export interface PartVariantButtonVariant extends ItemVariant {
   color: Color
 }
@@ -123,9 +133,14 @@ export interface PartPageVariant extends ItemVariant {
 export interface PartPageVariantInvItem extends InvItem {
   store: Store
   color: Color
+  cartQuantity: number
 }
 export interface UiItem extends Item {
   variants: UiItemVariant[]
+  category?: Category
+}
+export interface VariantPagePart extends Item {
+  variants: ItemVariant[]
   category?: Category
 }
 export interface PartsPagePart extends Item {
@@ -168,7 +183,6 @@ export interface StorePageInvItem extends InvItem {
   category: Category
   variant: ItemVariant
   cartQuantity: number
-  newCartQuantity: number
   priceScore: number
 }
 

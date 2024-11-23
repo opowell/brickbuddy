@@ -1,5 +1,5 @@
 import { categories } from './idb';
-import { ActiveCartButtonCart, Cart, CartItem, CartWithItems, StorePageInvItem } from './../types';
+import { ActiveCartButtonCart, Cart, CartItem, CartWithItems, StorePageInvItem, VariantPageInvItem, VariantPagePart, VariantPageVariant } from './../types';
 import { IDBPDatabase, openDB } from "idb";
 import STORES, { StoreDefinition } from './stores'
 import INDICES, { IndexDefinition } from './indices'
@@ -450,6 +450,40 @@ export async function getUiPartVariant(partId: string, colorId: string): Promise
   }
   return uiPartVariant
 }
+export async function getVariantPageVariant(partId: string, colorId: string): Promise<VariantPageVariant> {
+  const db = await getDbConnection()
+  const activeCart = getActiveCart()
+  const variant: ItemVariant = await get(db, STORES.PART_VARIANTS, [partId, colorId])
+  const invItems: InvItem[] = await getAllFromIndex(
+    db,
+    INDICES.INV_ITEMS_BY_ITEM_AND_COLOR,
+    [variant.itemId, variant.colorId]
+  )
+  const uiInvItems: VariantPageInvItem[] = []
+  for (let i = 0; i < invItems.length; i++) {
+    const invItem: InvItem = invItems[i]
+    const store = await get(db, STORES.STORES, invItem.storeId)
+    const uiItem: VariantPagePart | undefined = await getVariantPagePart(invItem.itemId)
+    const color: Color | undefined = await getColor(db, invItem.colorId)
+    if (!uiItem || !color) {
+      continue
+    }
+    const cartQuantity = getCartQuantity(activeCart, invItem)
+    uiInvItems.push({
+      ...invItem,
+      store,
+      item: uiItem,
+      cartQuantity
+    })
+  }
+  const uiPartVariant: UiItemVariant = {
+    ...variant,
+    color: await getColor(db, variant.colorId + ''),
+    invItems: uiInvItems,
+    item: await getUiPart(variant.itemId),
+  }
+  return uiPartVariant
+}
 export async function getUiPartVariants(db: IDBPDatabase, id: string, objectCache?: ObjectCache): Promise<UiItemVariant[]> {
   const variants: UiItemVariant[] = await getAllFromIndex(db, INDICES.PART_VARIANTS_BY_PART, id)
   for (let i = 0; i < variants.length; i++) {
@@ -496,6 +530,7 @@ async function getPartPageInvItems(db: IDBPDatabase, itemId: string): Promise<Pa
   return partPageInvItems
 }
 async function getPartPageVariantInvItems(db: IDBPDatabase, variant: ItemVariant): Promise<PartPageVariantInvItem[]> {
+  const activeCart = getActiveCart()
   const invItems = await getAllFromIndex(
     db,
     INDICES.INV_ITEMS_BY_ITEM_AND_COLOR,
@@ -504,8 +539,10 @@ async function getPartPageVariantInvItems(db: IDBPDatabase, variant: ItemVariant
   const partPageVariantInvItems = []
   for (let i = 0; i < invItems.length; i++) {
     const invItem: InvItem = invItems[i]
+    const cartQuantity = getCartQuantity(activeCart, invItem)
     const partPageVariantInvItem: PartPageVariantInvItem = {
       ...invItem,
+      cartQuantity,
       color: await getColor(db, invItem.colorId + ''),
       store: await getStore(db, invItem.storeId + '')
     }
@@ -588,7 +625,8 @@ function getCartQuantity(cart: CartWithItems, invItem: InvItem): number {
   return cartItem.quantity
 }
 
-export async function setCartQuantity(store: Store, invItem: StorePageInvItem): Promise<boolean> {
+export async function setCartQuantity(store: Store, invItem: StorePageInvItem, newQuantity: number): Promise<boolean> {
+  console.log('setCartQuantity', store, invItem, newQuantity)
   const activeCart = getActiveCart()
   let foundItem: CartItem | undefined = activeCart.cartItems.find(i => i.storeId === store.sId && i.invItemId === invItem.invId)
   if (!foundItem) {
@@ -601,7 +639,7 @@ export async function setCartQuantity(store: Store, invItem: StorePageInvItem): 
     }
     activeCart.cartItems.push(foundItem)
   }
-  foundItem.quantity = invItem.newCartQuantity
+  foundItem.quantity = newQuantity
   storeActiveCart(activeCart)
   return true
 }
@@ -609,6 +647,12 @@ export async function getUiPart(id: string, objectCache?: ObjectCache): Promise<
   id = id + ''
   const db = await getDbConnection()
   const part: Item = await get(db, STORES.PARTS, id)
+  const uiPart = await getUiPartFromPart(db, part, objectCache)
+  return uiPart
+}
+export async function getVariantPagePart(id: string, objectCache?: ObjectCache): Promise<VariantPagePart | undefined> {
+  const db = await getDbConnection()
+  const part: Item = await getPart(db, id)
   const uiPart = await getUiPartFromPart(db, part, objectCache)
   return uiPart
 }

@@ -7,6 +7,7 @@ import type { PartPagePart, PartPageVariant, PartPageVariantInvItem, UiInvItem, 
 import ActiveSearchButton from '../components/ActiveSearchButton.vue';
 import CategoryButton from '../components/CategoryButton.vue';
 import { formatInteger } from '../utils';
+import ActiveCartButton from '../components/ActiveCartButton.vue';
 interface VariantWithPriceQuantity extends PartPageVariant {
   price: number
   maxPrice: number
@@ -71,6 +72,12 @@ const invItems = computed<PartPageVariantInvItem[] | undefined>(() => {
     })
   })
 })
+const cartButton = ref<typeof ActiveCartButton | undefined>(undefined)
+function refreshCartButton() {
+  if (cartButton.value) {
+    cartButton.value.refresh()
+  }
+}
 </script>
 
 <template>
@@ -79,6 +86,7 @@ const invItems = computed<PartPageVariantInvItem[] | undefined>(() => {
     <HomeButton />
     <PartsButton />
     <ActiveSearchButton />
+    <ActiveCartButton ref="cartButton" />
     <h4>{{ item.itemName }} ({{ item.itemId }})</h4>
     <div>Bricklink: {{ item.brickLinkName }} ({{ item.brickLinkId }})</div>
     <div>Lego: {{ item.legoName }} ({{ item.legoPartId }})</div>
@@ -127,6 +135,6 @@ const invItems = computed<PartPageVariantInvItem[] | undefined>(() => {
         </tr>
       </tbody>
     </table>
-    <StoreItemsTable v-if="invItems" :items="invItems" show-color />
+    <StoreItemsTable v-if="invItems" :items="invItems" show-color @refresh-cart-button="refreshCartButton" />
   </div>
 </template>
