@@ -1,6 +1,7 @@
 # Brick Buddy
 
 ## TODO
+- fix part variant page.
 - scrape in background?
   - https://developer.chrome.com/docs/extensions/develop/migrate/to-service-workers#convert-timers
 - remove old inventory.
