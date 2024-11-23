@@ -206,24 +206,24 @@ export interface ShopListItem {
 }
 export interface SearchBase {
   categories: {
-    ids: string[]
-    excluded: boolean
+    included: string[]
+    excluded: string[]
   }
   colors: {
-    ids: number[]
-    excluded: boolean
+    included: string[]
+    excluded: string[]
   }
   conditions: {
-    ids: string[]
-    excluded: boolean
+    included: string[]
+    excluded: string[]
   }
   stores: {
-    ids: string[]
-    excluded: boolean
+    included: string[]
+    excluded: string[]
   }
   parts: {
-    ids: number[]
-    excluded: boolean
+    included: string[]
+    excluded: string[]
   }
   priceScoreQuantity: number
   priceScoreIgnoreColor: boolean
@@ -245,9 +245,34 @@ export interface ActiveCartButtonCart extends Cart {
 }
 export interface ActiveSearchButtonActiveSearch extends ActiveSearch {
   categories: {
-    ids: string[]
-    excluded: boolean
-    objects: Category[]
+    included: string[]
+    excluded: string[]
+    includedNames: string[]
+    excludedNames: string[]
+  }
+  colors: {
+    included: string[]
+    excluded: string[]
+    includedNames: string[]
+    excludedNames: string[]
+  }
+  parts: {
+    included: string[]
+    excluded: string[]
+    includedNames: string[]
+    excludedNames: string[]
+  }
+  stores: {
+    included: string[]
+    excluded: string[]
+    includedNames: string[]
+    excludedNames: string[]
+  }
+  conditions: {
+    included: string[]
+    excluded: string[]
+    includedNames: string[]
+    excludedNames: string[]
   }
 }
 interface ActiveSearchPagePart extends Item {

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { CategoriesPageCategory } from '../types';
 import ExcludeCategoryButton from '../components/ExcludeCategoryButton.vue';
+import IncludeCategoryButton from '../components/IncludeCategoryButton.vue';
 
 const newId = ref('')
 const newName = ref('')
@@ -13,6 +14,9 @@ function add() {
 }
 function excludeCategory(index: number) {
   categories.value?.splice(index, 1)
+}
+function includeCategory(index: number) {
+  categories.value = categories.value?.splice(index, 1)
 }
 import CategoryButton from '../components/CategoryButton.vue';
 import HomeButton from '../components/HomeButton.vue';
@@ -61,6 +65,7 @@ import NameIdLabel from '../components/NameIdLabel.vue';
           </td>
           <td>
             <ExcludeCategoryButton :category="category" @exclude="excludeCategory(index)"/>
+            <IncludeCategoryButton :category="category" @include="includeCategory(index)"/>
           </td>
         </tr>
       </tbody>

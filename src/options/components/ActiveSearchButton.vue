@@ -28,18 +28,12 @@ const text = computed(() => {
   ]
   const fields = ['categories', 'colors', 'parts', 'conditions']
   fields.forEach(field => {
-    const searchField: { ids: string[], excluded: boolean } = search[field]
-    if (searchField.ids.length > 0) {
-      // texts.push(searchField.ids.length + ' ' + (searchField.excluded ? 'excluded' : 'included') + ' ' + field)
-      let names = searchField.ids
-      if (searchField.objects) {
-        names = searchField.objects.map(object => object?.name)
-      }
-      if (searchField.excluded) {
-        texts.push(capitalizeFirstLetter(field) + ': all except ' + names.join(', '))
-      } else {
-        texts.push(capitalizeFirstLetter(field) + ': only ' + names.join(', '))
-      }
+    const searchField: { includedNames: string[], excludedNames: string[] } = search[field]
+    if (searchField.includedNames.length > 0) {
+      texts.push(capitalizeFirstLetter(field) + ': include ' + searchField.includedNames.join(', '))
+    }
+    if (searchField.excludedNames.length > 0) {
+      texts.push(capitalizeFirstLetter(field) + ': exclude ' + searchField.excludedNames.join(', '))
     }
   })
   return 'Search: ' + texts.join('; ')

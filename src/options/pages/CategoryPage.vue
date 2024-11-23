@@ -6,6 +6,7 @@ import HomeButton from '../components/HomeButton.vue';
 import { useRoute } from 'vue-router'
 import { getCategoryPageCategory } from '../idb/idb';
 import { CategoryPageCategory } from '../types';
+import IncludeCategoryButton from '../components/IncludeCategoryButton.vue';
 import ExcludeCategoryButton from '../components/ExcludeCategoryButton.vue';
 const route = useRoute()
 import { useRouter } from 'vue-router'
@@ -25,6 +26,7 @@ onMounted(async () => {
     <CategoriesButton />
     <ActiveSearchButton />
     <h4>{{ category.name }}</h4>
+    <IncludeCategoryButton :category="category" @include="router.push(Crumbs.categories.href)"/>
     <ExcludeCategoryButton :category="category" @exclude="router.push(Crumbs.categories.href)"/>
     <div>Id: {{ category.id }}</div>
     <div>Bricklink: <NameIdLabel is-span :id="category.brickLinkId" :name="category.brickLinkName" /></div>

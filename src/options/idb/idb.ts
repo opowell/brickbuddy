@@ -147,24 +147,24 @@ export function getActiveCart(): CartWithItems {
 export function getActiveSearch(): ActiveSearch {
   let activeSearch: ActiveSearch = {
     categories: {
-      ids: [],
-      excluded: false
+      excluded: [],
+      included: []
     },
     colors: {
-      ids: [],
-      excluded: false
+      excluded: [],
+      included: []
     },
     conditions: {
-      ids: [],
-      excluded: false
+      excluded: [],
+      included: []
     },
     stores: {
-      ids: [],
-      excluded: false
+      excluded: [],
+      included: []
     },
     parts: {
-      ids: [],
-      excluded: false
+      excluded: [],
+      included: []
     },
     priceScoreQuantity: 100,
     priceScoreIgnoreColor: true
@@ -181,8 +181,33 @@ export async function getActiveSearchButtonActiveSearch(): Promise<ActiveSearchB
     ...search,
     categories: {
       excluded: search.categories.excluded,
-      ids: search.categories.ids,
-      objects: await getCategories(search.categories.ids)
+      excludedNames: (await getCategories(search.categories.excluded)).map(category => category.name),
+      included: search.categories.included,
+      includedNames: (await getCategories(search.categories.included)).map(category => category.name)
+    },
+    colors: {
+      excluded: search.colors.excluded,
+      excludedNames: [],
+      included: search.colors.included,
+      includedNames: []
+    },
+    conditions: {
+      excluded: search.conditions.excluded,
+      excludedNames: search.conditions.excluded,
+      included: search.conditions.included,
+      includedNames: search.conditions.included
+    },
+    stores: {
+      excluded: search.stores.excluded,
+      excludedNames: [],
+      included: search.stores.included,
+      includedNames: []
+    },
+    parts: {
+      excluded: search.parts.excluded,
+      excludedNames: [],
+      included: search.parts.included,
+      includedNames: []
     }
   }
   return activeSearch
@@ -238,14 +263,18 @@ export async function getActiveSearchPageSearch(): Promise<ActiveSearchPageSearc
 }
 export async function excludeCategory(category: Category) {
   const activeSearch = getActiveSearch()
-  activeSearch.categories.excluded = true
-  activeSearch.categories.ids.push(category.id)
+  activeSearch.categories.excluded.push(category.id)
+  storeActiveSearch(activeSearch)
+}
+export async function includeCategory(category: Category) {
+  const activeSearch = getActiveSearch()
+  activeSearch.categories.included.push(category.id)
   storeActiveSearch(activeSearch)
 }
 export function storeActiveSearch(activeSearch: ActiveSearch) {
   const toStore: ActiveSearch = {
     categories: {
-      ids: activeSearch.categories.ids,
+      included: activeSearch.categories.included,
       excluded: activeSearch.categories.excluded
     },
     colors: activeSearch.colors,
@@ -370,14 +399,13 @@ export async function getCategoriesPageCategories(): Promise<CategoriesPageCateg
   for (let i = 0; i < categories.length; i++) {
     const category: Category = categories[i]
     if (
-      activeSearch.categories.excluded
+      activeSearch.categories.excluded.includes(category.id)
     ) {
-      if (activeSearch.categories.ids.includes(category.id)) {
-        continue
-      }
-    } else if (
-      activeSearch.categories.ids.length > 0 &&
-      !activeSearch.categories.ids.includes(category.id)
+      continue
+    }
+    if (
+      activeSearch.categories.included.length > 0 &&
+      !activeSearch.categories.included.includes(category.id)
     ) {
       continue
     }
@@ -1399,7 +1427,7 @@ export async function addInvItem(
   if (!invItem) {
     invItem = {
       storeId: store.sId,
-      invIds: [invId],
+      invId,
       itemId,
       condition,
       quantity: 0,
@@ -1565,18 +1593,29 @@ export async function getStoresPageStores(): Promise<StoresPageStore[]> {
 
 async function countInvItems(db: IDBPDatabase, storeId: string, search: SearchBase): Promise<number> {
   const conditions = search.conditions
-  if (conditions.ids.length > 0) {
-    const sortedIds = conditions.ids
-      .map(x => 'condition_' + x)
-      .sort((a, b) => a > b ? 1 : -1)
-    const values = sortedIds.map(() => conditions.excluded ? 0 : 1)
-    const indexName = sortedIds.join('_')
+  const entries = []
+  for (let i = 0; i < conditions.excluded.length; i++) {
+    entries.push({
+      id: conditions.excluded[i],
+      excluded: true
+    })
+  }
+  for (let i = 0; i < conditions.included.length; i++) {
+    entries.push({
+      id: conditions.included[i],
+      excluded: false
+    })
+  }
+  if (entries.length > 0) {
+    const sortedEntries = entries
+      .sort((a, b) => a.id > b.id ? 1 : -1)
+    const values = sortedEntries.map((entry) => entry.excluded ? 0 : 1)
+    const indexName = sortedEntries.map(e => 'condition_' + e.id).join('_')
     const index: IndexDefinition = {
-      keyPath: ['storeId', ...sortedIds],
+      keyPath: ['storeId', ...sortedEntries.map(e => e.id)],
       name: 'store_' + indexName,
       store: STORES.INVENTORY_ITEMS.name
     }
-    console.log('count', db, index, storeId, values)
     return await countFromIndex(db, index, [storeId, ...values])
   }
   return await countFromIndex(db, INDICES.INV_ITEMS_BY_STORE, storeId)

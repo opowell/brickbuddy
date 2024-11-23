@@ -95,7 +95,7 @@ const cartButton = ref<typeof ActiveCartButton | undefined>(undefined)
         <tr>
           <th>Item</th>
           <th>Name</th>
-          <th v-if="search && search.conditions.ids.length < 1">Condition</th>
+          <th v-if="search && search.conditions.excluded.length < 1">Condition</th>
           <th>Color</th>
           <th>Category</th>
           <th>Quantity</th>
@@ -113,7 +113,7 @@ const cartButton = ref<typeof ActiveCartButton | undefined>(undefined)
           <td>
             <PartButton :part="item.item" />
           </td>
-          <td v-if="search && search.conditions.ids.length < 1"><ConditionButton :condition="item.condition" /></td>
+          <td v-if="search && search.conditions.excluded.length < 1"><ConditionButton :condition="item.condition" /></td>
           <td><ColorButton :color="{ id: item.colorId, name: item.colorName }" /></td>
           <td><CategoryButton :category="item.category" /></td>
           <td>{{ formatInteger(item.quantity) }}</td>

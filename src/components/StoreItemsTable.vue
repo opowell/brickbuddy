@@ -57,7 +57,6 @@ const viewedItems = computed<StoreItemsTableInvItem[]>(() => {
   for (let i = 0; i < out.length; i++) {
     const item = out[i]
     let priceScore = 0
-    let cost
     let priceScoreString = ''
     if (search.value && costOfCheapest.value) {
       priceScore = math.number(math.divide(math.bignumber(item.price), math.bignumber(costOfCheapest.value)))
@@ -85,7 +84,7 @@ const viewedItems = computed<StoreItemsTableInvItem[]>(() => {
         <th>Variant</th>
         <th>Store</th>
         <th v-if="showColor">Color</th>
-        <th v-if="search && search.conditions.ids.length < 1">Condition</th>
+        <th v-if="search && search.conditions.excluded.length < 1">Condition</th>
         <th>Price</th>
         <th>Price Score</th>
         <th>Quantity</th>
@@ -100,7 +99,7 @@ const viewedItems = computed<StoreItemsTableInvItem[]>(() => {
           <StoreButton :store="invItem.store" />
         </td>
         <td v-if="showColor"><ColorButton :color="invItem.variant.color" /></td>
-        <td v-if="search && search.conditions.ids.length < 1"><ConditionButton :condition="invItem.condition" /></td>
+        <td v-if="search && search.conditions.excluded.length < 1"><ConditionButton :condition="invItem.condition" /></td>
         <td>{{ formatAmount(invItem.price) }}</td>
         <td>{{ invItem.priceScore }}</td>
         <td>{{ formatInteger(invItem.quantity) }}</td>
