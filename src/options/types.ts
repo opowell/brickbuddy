@@ -107,6 +107,9 @@ export interface UiItemVariant extends ItemVariant {
   invItems: UiInvItem[]
   item?: UiItem
 }
+export interface PartVariantButtonVariant extends ItemVariant {
+  color: Color
+}
 export interface StorePageVariant extends ItemVariant {
   color: Color
   invItems: UiInvItem[]

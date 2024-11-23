@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { UiItem, UiItemVariant } from '../types';
+import { PartVariantButtonVariant, Item } from '../types';
 import { Crumbs } from '../idb/constants';
 import { useRouter } from 'vue-router'
 import {PropType} from 'vue'
 const { part, variant } = defineProps({
-  part: Object as PropType<UiItem>,
-  variant: Object as PropType<UiItemVariant>
+  part: Object as PropType<Item>,
+  variant: Object as PropType<PartVariantButtonVariant>
 })
 const router = useRouter()
 const href = computed(() => {

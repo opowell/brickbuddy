@@ -65,7 +65,7 @@ export async function startFetching() {
       return
     }
     getPrices()
-  }, 30000 + Math.floor(Math.random() * 30000))
+  }, 20000 + Math.floor(Math.random() * 20000))
 }
 
 async function count(db: IDBPDatabase, storeDefinition: StoreDefinition) {

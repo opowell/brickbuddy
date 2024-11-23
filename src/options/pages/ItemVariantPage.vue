@@ -70,7 +70,7 @@ watch(() => lists, () => {
           {{ list.name }}
         </option>
       </select>
-      <div v-if="search && search.conditions.ids.length < 1">
+      <div v-if="search && search.conditions.excluded.length < 1">
         Condition:<select v-model="addToListCondition">
           <option value="New">
             New

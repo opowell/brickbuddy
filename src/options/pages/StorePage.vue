@@ -13,6 +13,7 @@ import { formatAmount, formatInteger } from '../utils';
 import CategoryButton from '../components/CategoryButton.vue';
 import ConditionButton from '../components/ConditionButton.vue';
 import ObjectCache from '../idb/ObjectCache';
+import PartVariantButton from '../components/PartVariantButton.vue';
 const route = useRoute()
 const store = ref<StorePageStore | undefined>(undefined)
 const search = ref<ActiveSearch | undefined>(undefined)
@@ -42,9 +43,6 @@ function getImageSrc(invItem: StorePageInvItem) {
   }
   return variant.image
 }
-function goVariant(invItem: StorePageInvItem) {
-
-}
 function getVariant(invItem: StorePageInvItem) {
   return invItem.item.variants.find(v => v.colorId === invItem.colorId)
 }
@@ -64,6 +62,9 @@ const url = computed(() => {
 })
 
 async function updateCartQuantity(item: StorePageInvItem) {
+  if (!store.value) {
+    return
+  }
   const response = await setCartQuantity(store.value, item)
   if (response) {
     item.cartQuantity = item.newCartQuantity
@@ -106,10 +107,11 @@ const cartButton = ref<typeof ActiveCartButton | undefined>(undefined)
       </thead>
       <tbody>
         <tr v-for="item in items" :key="item.invId">
-          <td><img
-            :src="getImageSrc(item)"
-            @click="goVariant(item)"
-          ></td>
+          <td>
+            <PartVariantButton :part="item.item" :variant="item.variant">
+              <img :src="getImageSrc(item)">
+            </PartVariantButton>
+          </td>
           <td>
             <PartButton :part="item.item" />
           </td>
