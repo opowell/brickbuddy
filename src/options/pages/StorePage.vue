@@ -124,7 +124,8 @@ const cartButton = ref<typeof ActiveCartButton | undefined>(undefined)
           <td>{{ item.priceScore }}</td>
           <td>
             <QuantityInput
-              :current="item.quantity"
+              :current="item.cartQuantity"
+              :max="item.quantity"
               @update-quantity="updateCartQuantity(item, $event)"
             />
           </td>
