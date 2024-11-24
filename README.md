@@ -1,7 +1,6 @@
 # Brick Buddy
 
 ## TODO
-- show active cart.
 - saved carts.
 - scrape in background?
   - https://developer.chrome.com/docs/extensions/develop/migrate/to-service-workers#convert-timers

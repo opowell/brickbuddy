@@ -1,5 +1,5 @@
 import { categories } from './idb';
-import { ActiveCartButtonCart, Cart, CartItem, CartWithItems, StorePageInvItem, VariantPageInvItem, VariantPagePart, VariantPageVariant } from './../types';
+import { ActiveCartButtonCart, Cart, CartItem, CartPageCartItem, CartWithItems, StorePageInvItem, VariantPageInvItem, VariantPagePart, VariantPageVariant } from './../types';
 import { IDBPDatabase, openDB } from "idb";
 import STORES, { StoreDefinition } from './stores'
 import INDICES, { IndexDefinition } from './indices'
@@ -76,13 +76,35 @@ export async function setPriceScoreQuantity(quantity: number) {
   search.priceScoreQuantity = quantity
   storeActiveSearch(search)
 }
+async function getNumParts(db: IDBPDatabase): Promise<number> {
+  const parts = await getParts(db)
+  return parts.length
+}
+
+async function getParts(db: IDBPDatabase): Promise<Item[]> {
+  const search = getActiveSearch()
+  const parts: Item[] = await db.getAll(STORES.PARTS.name)
+  return parts.filter(part => {
+    if (search.categories.excluded.includes(part.categoryId)) {
+      return false
+    }
+    if (search.categories.included.length > 0) {
+      if (!search.categories.included.includes(part.categoryId)) {
+        return false
+      }
+    }
+    return true
+  })
+}
+
 export async function getHomeData(): Promise<HomeData> {
   const db = await getDbConnection()
+  const parts = getParts(db)
   return {
     stores: await count(db, STORES.STORES),
     colors: await count(db, STORES.COLORS),
     categories: await count(db, STORES.CATEGORIES),
-    parts: await count(db, STORES.PARTS),
+    parts: await getNumParts(db),
     conditions: 2,
     lists: await count(db, STORES.LISTS),
     searches: await count(db, STORES.SEARCHES),
@@ -107,15 +129,10 @@ function partExcluded(part: Item, search: ActiveSearch) {
 export async function getPartsPageParts(): Promise<PartsPagePart[]> {
   const db = await getDbConnection()
   const objectCache = new ObjectCacheClass(db)
-  const items: Item[] = await db.getAll(STORES.PARTS.name)
-  const activeSearch: ActiveSearch = getActiveSearch()
+  const items: Item[] = await getParts(db)
   const uiItems: PartsPagePart[] = []
   for (let i = 0; i < items.length; i++) {
     const part = items[i]
-    if (partExcluded(part, activeSearch)) {
-      console.log('excluded')
-      continue
-    }
     const variants = await getPartsPageVariants(db, part, objectCache)
     if (variants.length === 0) {
       console.log('no variants')
@@ -538,6 +555,9 @@ async function getPartPageInvItems(db: IDBPDatabase, itemId: string): Promise<Pa
   }
   return partPageInvItems
 }
+export async function getCartPageCart(cartId: number) {
+  return getActiveCart()
+}
 async function getPartPageVariantInvItems(db: IDBPDatabase, variant: ItemVariant): Promise<PartPageVariantInvItem[]> {
   const activeCart = getActiveCart()
   const invItems = await getAllFromIndex(
@@ -565,6 +585,85 @@ export async function getStorePageInvItems(db: IDBPDatabase, id: string): Promis
   const invItems: InvItem[] = await getAllFromIndex(db, INDICES.INV_ITEMS_BY_STORE, id)
   return invItems
 }
+export async function getInvItemFromId(db: IDBPDatabase, storeId: string, invItemId: string) {
+  return get(db, STORES.INVENTORY_ITEMS, [storeId, invItemId])
+}
+export async function getCartPageCartItem(objectCache: ObjectCacheClass, cartItem: CartItem): Promise<CartPageCartItem | undefined> {
+  const search = getActiveSearch()
+  const invItem: InvItem | undefined = await objectCache.getInvItem(cartItem.storeId, cartItem.invItemId)
+  console.log(invItem, cartItem)
+  if (!invItem) {
+    return
+  }
+  const store = await objectCache.getStore(invItem.storeId)
+  if (!store) {
+    return
+  }
+  const part = await objectCache.getStorePagePart(invItem.itemId)
+  if (!part) {
+    return
+  }
+  const color = await objectCache.getColor(invItem.colorId)
+  if (!color) {
+    return
+  }
+  const category = await objectCache.getCategory(part.categoryId)
+  if (!category) {
+    return
+  }
+  const variant = await getFromIndex(objectCache.db, INDICES.PART_VARIANTS_BY_PART_AND_COLOR, [part.itemId, color.id])
+  const variant2 = await getItemVariant(objectCache.db, invItem.itemId, invItem.colorId)
+  if (!variant2) {
+    return
+  }
+  let allMatchingInvItems
+  if (search.priceScoreIgnoreColor) {
+    allMatchingInvItems= await getAllFromIndex(objectCache.db, INDICES.INV_ITEMS_BY_ITEM, part.itemId)
+  } else {
+    allMatchingInvItems= await getAllFromIndex(objectCache.db, INDICES.INV_ITEMS_BY_ITEM_AND_COLOR, [part.itemId, color.id])
+  } 
+  if (!search) {
+    return
+  }
+  const sortedItems = allMatchingInvItems.sort((a, b) => a.price - b.price)
+  const targetQ = search.priceScoreQuantity
+  let cost = 0
+  let quantity = 0
+  for (let i = 0; i < sortedItems.length; i++) {
+    const item = sortedItems[i]
+    const toTake = Math.min(item.quantity, targetQ - quantity)
+    try {
+      quantity += toTake
+      cost += item.price * toTake
+    } catch (e) {
+      console.log(e)
+    }
+    if (toTake >= targetQ) {
+      break
+    }
+  }
+  const cheapestPrice = cost / quantity
+  console.log(invItem.itemId, cost, quantity, cheapestPrice)
+  const priceScore = math.number(math.divide(math.bignumber(invItem.price), math.bignumber(cheapestPrice)))
+  const percent = math.number(math.multiply(100, math.number(math.subtract(priceScore, 1))))
+  let sign = ''
+  if (percent > 0) {
+    sign = '+'
+  }
+  const priceScoreString = sign + percent.toFixed(2) + '%'
+  return {
+    ...cartItem,
+    invItem,
+    item: part,
+    store,
+    color,
+    category,
+    variant,
+    variant2,
+    priceScore: priceScoreString,
+  }
+}
+
 export async function getStorePageInvItem(objectCache: ObjectCacheClass, invItem: InvItem): Promise<StorePageInvItem | undefined> {
   const search = getActiveSearch()
   const part = await objectCache.getStorePagePart(invItem.itemId)
@@ -598,7 +697,7 @@ export async function getStorePageInvItem(objectCache: ObjectCacheClass, invItem
     const toTake = Math.min(item.quantity, targetQ - quantity)
     try {
       quantity += toTake
-      cost += math.number(math.multiply(math.bignumber(item.price), math.bignumber(toTake)))
+      cost += item.price * toTake
     } catch (e) {
       console.log(e)
     }
@@ -607,6 +706,7 @@ export async function getStorePageInvItem(objectCache: ObjectCacheClass, invItem
     }
   }
   const cheapestPrice = cost / quantity
+  console.log(invItem.itemId, cost, quantity, cheapestPrice)
   const priceScore = math.number(math.divide(math.bignumber(invItem.price), math.bignumber(cheapestPrice)))
   const percent = math.number(math.multiply(100, math.number(math.subtract(priceScore, 1))))
   let sign = ''
@@ -692,13 +792,12 @@ export async function getStorePagePart(id: string, objectCache?: ObjectCacheClas
     category: await objectCache.getCategory(part.categoryId)
   }
 }
-async function getStore(db: IDBPDatabase, storeId: string): Promise<Store> {
-  return await db.get(STORES.STORES.name, storeId + '')
+export async function getStore(db: IDBPDatabase, storeId: string): Promise<Store> {
+  return await get(db, STORES.STORES, storeId)
 }
 export async function getPartPagePart(id: string): Promise<PartPagePart | undefined> {
   const db = await getDbConnection()
   const part: Item = await get(db, STORES.PARTS, id)
-  console.log('getPartPagePart', id, part)
   if (!part) {
     return
   }

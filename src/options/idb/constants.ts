@@ -30,7 +30,7 @@ export const LINKS = {
 
 export const Routes = {
   home: '/',
-  activeCart: '/active-cart',
+  activeCart: '/cart',
   activeSearch: '/active-search',
   carts: '/carts',
   stores: '/stores',
@@ -52,7 +52,7 @@ export const Routes = {
   part(id: string) {
     return '/' + LINKS.PART + '/' + encodeURIComponent(id)
   },
-  partVariant(itemId: string, colorId: number) {
+  partVariant(itemId: string, colorId: string) {
     return '/' + LINKS.PART + '/' + encodeURIComponent(itemId) + '/' + LINKS.PART_VARIANT + '/' + encodeURIComponent(colorId)
   },
   store(id: string) {
@@ -84,7 +84,7 @@ export const Hrefs = {
   part(id: string) {
     return Routes.part(id)
   },
-  partVariant(itemId: string, colorId: number) {
+  partVariant(itemId: string, colorId: string) {
     return Routes.partVariant(itemId, colorId)
   },
   store(id: string) {
@@ -161,7 +161,7 @@ export const Crumbs = {
       href: Hrefs.part(id)
     }
   },
-  partVariant(title: string, itemId: string, colorId: number) {
+  partVariant(title: string, itemId: string, colorId: string) {
     return {
       title,
       href: Hrefs.partVariant(itemId, colorId)

@@ -12,7 +12,7 @@ import ItemVariantPage from './pages/ItemVariantPage.vue'
 import ColorPage from './pages/ColorPage.vue'
 import CategoryPage from './pages/CategoryPage.vue'
 import ActiveSearchPage from './pages/ActiveSearchPage.vue'
-import ActiveCartPage from './pages/ActiveCartPage.vue'
+import CartPage from './pages/CartPage.vue'
 import ConditionsPage from './pages/ConditionsPage.vue'
 export default [
   {
@@ -88,6 +88,6 @@ export default [
   {
     name: 'activeCart',
     path: Routes.activeCart,
-    component: ActiveCartPage
+    component: CartPage
   },
 ]

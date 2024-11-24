@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { Crumbs } from '../idb/constants';
-import { useRouter } from 'vue-router'
 import ActiveSearchButton from '../components/ActiveSearchButton.vue';
+import ActiveCartButton from '../components/ActiveCartButton.vue';
 import { HomeData } from '../types';
 import { getHomeData } from '../idb/idb';
-const router = useRouter()
 const homeData = ref<HomeData | undefined>(undefined)
 onMounted(async () => {
   homeData.value = await getHomeData()
@@ -17,6 +16,7 @@ import CardComponent from '../components/CardComponent.vue';
     <h4>Brick Buddy</h4>
     <p>
       <ActiveSearchButton />
+      <ActiveCartButton />
     </p>
     <div class="cards">
       <CardComponent v-if="homeData" name="Stores" :count="homeData.stores" :href="Crumbs.stores.href" />

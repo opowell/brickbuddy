@@ -25,6 +25,8 @@ export interface CartPageCartItem extends CartItem {
   color: Color
   maxQuantity: number
   category: Category
+  invItem: InvItem
+  variant: ItemVariant
 }
 
 export interface ShippingCost {
@@ -254,6 +256,9 @@ export interface Search extends SearchBase {
 }
 export interface ActiveSearch extends SearchBase {
   linkedSearch?: string
+}
+export interface CartPageCart extends CartWithItems {
+
 }
 export interface ActiveCartButtonCart extends Cart {
   totalCost: number

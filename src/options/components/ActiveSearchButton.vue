@@ -3,6 +3,7 @@ import { Crumbs } from '../idb/constants';
 import { useRouter } from 'vue-router'
 import { ActiveSearchButtonActiveSearch } from '../types';
 import { getActiveSearchButtonActiveSearch } from '../idb/idb';
+import { formatInteger } from '../utils';
 const router = useRouter()
 const activeSearch = ref<ActiveSearchButtonActiveSearch | undefined>(undefined)
 onMounted(async () => {
@@ -23,9 +24,11 @@ const text = computed(() => {
     return ''
   }
   const texts: string[] = [
-    'Price score: quantity: ' + search.priceScoreQuantity,
-    'ignore color: ' + search.priceScoreIgnoreColor,
+    'Price score: quantity: ' + formatInteger(search.priceScoreQuantity),
   ]
+  if (search.priceScoreIgnoreColor) {
+    texts.push('ignore color')
+  }
   const fields = ['categories', 'colors', 'parts', 'conditions']
   fields.forEach(field => {
     const searchField: { includedNames: string[], excludedNames: string[] } = search[field]
