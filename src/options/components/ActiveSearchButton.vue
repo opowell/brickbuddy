@@ -29,12 +29,20 @@ const text = computed(() => {
   const fields = ['categories', 'colors', 'parts', 'conditions']
   fields.forEach(field => {
     const searchField: { includedNames: string[], excludedNames: string[] } = search[field]
+    if (searchField.includedNames.length === 0 && searchField.excludedNames.length === 0) {
+      return
+    }
+    let searchText = capitalizeFirstLetter(field) + ': '
     if (searchField.includedNames.length > 0) {
-      texts.push(capitalizeFirstLetter(field) + ': include ' + searchField.includedNames.join(', '))
+      searchText += searchField.includedNames.length + ' included'
     }
     if (searchField.excludedNames.length > 0) {
-      texts.push(capitalizeFirstLetter(field) + ': exclude ' + searchField.excludedNames.join(', '))
+      if (searchField.includedNames.length > 0) {
+        searchText += ', '
+      }
+      searchText += searchField.excludedNames.length + ' excluded'
     }
+    texts.push(searchText)
   })
   return 'Search: ' + texts.join('; ')
 })

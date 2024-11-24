@@ -5,8 +5,6 @@
 - saved carts.
 - scrape in background?
   - https://developer.chrome.com/docs/extensions/develop/migrate/to-service-workers#convert-timers
-- search: remove item names, just show amounts:
-  - "Colors: 3 excluded, 1 included"
 - remove old inventory.
 - add global quantity minimum.
 - sort lists by name.
