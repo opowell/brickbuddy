@@ -44,7 +44,7 @@ const costOfCheapest = computed<number | undefined>(() => {
       break
     }
   }
-  return cost / targetQ
+  return cost / quantity
 })
 
 const sortedItems = computed<StoreItemsTableInvItem[]>(() => {
