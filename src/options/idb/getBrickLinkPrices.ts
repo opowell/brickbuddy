@@ -1,6 +1,6 @@
 import { IDBPDatabase } from "idb";
 import { BrickLinkItem, Category, Color, Item, Store } from "../types";
-import { addBrickLinkItem, addCategory, addInvItem, addItem, getBrickLinkItem, getCategory, getFromIndex, getPart, getPartByBrickLinkId, updateCategory, updatePart, updateStore } from "./idb";
+import { addBrickLinkCategory, addBrickLinkItem, addCategory, addCategoryToBrickLinkCategory, addInvItem, addItem, getBrickLinkItem, getCategory, getFromIndex, getPart, getPartByBrickLinkId, updateCategory, updatePart, updateStore } from "./idb";
 import * as math from 'mathjs'
 import INDICES from './indices'
 
@@ -49,6 +49,7 @@ export async function getBrickLinkPrices(db: IDBPDatabase, store: Store) {
     for (let i = 0; i < partCategories.categories.length; i++) {
       const partCategory = partCategories.categories[i]
       blCategories[partCategory.id + ''] = partCategory.name + ''
+      await addBrickLinkCategory(db, partCategory.catstr, partCategory.name)
     }
   }
   for (let i = 0; i < json.result.groups.length; i++) {
@@ -79,6 +80,7 @@ export async function getBrickLinkPrices(db: IDBPDatabase, store: Store) {
             console.log('NO BL NAME!', category, blItem, blCategories, resultItem.categoryString)
           }
           category.brickLinkName = blCategoryName
+          await addCategoryToBrickLinkCategory(db, category.brickLinkId, category.id)
           await updateCategory(db, category)
         }
         await addBrickLinkItem(
@@ -88,6 +90,7 @@ export async function getBrickLinkPrices(db: IDBPDatabase, store: Store) {
           item,
           resultItem.itemName,
           resultItem.newThumb1Img,
+          resultItem.categoryString,
           db
         )
         await addInvItem(

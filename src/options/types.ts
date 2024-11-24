@@ -44,6 +44,7 @@ export interface AddNewStore {
 
 export interface HomeData {
   stores: number
+  brickLinkCategories: number
   categories: number
   colors: number
   parts: number
@@ -67,6 +68,7 @@ export interface Store extends AddNewStore {
 }
 
 export interface BrickLinkItem {
+  categoryId: string
   brickLinkId: string
   name: string
   partId: string
@@ -78,7 +80,14 @@ export interface LegoItem {
   partId: string
   part?: Item
 }
+
+export interface BrickLinkCategory {
+  id: string
+  name: string
+  categoryIds: string[]
+}
 export interface Item {
+  brickLinkCategoryId: string
   categoryId: string
   itemId: string
   itemName: string
@@ -228,6 +237,10 @@ export interface SearchBase {
     included: string[]
     excluded: string[]
   }
+  categoriesBrickLink: {
+    included: string[]
+    excluded: string[]
+  }
   colors: {
     included: string[]
     excluded: string[]
@@ -267,6 +280,12 @@ export interface ActiveCartButtonCart extends Cart {
 }
 export interface ActiveSearchButtonActiveSearch extends ActiveSearch {
   categories: {
+    included: string[]
+    excluded: string[]
+    includedNames: string[]
+    excludedNames: string[]
+  }
+  categoriesBrickLink: {
     included: string[]
     excluded: string[]
     includedNames: string[]
@@ -389,6 +408,12 @@ export interface CategoryPageCategory extends Category {
 export interface CategoriesPageCategory extends Category {
   numParts: number
   image?: string
+}
+
+export interface BrickLinkCategoriesPageCategory extends Category {
+  numParts: number
+  image?: string
+  categoryIds: string[]
 }
 
 export interface UiCategory extends Category {

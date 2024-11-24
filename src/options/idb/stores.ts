@@ -10,6 +10,7 @@ const stores: {
   ACTIVE_SEARCH: StoreDefinition
   CARTS: StoreDefinition
   CATEGORIES: StoreDefinition
+  CATEGORIES_BRICKLINK: StoreDefinition
   COLORS: StoreDefinition
   INVENTORY_ITEMS: StoreDefinition
   PART_VARIANTS: StoreDefinition
@@ -33,6 +34,10 @@ const stores: {
   },
   CATEGORIES: {
     name: 'categories',
+    keyPath: 'id',
+  },
+  CATEGORIES_BRICKLINK: {
+    name: 'categoriesBrickLink',
     keyPath: 'id',
   },
   COLORS: {

@@ -7,6 +7,9 @@ const newQ = ref<undefined | number>(current)
 const emits = defineEmits([
   'updateQuantity'
 ])
+watch(() => current, () => {
+  newQ.value = current
+})
 const setButtonDisabled: ComputedRef<boolean> = computed(() => {
   if (
     newQ.value === undefined ||

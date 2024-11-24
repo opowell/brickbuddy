@@ -29,9 +29,12 @@ const text = computed(() => {
   if (search.priceScoreIgnoreColor) {
     texts.push('ignore color')
   }
-  const fields = ['categories', 'colors', 'parts', 'conditions']
+  const fields = ['categoriesBrickLink', 'categories', 'colors', 'parts', 'conditions']
   fields.forEach(field => {
     const searchField: { includedNames: string[], excludedNames: string[] } = search[field]
+    if (!searchField) {
+      return
+    }
     if (searchField.includedNames.length === 0 && searchField.excludedNames.length === 0) {
       return
     }

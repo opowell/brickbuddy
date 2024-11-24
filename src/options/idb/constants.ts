@@ -36,6 +36,7 @@ export const Routes = {
   stores: '/stores',
   colors: '/colors',
   conditions: '/conditions',
+  brickLinkCategories: '/brick-link-categories',
   categories: '/categories',
   parts: '/parts',
   searches: '/searches',
@@ -68,6 +69,7 @@ export const Hrefs = {
   stores: Routes.stores,
   conditions: Routes.conditions,
   colors: Routes.colors,
+  brickLinkCategories: Routes.brickLinkCategories,
   categories: Routes.categories,
   parts: Routes.parts,
   searches: Routes.searches,
@@ -124,6 +126,10 @@ export const Crumbs = {
   colors: {
     title: 'Colors',
     href: Hrefs.colors
+  },
+  brickLinkCategories: {
+    title: 'BrickLink Categories',
+    href: Hrefs.brickLinkCategories
   },
   categories: {
     title: 'Categories',

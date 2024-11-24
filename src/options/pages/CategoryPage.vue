@@ -31,7 +31,7 @@ onMounted(async () => {
     <div>Id: {{ category.id }}</div>
     <div>Bricklink: <NameIdLabel is-span :id="category.brickLinkId" :name="category.brickLinkName" /></div>
     <div>Lego: <NameIdLabel is-span :id="category.legoId" :name="category.legoName" /></div>
-    <h4>Parts</h4>
+    <h4>Parts ({{ category.parts.length }})</h4>
     <table>
       <thead>
         <tr>

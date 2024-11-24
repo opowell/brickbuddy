@@ -16,7 +16,8 @@ const { hideVariant = false, items, showColor = false } = defineProps({
   items: Object as PropType<UiInvItem[]>,
 })
 const emits = defineEmits([
-  'refreshCartButton'
+  'refreshCartButton',
+  'setCartQuantity'
 ])
 
 interface StoreItemsTableInvItem extends UiInvItem {
@@ -82,13 +83,13 @@ const viewedItems = computed<StoreItemsTableInvItem[]>(() => {
   return out2
 })
 async function updateCartQuantity(item: StoreItemsTableInvItem, newQuantity: number) {
-  console.log(item, newQuantity)
   if (!item.store) {
     return
   }
   const response = await setCartQuantity(item.store, item, newQuantity)
   if (response) {
     item.cartQuantity = newQuantity
+    emits('setCartQuantity', { invItem: item, newQuantity })
   }
   emits('refreshCartButton')
 }

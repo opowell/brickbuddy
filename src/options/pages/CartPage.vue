@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import HomeButton from '../components/HomeButton.vue';
-import { getActiveSearchPageSearch, getCartPageCart, getCartPageCartItem, getDbConnection, setPriceScoreQuantity } from '../idb/idb';
+import { getActiveSearchPageSearch, getCartPageCart, getCartPageCartItem, getDbConnection, setCartQuantity, setPriceScoreQuantity } from '../idb/idb';
 import { formatAmount, formatInteger } from '../utils';
 
 import { CartPageCart, CartPageCartItem } from '../types';
@@ -16,7 +16,6 @@ onMounted(async () => {
 
   for (let i = 0; i < cart.value.cartItems.length; i++) {
     const cartPageCartItem = await getCartPageCartItem(objectCache, cart.value.cartItems[i])
-    console.log(cartPageCartItem)
     if (!cartPageCartItem) {
       continue
     }
@@ -30,6 +29,23 @@ import StoreButton from '../components/StoreButton.vue';
 import PartButton from '../components/PartButton.vue';
 import ColorButton from '../components/ColorButton.vue';
 import ObjectCache from '../idb/ObjectCache';
+import QuantityInput from '../components/QuantityInput.vue';
+
+async function updateCartQuantity(item: CartPageCartItem, newQuantity: number, index: number) {
+  console.log(item, newQuantity)
+  if (!item.store) {
+    return
+  }
+  const response = await setCartQuantity(item.store, item, newQuantity)
+  if (response) {
+    if (newQuantity === 0) {
+      items.value.splice(index, 1)
+    } else {
+      item.quantity = newQuantity
+    }
+  }
+}
+
 </script>
 
 <template>
@@ -52,7 +68,7 @@ import ObjectCache from '../idb/ObjectCache';
         </tr>
       </thead>
       <tbody>
-        <tr v-for="item in items" :key="item.id">
+        <tr v-for="(item, index) in items" :key="item.id">
           <td><img
             :src="item.variant.image"
             @click="goVariant(item.variant)"
@@ -68,7 +84,7 @@ import ObjectCache from '../idb/ObjectCache';
           <td><CategoryButton :category="item.category" /></td>
           <td>{{ formatAmount(item.price) }}</td>
           <td>{{ item.priceScore }}</td>
-          <td>{{ formatInteger(item.quantity) }} / {{ formatInteger(item.invItem.quantity) }}</td>
+          <td><QuantityInput :current="item.quantity" :max="item.invItem.quantity" @update-quantity="updateCartQuantity(item, $event, index)" /></td>
         </tr>
       </tbody>
     </table>

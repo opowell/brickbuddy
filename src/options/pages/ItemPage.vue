@@ -3,7 +3,7 @@ import HomeButton from '../components/HomeButton.vue';
 import PartsButton from '../components/PartsButton.vue';
 import PartVariantButton from '../components/PartVariantButton.vue';
 import { getPartPagePart } from '../idb/idb';
-import type { PartPagePart, PartPageVariant, PartPageVariantInvItem, UiInvItem, UiItem, UiItemVariant } from '../types'
+import type { InvItem, PartPagePart, PartPageVariant, PartPageVariantInvItem, UiInvItem, UiItem, UiItemVariant } from '../types'
 import ActiveSearchButton from '../components/ActiveSearchButton.vue';
 import CategoryButton from '../components/CategoryButton.vue';
 import { formatInteger } from '../utils';
@@ -78,6 +78,13 @@ function refreshCartButton() {
     cartButton.value.refresh()
   }
 }
+function setCartQuantity({ invItem, newQuantity }: { invItem: InvItem, newQuantity: number}) {
+  const originalItem = item.value?.variants.flatMap(v => v.invItems).find(i => i.invId === invItem.invId && i.storeId === invItem.storeId)
+  if (!originalItem) {
+    return
+  }
+  originalItem.cartQuantity = newQuantity
+}
 </script>
 
 <template>
@@ -88,8 +95,8 @@ function refreshCartButton() {
     <ActiveSearchButton />
     <ActiveCartButton ref="cartButton" />
     <h4>{{ item.itemName }} ({{ item.itemId }})</h4>
-    <div>Bricklink: {{ item.brickLinkName }} ({{ item.brickLinkId }})</div>
-    <div>Lego: {{ item.legoName }} ({{ item.legoPartId }})</div>
+    <div>Bricklink: {{ item.brickLinkName }} ({{ item.brickLinkIds?.join(',') }})</div>
+    <div>Lego: {{ item.legoName }} ({{ item.legoPartIds?.join(',') }})</div>
     <div>Min quantity:<input v-model="minQuantity" type="number"></div>
     <div>Min quantity:<input v-model="minQuantity" type="number"></div>
     <div>Max price:<input v-model="maxPrice" type="number"></div>
@@ -135,6 +142,12 @@ function refreshCartButton() {
         </tr>
       </tbody>
     </table>
-    <StoreItemsTable v-if="invItems" :items="invItems" show-color @refresh-cart-button="refreshCartButton" />
+    <StoreItemsTable
+      v-if="invItems"
+      :items="invItems"
+      show-color
+      @set-cart-quantity="setCartQuantity"
+      @refresh-cart-button="refreshCartButton"
+    />
   </div>
 </template>

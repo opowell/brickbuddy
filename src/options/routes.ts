@@ -14,6 +14,7 @@ import CategoryPage from './pages/CategoryPage.vue'
 import ActiveSearchPage from './pages/ActiveSearchPage.vue'
 import CartPage from './pages/CartPage.vue'
 import ConditionsPage from './pages/ConditionsPage.vue'
+import BrickLinkCategoriesPage from './pages/BrickLinkCategoriesPage.vue'
 export default [
   {
     name: 'home',
@@ -64,6 +65,11 @@ export default [
     name: 'categories',
     path: Routes.categories,
     component: CategoriesPage
+  },
+  {
+    name: 'brickLinkCategories',
+    path: Routes.brickLinkCategories,
+    component: BrickLinkCategoriesPage
   },
   {
     name: 'conditions',
