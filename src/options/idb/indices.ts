@@ -7,6 +7,9 @@ export interface IndexDefinition {
 }
 const indices: {
   STORES_BY_TYPE_AND_LAST_SCRAPED: IndexDefinition
+  CARTS_BY_ACTIVE: IndexDefinition
+  CART_ITEMS_BY_CART: IndexDefinition
+  BRICKLINK_CATEGORIES_BY_CATEGORY: IndexDefinition
   PARTS_BY_CATEGORY: IndexDefinition
   BRICKLINK_PARTS_BY_CATEGORY: IndexDefinition
   PARTS_BY_BRICKLINK_ID: IndexDefinition
@@ -28,6 +31,16 @@ const indices: {
     name: 'typeLastScraped',
     keyPath: ['type', 'lastScraped']
   },
+  CART_ITEMS_BY_CART: {
+    store: stores.CART_ITEMS.name,
+    name: 'cartId',
+    keyPath: 'cartId'
+  },
+  CARTS_BY_ACTIVE: {
+    store: stores.CARTS.name,
+    name: 'active',
+    keyPath: 'active'
+  },
   INV_ITEMS_BY_STORE: {
     store: stores.INVENTORY_ITEMS.name,
     name: 'store',
@@ -40,6 +53,11 @@ const indices: {
   },
   BRICKLINK_PARTS_BY_CATEGORY: {
     store: stores.PARTS_BRICK_LINK.name,
+    name: 'category',
+    keyPath: 'categoryId'
+  },
+  BRICKLINK_CATEGORIES_BY_CATEGORY: {
+    store: stores.CATEGORIES_BRICKLINK.name,
     name: 'category',
     keyPath: 'categoryId'
   },

@@ -101,6 +101,7 @@ function setCartQuantity({ invItem, newQuantity }: { invItem: InvItem, newQuanti
     <div>Min quantity:<input v-model="minQuantity" type="number"></div>
     <div>Max price:<input v-model="maxPrice" type="number"></div>
     <div>Category: <CategoryButton :category="item.category" /></div>
+    <div>BrickLink Categories: <CategoryButton :category="item.category" /></div>
     <div>
       Condition:<select v-model="condition">
         <option value="New">

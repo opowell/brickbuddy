@@ -1,6 +1,7 @@
 import { IDBPDatabase } from 'idb';
 import { CartWithItems, Category, InvItem, Item, Store, UiColor } from './../types';
-import { getActiveCart, getStore, getCategory, getColor, getInvItemFromId, getStorePagePart } from './idb';
+import { getStore, getCategory, getColor, getInvItemFromId, getStorePagePart, getActiveCarts, getFirstActiveCart, getCartItems } from './idb';
+import STORES from './stores'
 export default class ObjectCache {
   colors: Map<string, UiColor>
   categories: Map<string, Category>
@@ -30,9 +31,23 @@ export default class ObjectCache {
     return object
 
   }
-  getActiveCart() {
+  async getActiveCart(): Promise<CartWithItems> {
     if (!this.activeCart) {
-      this.activeCart = getActiveCart()
+      let cart = await getFirstActiveCart(this.db)
+      if (!cart) {
+        const newCart = {
+          active: 1,
+          name: new Date().toISOString()
+        }
+        cart = {
+          ...newCart,
+          id: await this.db.put(STORES.CARTS.name, cart)
+        }
+      }
+      this.activeCart = {
+        ...cart,
+        cartItems: await getCartItems(this.db, cart)
+      }
     }
     return this.activeCart
   }

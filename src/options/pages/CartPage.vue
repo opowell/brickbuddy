@@ -65,6 +65,7 @@ async function updateCartQuantity(item: CartPageCartItem, newQuantity: number, i
           <th>Price</th>
           <th>Price Score</th>
           <th>Quantity</th>
+          <th>Total cost (EUR)</th>
         </tr>
       </thead>
       <tbody>
@@ -85,6 +86,7 @@ async function updateCartQuantity(item: CartPageCartItem, newQuantity: number, i
           <td>{{ formatAmount(item.price) }}</td>
           <td>{{ item.priceScore }}</td>
           <td><QuantityInput :current="item.quantity" :max="item.invItem.quantity" @update-quantity="updateCartQuantity(item, $event, index)" /></td>
+          <td>{{ formatAmount(item.price * item.quantity / 100) }}</td>
         </tr>
       </tbody>
     </table>

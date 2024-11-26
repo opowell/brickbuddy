@@ -21,7 +21,7 @@ const text = computed(() => {
   if (!cart) {
     return ''
   }
-  return 'Cart: ' + formatInteger(cart.totalItems) + ' items, ' + formatInteger(cart.totalQuantity) + ' pieces, EUR ' + formatAmount(cart.totalCost)
+  return 'Cart: ' + formatInteger(cart.totalItems) + ' items, ' + formatInteger(cart.totalQuantity) + ' pcs., &euro; ' + formatAmount(cart.totalCost)
 })
 async function refresh() {
   activeCart.value = await getActiveCartButtonCart()
@@ -32,7 +32,6 @@ defineExpose({
 </script>
 
 <template>
-  <button v-if="activeCart && showButton" @click="router.push(Crumbs.activeCart.href)">
-    {{ text }}
+  <button v-if="activeCart && showButton" @click="router.push(Crumbs.activeCart.href)" v-html="text">
   </button>
 </template>

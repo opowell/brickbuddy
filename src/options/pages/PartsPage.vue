@@ -17,6 +17,8 @@ import HomeButton from '../components/HomeButton.vue'
 import CategoryButton from '../components/CategoryButton.vue';
 import ActiveSearchButton from '../components/ActiveSearchButton.vue';
 import NameIdLabel from '../components/NameIdLabel.vue';
+import QuantityInput from '../components/QuantityInput.vue';
+import ActiveCartButton from '../components/ActiveCartButton.vue';
 </script>
 
 <template>
@@ -26,6 +28,7 @@ import NameIdLabel from '../components/NameIdLabel.vue';
   <div v-else>
     <HomeButton />
     <ActiveSearchButton />
+    <ActiveCartButton />
     <h4>Parts ({{ filteredParts.length }} / {{ items.length }})</h4>
     <div>Search: <input v-model="search"></div>
     <table>
@@ -37,6 +40,7 @@ import NameIdLabel from '../components/NameIdLabel.vue';
           <th>Colors</th>
           <th>BrickLink</th>
           <th>Lego</th>
+          <th>List</th>
         </tr>
       </thead>
       <tbody>
@@ -47,8 +51,9 @@ import NameIdLabel from '../components/NameIdLabel.vue';
           </td>
           <td><CategoryButton :category="item.category" /></td>
           <td>{{ item.variants.length }}</td>
-          <td><NameIdLabel :id="item.brickLinkIds?.join(',')" /></td>
-          <td><NameIdLabel :id="item.legoPartIds?.join(',')" /></td>
+          <td><NameIdLabel :id="item.brickLinkIds?.join(', ')" /></td>
+          <td><NameIdLabel :id="item.legoPartIds?.join(', ')" /></td>
+          <td><QuantityInput :current="0" :max="1000" /></td>
         </tr>
       </tbody>
     </table>

@@ -9,6 +9,7 @@ export interface StoreDefinition {
 const stores: {
   ACTIVE_SEARCH: StoreDefinition
   CARTS: StoreDefinition
+  CART_ITEMS: StoreDefinition
   CATEGORIES: StoreDefinition
   CATEGORIES_BRICKLINK: StoreDefinition
   COLORS: StoreDefinition
@@ -31,6 +32,10 @@ const stores: {
     name: 'carts',
     keyPath: 'id',
     autoIncrement: true,
+  },
+  CART_ITEMS: {
+    name: 'cartItems',
+    keyPath: ['cartId', 'storeId', 'invItemId'],
   },
   CATEGORIES: {
     name: 'categories',

@@ -1,6 +1,5 @@
-import { categories } from './idb';
-import { ActiveCartButtonCart, BrickLinkCategoriesPageCategory, BrickLinkCategory, Cart, CartItem, CartPageCartItem, CartWithItems, StorePageInvItem, VariantPageInvItem, VariantPagePart, VariantPageVariant } from './../types';
-import { IDBPDatabase, openDB } from "idb";
+import { ActiveCartButtonCart, BrickLinkCategoriesPageCategory, BrickLinkCategory, Cart, CartItem, CartPageCartItem, CartsPageCart, CartWithItems, StorePageInvItem, VariantPageInvItem, VariantPagePart, VariantPageVariant } from './../types';
+import { IDBPDatabase, IDBPTransaction, openDB } from "idb";
 import STORES, { StoreDefinition } from './stores'
 import INDICES, { IndexDefinition } from './indices'
 import { ActiveSearch, ActiveSearchButtonActiveSearch, ActiveSearchPageSearch, AddNewStore, BrickLinkItem, CategoriesPageCategory, Category, CategoryPageCategory, CategoryPagePart, Color, ColorPageColor, ColorPageInvItem, ColorsPageColor, HomeData, InvItem, Item, ItemVariant, LegoItem, ObjectCache, PartPagePart, PartPageVariant, PartPageVariantInvItem, PartsPagePart, PartsPageVariant, PartsPageVariantInvItem, RbColor, Search, SearchBase, SearchesPageSearch, ShippingCost, ShopListItem, Store, StorePageInvItem, StorePageInvItemItem, StorePagePart, StorePageStore, StoresPageStore, StoreType, UiCategory, UiColor, UiInvItem, UiItem, UiItemVariant, UiSearch, UiShopList, UiStore } from "../types";
@@ -29,6 +28,64 @@ async function getPrices() {
   if (legoStore) {
     getLegoPrices(db, legoStore)
   }
+}
+
+async function getAll(db: IDBPDatabase, storeDefinition: StoreDefinition) {
+  return db.getAll(storeDefinition.name)
+}
+export async function getCartItems(db: IDBPDatabase, cart: Cart): Promise<CartItem[]> {
+  return getAllFromIndex(db, INDICES.CART_ITEMS_BY_CART, cart.id)
+}
+
+function onlyUnique(value: any, index: number, array: any[]) {
+  return array.indexOf(value) === index;
+}
+
+function sum(array: any[], getValue: Function) {
+  return array.reduce((accumulator, currentValue) => {
+    return accumulator + getValue(currentValue)
+  }, 0)
+}
+
+export async function getCartsPageCarts(): Promise<CartsPageCart[]> {
+  const db = await getDbConnection()
+  const carts = await getAll(db, STORES.CARTS)
+  return await Promise.all<CartsPageCart>(carts.map(async cart => {
+    const cartItems = await getCartItems(db, cart)
+    return {
+      ...cart,
+      numStores: cartItems.map(cartItem => cartItem.storeId).filter(onlyUnique).length,
+      numInvItems: cartItems.length,
+      quantity: sum(cartItems, (cartItem: CartItem) => cartItem.quantity),
+      cost: sum(cartItems, (cartItem: CartItem) => cartItem.quantity * cartItem.price),
+    }
+  }))
+}
+
+export async function getActiveCarts(db: IDBPDatabase): Promise<Cart[]> {
+  return await getAllFromIndex(db, INDICES.CARTS_BY_ACTIVE, 1)
+}
+export async function getFirstActiveCart(db: IDBPDatabase): Promise<Cart | undefined> {
+  return await getFromIndex(db, INDICES.CARTS_BY_ACTIVE, 1)
+}
+export async function setActiveCart(cart: Cart) {
+  const db = await getDbConnection()
+  const activeCarts: Cart[] = await getActiveCarts(db)
+  for (let i = 0; i < activeCarts.length; i++) {
+    const ac = activeCarts[i]
+    ac.active = 0
+    await put(db, STORES.CARTS, ac)
+  }
+  cart.active = 1
+  await put(db, STORES.CARTS, cart)
+}
+
+export async function addCart() {
+  const db = await getDbConnection()
+  return put(db, STORES.CARTS, {
+    name: new Date().toISOString(),
+    active: 0,
+  })
 }
 
 export async function getStorePrices(db: IDBPDatabase, store: Store) {
@@ -169,17 +226,10 @@ export async function getPartsPageParts(): Promise<PartsPagePart[]> {
   }
   return uiItems
 }
-export function getActiveCart(): CartWithItems {
-  let activeCart: CartWithItems = {
-    id: -1,
-    name: 'Active cart',
-    cartItems: []
-  }
-  let storageValue = localStorage.getItem('activeCart')
-  if (storageValue) {
-    activeCart = JSON.parse(storageValue)
-  }
-  return activeCart
+export async function getActiveCart(): Promise<CartWithItems> {
+  const db = await getDbConnection()
+  const objectCache = new ObjectCacheClass(db)
+  return await objectCache.getActiveCart()
 }
 export function getActiveSearch(): ActiveSearch {
   let activeSearch: ActiveSearch = {
@@ -261,7 +311,7 @@ export async function getActiveSearchButtonActiveSearch(): Promise<ActiveSearchB
 }
 
 export async function getActiveCartButtonCart(): Promise<ActiveCartButtonCart> {
-  const cart = getActiveCart()
+  const cart = await getActiveCart()
   let totalCost = 0
   let totalQuantity = 0
   cart.cartItems.forEach((i) => {
@@ -361,8 +411,8 @@ export function storeActiveSearch(activeSearch: ActiveSearch) {
   }
   localStorage.setItem('activeSearch', JSON.stringify(toStore))
 }
-export function storeActiveCart(activeCart: Cart) {
-  localStorage.setItem('activeCart', JSON.stringify(activeCart))
+export async function storeActiveCart(db: IDBPDatabase, activeCart: Cart) {
+  return await put(db, STORES.CARTS, activeCart)
 }
 
 export const excludedCategories = ref<Category[]>([])
@@ -598,7 +648,7 @@ export async function getUiPartVariant(partId: string, colorId: string): Promise
 }
 export async function getVariantPageVariant(partId: string, colorId: string): Promise<VariantPageVariant> {
   const db = await getDbConnection()
-  const activeCart = getActiveCart()
+  const activeCart = await getActiveCart()
   const variant: ItemVariant = await get(db, STORES.PART_VARIANTS, [partId, colorId])
   const invItems: InvItem[] = await getAllFromIndex(
     db,
@@ -676,10 +726,10 @@ async function getPartPageInvItems(db: IDBPDatabase, itemId: string): Promise<Pa
   return partPageInvItems
 }
 export async function getCartPageCart(cartId: number) {
-  return getActiveCart()
+  return await getActiveCart()
 }
 async function getPartPageVariantInvItems(db: IDBPDatabase, variant: ItemVariant): Promise<PartPageVariantInvItem[]> {
-  const activeCart = getActiveCart()
+  const activeCart = await getActiveCart()
   const invItems = await getAllFromIndex(
     db,
     INDICES.INV_ITEMS_BY_ITEM_AND_COLOR,
@@ -826,7 +876,6 @@ export async function getStorePageInvItem(objectCache: ObjectCacheClass, invItem
     }
   }
   const cheapestPrice = cost / quantity
-  console.log(invItem.itemId, cost, quantity, cheapestPrice)
   const priceScore = math.number(math.divide(math.bignumber(invItem.price), math.bignumber(cheapestPrice)))
   const percent = math.number(math.multiply(100, math.number(math.subtract(priceScore, 1))))
   let sign = ''
@@ -834,7 +883,8 @@ export async function getStorePageInvItem(objectCache: ObjectCacheClass, invItem
     sign = '+'
   }
   const priceScoreString = sign + percent.toFixed(2) + '%'
-  const cartQuantity = getCartQuantity(objectCache.getActiveCart(), invItem)
+  const cart = await objectCache.getActiveCart()
+  const cartQuantity = getCartQuantity(cart, invItem)
   return {
     ...invItem,
     item: part,
@@ -855,27 +905,27 @@ function getCartQuantity(cart: CartWithItems, invItem: InvItem): number {
 }
 
 export async function setCartQuantity(store: Store, invItem: StorePageInvItem, newQuantity: number): Promise<boolean> {
-  const activeCart = getActiveCart()
-  let foundItemIndex: number = activeCart.cartItems.findIndex(i => i.storeId === store.sId && i.invItemId === invItem.invItemId)
-  console.log(store, invItem, newQuantity, foundItemIndex, activeCart.cartItems)
-  if (foundItemIndex < 0) {
-    activeCart.cartItems.push({
+  const activeCart = await getActiveCart()
+  const db = await getDbConnection()
+  let foundItem: CartItem = await db.get(STORES.CART_ITEMS.name, [activeCart.id, store.sId, invItem.invId])
+  if (!foundItem) {
+    foundItem = {
       cartId: activeCart.id,
       invItemId: invItem.invId,
       storeId: store.sId,
       quantity: 0,
-      price: invItem.price
-    })
-    foundItemIndex = activeCart.cartItems.length - 1
+      price: invItem.price,
+      lastUpdated: new Date()
+    }
   }
-  console.log('setCartQuantity')
-  const foundItem: CartItem = activeCart.cartItems[foundItemIndex]
   foundItem.quantity = newQuantity
+  foundItem.lastUpdated = new Date()
   if (foundItem.quantity === 0) {
-    console.log('0', foundItemIndex)
-    activeCart.cartItems.splice(foundItemIndex, 1)
+    await db.delete(STORES.CART_ITEMS.name, [activeCart.id, store.sId, invItem.invId])
+  } else {
+    await db.put(STORES.CART_ITEMS.name, foundItem)
   }
-  storeActiveCart(activeCart)
+  await storeActiveCart(db, activeCart)
   return true
 }
 export async function getUiPart(id: string, objectCache?: ObjectCache): Promise<UiItem | undefined> {
@@ -927,13 +977,15 @@ export async function getPartPagePart(id: string): Promise<PartPagePart | undefi
   if (!part) {
     return
   }
-  const variants: PartPageVariant[] = await getPartPageVariants(db, part.itemId + '')
-  const invItems: PartPageVariantInvItem[] = await getPartPageInvItems(db, part.itemId + '')
+  const variants: PartPageVariant[] = await getPartPageVariants(db, part.itemId)
+  const invItems: PartPageVariantInvItem[] = await getPartPageInvItems(db, part.itemId)
+  const brickLinkCategories: BrickLinkCategory[] = await getAllFromIndex(db, INDICES.BRICKLINK_CATEGORIES_BY_CATEGORY, part.categoryId)
   return {
     ...part,
     variants,
     invItems,
-    category: await getCategory(db, part.categoryId)
+    category: await getCategory(db, part.categoryId),
+    brickLinkCategories
   }
 }
 
@@ -1504,7 +1556,6 @@ export async function getLegoItem(db: IDBPDatabase, legoId: string): Promise<Leg
 }
 
 export async function getPartByLegoId(db: IDBPDatabase, legoId: string): Promise<Item> {
-  legoId = legoId + ''
   let item = await getFromIndex(db, INDICES.PARTS_BY_LEGO_ID, legoId)
   if (!item) {
     item = rbPartsLegoId[legoId]
@@ -1552,10 +1603,10 @@ export async function addBrickLinkItem(
 
 export async function getDbConnection(): Promise<IDBPDatabase> {
   let createData = false
-  const db = await openDB(DB_NAME, 2, {
+  const db = await openDB(DB_NAME, 5, {
     async upgrade(db, oldVersion, newVersion, transaction) {
       switch (oldVersion) {
-        case 0:
+        case 0: {
           Object.keys(STORES).forEach((key) => {
             const store = STORES[key]
             db.createObjectStore(store.name, {
@@ -1564,9 +1615,7 @@ export async function getDbConnection(): Promise<IDBPDatabase> {
             })
           })
           Object.keys(INDICES).forEach((key) => {
-            const index = INDICES[key]
-            const store = transaction.objectStore(index.store)
-            store.createIndex(index.name, index.keyPath)
+            createIndex(transaction, INDICES[key])
           })
           const conditions = ['New', 'Used']
           const store = transaction.objectStore(STORES.INVENTORY_ITEMS.name)
@@ -1575,11 +1624,24 @@ export async function getDbConnection(): Promise<IDBPDatabase> {
             store.createIndex('store_condition_' + condition, ['storeId', 'condition_' + condition])
           }
           createData = true
+        }
         case 1:
           db.createObjectStore(STORES.CATEGORIES_BRICKLINK.name, {
-            keyPath: 'id'
+            keyPath: STORES.CATEGORIES_BRICKLINK.keyPath
           })
           break
+        case 2: {
+          createIndex(transaction, INDICES.BRICKLINK_CATEGORIES_BY_CATEGORY)
+        }
+        case 3: {
+          db.createObjectStore(STORES.CART_ITEMS.name, {
+            keyPath: STORES.CART_ITEMS.keyPath
+          })
+          createIndex(transaction, INDICES.CART_ITEMS_BY_CART)
+        }
+        case 4: {
+          createIndex(transaction, INDICES.CARTS_BY_ACTIVE)
+        }
       }
     }
   })
@@ -1587,6 +1649,11 @@ export async function getDbConnection(): Promise<IDBPDatabase> {
     await createInitialData(db)
   }
   return db
+}
+
+function createIndex(transaction: IDBPTransaction<unknown, string[], "versionchange">, index: IndexDefinition) {
+  const store = transaction.objectStore(index.store)
+  store.createIndex(index.name, index.keyPath)
 }
 export async function addNewStore(store: AddNewStore) {
   const db = await getDbConnection()
@@ -1736,7 +1803,7 @@ export async function addInvItem(
 
 async function put(db: IDBPDatabase, storeDef: StoreDefinition, value: any) {
   try {
-    await db.put(storeDef.name, value)
+    return await db.put(storeDef.name, value)
   } catch (e) {
     console.log(value, e)
   }

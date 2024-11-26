@@ -15,6 +15,7 @@ import ActiveSearchPage from './pages/ActiveSearchPage.vue'
 import CartPage from './pages/CartPage.vue'
 import ConditionsPage from './pages/ConditionsPage.vue'
 import BrickLinkCategoriesPage from './pages/BrickLinkCategoriesPage.vue'
+import CartsPage from './pages/CartsPage.vue'
 export default [
   {
     name: 'home',
@@ -30,6 +31,11 @@ export default [
     name: 'lists',
     path: '/lists',
     component: ListsPage
+  },
+  {
+    name: 'carts',
+    path: '/carts',
+    component: CartsPage
   },
   {
     name: 'colors',

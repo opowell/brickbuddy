@@ -1,18 +1,27 @@
 export interface Cart {
-  id: number
+  id: number | IDBValidKey
   name: string
+  active?: number
 }
 
 export interface CartWithItems extends Cart {
   cartItems: CartItem[]
 }
 
+export interface CartsPageCart extends Cart {
+  numStores: number
+  numInvItems: number
+  quantity: number
+  cost: number
+}
+
 export interface CartItem {
-  cartId: number
+  cartId: number | IDBValidKey
   storeId: string
   invItemId: string
   quantity: number
   price: number
+  lastUpdated: Date
 }
 
 export interface CartPageCartItem extends CartItem {
@@ -166,6 +175,7 @@ export interface PartPagePart extends Item {
   variants: PartPageVariant[]
   invItems: PartPageVariantInvItem[]
   category: Category
+  brickLinkCategories: BrickLinkCategory[]
 }
 export interface InvItem {
   invId: string

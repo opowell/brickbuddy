@@ -35,6 +35,7 @@ import ActiveSearchButton from '../components/ActiveSearchButton.vue';
     <ActiveSearchButton />
     <h4>Stores</h4>
     <h4>Scraping: {{ scrapingOn ? 'On' : 'Off' }}</h4>
+    <div><button>Import from BrickLink</button></div>
     <div>
       <button @click="setScraping(true)" :disabled="scrapingOn">Start</button>
       <button @click="setScraping(false)" :disabled="!scrapingOn">Stop</button>
