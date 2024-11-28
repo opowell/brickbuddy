@@ -1,7 +1,7 @@
 <script setup lang="ts">
+import { includeCategory } from '../idb/categories';
 import { Category } from '../types';
 import { PropType } from 'vue'
-import { includeCategory } from '../idb/idb';
 const { category } = defineProps({
   category: Object as PropType<Category>
 })

@@ -242,7 +242,21 @@ export interface ShopListItem {
   maxPrice: number
   colors: string[]
 }
-export interface SearchBase {
+export interface SearchFilter {
+  searchId: IDBValidKey
+  type: 'category' | 'color' | 'store' | 'condition'
+  objectId: string
+  isExcluded: boolean
+}
+export interface Search {
+  id: IDBValidKey | string
+  name: string
+  active: number
+  filters: SearchFilter[]
+  priceScoreQuantity: number
+  priceScoreIgnoreColor: boolean
+}
+export interface ActiveSearch extends Search {
   categories: {
     included: string[]
     excluded: string[]
@@ -267,18 +281,6 @@ export interface SearchBase {
     included: string[]
     excluded: string[]
   }
-  priceScoreQuantity: number
-  priceScoreIgnoreColor: boolean
-}
-export interface Search extends SearchBase {
-  id: number
-  name: string
-  shoppingListId?: number
-  shopListItemIds?: number[]
-  storeIds: string[]
-}
-export interface ActiveSearch extends SearchBase {
-  linkedSearch?: string
 }
 export interface CartPageCart extends CartWithItems {
 
@@ -336,7 +338,7 @@ export interface ActiveSearchPageCondition {
   id: string
   numInvItems: number
 }
-export interface ActiveSearchPageSearch extends ActiveSearch {
+export interface SearchPageSearch extends ActiveSearch {
   includedConditionObjects: ActiveSearchPageCondition[] 
   excludedConditionObjects: ActiveSearchPageCondition[] 
   includedCategoryObjects: CategoriesPageCategory[] 

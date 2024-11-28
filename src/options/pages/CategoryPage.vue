@@ -4,7 +4,7 @@ import CategoriesButton from '../components/CategoriesButton.vue';
 import HomeButton from '../components/HomeButton.vue';
 
 import { useRoute } from 'vue-router'
-import { getCategoryPageCategory } from '../idb/idb';
+import { getCategoryPageCategory } from '../idb/categories';
 import { CategoryPageCategory } from '../types';
 import IncludeCategoryButton from '../components/IncludeCategoryButton.vue';
 import ExcludeCategoryButton from '../components/ExcludeCategoryButton.vue';

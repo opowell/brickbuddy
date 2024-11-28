@@ -2,8 +2,8 @@
 import { Crumbs } from '../idb/constants';
 import { useRouter } from 'vue-router'
 import { ActiveSearchButtonActiveSearch } from '../types';
-import { getActiveSearchButtonActiveSearch } from '../idb/idb';
 import { formatInteger } from '../utils';
+import { getActiveSearchButtonActiveSearch } from '../idb/searches'
 const router = useRouter()
 const activeSearch = ref<ActiveSearchButtonActiveSearch | undefined>(undefined)
 onMounted(async () => {
@@ -55,7 +55,7 @@ const text = computed(() => {
 </script>
 
 <template>
-  <button v-if="activeSearch && showButton" @click="router.push(Crumbs.activeSearch.href)">
+  <button v-if="activeSearch && showButton" @click="router.push(Crumbs.search(activeSearch.id).href)">
     {{ text }}
   </button>
 </template>

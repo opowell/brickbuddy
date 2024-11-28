@@ -89,17 +89,17 @@ export default [
   },
   {
     name: 'searches',
-    path: '/searches',
+    path: Routes.searches,
     component: SearchesPage
   },
   {
-    name: 'activeSearch',
-    path: Routes.activeSearch,
+    name: 'search',
+    path: '/' + LINKS.SEARCH + '/:id',
     component: ActiveSearchPage
   },
   {
-    name: 'activeCart',
-    path: Routes.activeCart,
+    name: 'cart',
+    path: '/' + LINKS.CART + '/:id',
     component: CartPage
   },
 ]

@@ -6,7 +6,7 @@ onMounted(async () => {
   carts.value = await getCartsPageCarts()
 })
 import HomeButton from '../components/HomeButton.vue';
-import { addCart, getCartsPageCarts, setActiveCart } from '../idb/idb';
+import { addCart, getCartsPageCarts, setActiveCart } from '../idb/carts';
 import ActiveSearchButton from '../components/ActiveSearchButton.vue';
 import ActiveCartButton from '../components/ActiveCartButton.vue';
 import CartButton from '../components/CartButton.vue';

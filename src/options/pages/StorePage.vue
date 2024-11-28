@@ -3,7 +3,12 @@ import HomeButton from '../components/HomeButton.vue';
 import StoresButton from '../components/StoresButton.vue';
 import { ActiveSearch, StorePageInvItem, StorePageStore, StoreType, type UiInvItem } from '../types';
 import { useRoute } from 'vue-router'
-import { getActiveSearch, getDbConnection, getStorePageInvItem, getStorePageStore, getStorePrices, setCartQuantity } from '../idb/idb';
+import { getStorePrices } from '../idb/scraping';
+import { getStorePageStore } from '../idb/storeMethods';
+import { getActiveSearch } from '../idb/searches';
+import { getDbConnection } from '../idb/idb';
+import { getStorePageInvItem } from '../idb/invItems';
+import { setCartQuantity } from '../idb/carts';
 import PartButton from '../components/PartButton.vue';
 import ColorButton from '../components/ColorButton.vue';
 import ActiveSearchButton from '../components/ActiveSearchButton.vue';
@@ -12,7 +17,7 @@ import { IDBPDatabase } from 'idb';
 import { formatAmount, formatInteger } from '../utils';
 import CategoryButton from '../components/CategoryButton.vue';
 import ConditionButton from '../components/ConditionButton.vue';
-import ObjectCache from '../idb/ObjectCache';
+import ObjectCache from '../idb/ObjectCacheClass';
 import PartVariantButton from '../components/PartVariantButton.vue';
 import QuantityInput from '../components/QuantityInput.vue';
 const route = useRoute()
@@ -21,7 +26,7 @@ const search = ref<ActiveSearch | undefined>(undefined)
 const db = ref<IDBPDatabase | undefined>(undefined)
 const items = ref<StorePageInvItem[]>([])
 onMounted(async () => {
-  search.value = getActiveSearch()
+  search.value = await getActiveSearch()
   db.value = await getDbConnection()
   const objectCache = new ObjectCache(db.value)
   store.value = await getStorePageStore(route.params.id)

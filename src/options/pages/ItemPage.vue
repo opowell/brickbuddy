@@ -2,12 +2,13 @@
 import HomeButton from '../components/HomeButton.vue';
 import PartsButton from '../components/PartsButton.vue';
 import PartVariantButton from '../components/PartVariantButton.vue';
-import { getPartPagePart } from '../idb/idb';
+import { getPartPagePart } from '../idb/parts';
 import type { InvItem, PartPagePart, PartPageVariant, PartPageVariantInvItem, UiInvItem, UiItem, UiItemVariant } from '../types'
 import ActiveSearchButton from '../components/ActiveSearchButton.vue';
 import CategoryButton from '../components/CategoryButton.vue';
 import { formatInteger } from '../utils';
 import ActiveCartButton from '../components/ActiveCartButton.vue';
+import StoreItemsTable from '../components/StoreItemsTable.vue';
 interface VariantWithPriceQuantity extends PartPageVariant {
   price: number
   maxPrice: number
@@ -90,10 +91,12 @@ function setCartQuantity({ invItem, newQuantity }: { invItem: InvItem, newQuanti
 <template>
   <div v-if="!item">Loading...</div>
   <div v-else>
+    <p>
+      <ActiveSearchButton />
+      <ActiveCartButton ref="cartButton" />
+    </p>
     <HomeButton />
     <PartsButton />
-    <ActiveSearchButton />
-    <ActiveCartButton ref="cartButton" />
     <h4>{{ item.itemName }} ({{ item.itemId }})</h4>
     <div>Bricklink: {{ item.brickLinkName }} ({{ item.brickLinkIds?.join(',') }})</div>
     <div>Lego: {{ item.legoName }} ({{ item.legoPartIds?.join(',') }})</div>

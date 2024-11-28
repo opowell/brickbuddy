@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { getPartsPageParts, startPartScraping, stopPartScrapingFn, importRbPartsToMemory } from '../idb/idb';
-import type { PartsPagePart, UiItem } from '../types';
+import { getPartsPageParts } from '../idb/parts';
+import type { PartsPagePart } from '../types';
 import PartButton from '../components/PartButton.vue';
 const search = ref('')
 const items = ref<PartsPagePart[] | undefined>(undefined)
@@ -40,6 +40,7 @@ import ActiveCartButton from '../components/ActiveCartButton.vue';
           <th>Colors</th>
           <th>BrickLink</th>
           <th>Lego</th>
+          <th>Price</th>
           <th>List</th>
         </tr>
       </thead>
@@ -53,6 +54,7 @@ import ActiveCartButton from '../components/ActiveCartButton.vue';
           <td>{{ item.variants.length }}</td>
           <td><NameIdLabel :id="item.brickLinkIds?.join(', ')" /></td>
           <td><NameIdLabel :id="item.legoPartIds?.join(', ')" /></td>
+          <td>1-5</td>
           <td><QuantityInput :current="0" :max="1000" /></td>
         </tr>
       </tbody>

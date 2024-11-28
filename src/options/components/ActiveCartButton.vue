@@ -2,7 +2,7 @@
 import { Crumbs } from '../idb/constants';
 import { useRouter } from 'vue-router'
 import { ActiveCartButtonCart } from '../types';
-import { getActiveCartButtonCart } from '../idb/idb';
+import { getActiveCartButtonCart } from '../idb/carts';
 import { formatAmount, formatInteger } from '../utils';
 
 const router = useRouter()

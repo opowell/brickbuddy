@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { getColorsPageColors } from '../idb/idb';
+import { getColorsPageColors } from '../idb/colors';
 const colors = ref<ColorsPageColor[] | undefined>(undefined)
 onMounted(async () => {
   colors.value = await getColorsPageColors()

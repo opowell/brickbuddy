@@ -20,9 +20,9 @@ function includeCategory(index: number) {
 }
 import CategoryButton from '../components/CategoryButton.vue';
 import HomeButton from '../components/HomeButton.vue';
-import { getCategoriesPageCategories } from '../idb/idb';
 import ActiveSearchButton from '../components/ActiveSearchButton.vue';
 import NameIdLabel from '../components/NameIdLabel.vue';
+import { getCategoriesPageCategories } from '../idb/categories';
 </script>
 
 <template>

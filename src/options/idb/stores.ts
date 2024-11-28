@@ -7,7 +7,6 @@ export interface StoreDefinition {
   }
 }
 const stores: {
-  ACTIVE_SEARCH: StoreDefinition
   CARTS: StoreDefinition
   CART_ITEMS: StoreDefinition
   CATEGORIES: StoreDefinition
@@ -19,15 +18,11 @@ const stores: {
   PARTS_BRICK_LINK: StoreDefinition
   PARTS_LEGO: StoreDefinition
   SEARCHES: StoreDefinition
+  SEARCH_FILTERS: StoreDefinition
   LISTS: StoreDefinition
   LIST_ITEMS: StoreDefinition
   STORES: StoreDefinition
 } = {
-  ACTIVE_SEARCH: {
-    name: 'activeSearch',
-    keyPath: 'id',
-    autoIncrement: true
-  },
   CARTS: {
     name: 'carts',
     keyPath: 'id',
@@ -76,6 +71,10 @@ const stores: {
     name: 'searches',
     keyPath: 'id',
     autoIncrement: true
+  },
+  SEARCH_FILTERS: {
+    name: 'searchFilters',
+    keyPath: ['searchId', 'type', 'objectId'],
   },
   LISTS: {
     name: 'lists',

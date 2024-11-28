@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import HomeButton from '../components/HomeButton.vue';
-import { getActiveSearchPageSearch, getCartPageCart, getCartPageCartItem, getDbConnection, setCartQuantity, setPriceScoreQuantity } from '../idb/idb';
-import { formatAmount, formatInteger } from '../utils';
+import { formatAmount } from '../utils';
 
 import { CartPageCart, CartPageCartItem } from '../types';
 const cart = ref<CartPageCart | undefined>(undefined)
@@ -28,8 +27,10 @@ import ConditionButton from '../components/ConditionButton.vue';
 import StoreButton from '../components/StoreButton.vue';
 import PartButton from '../components/PartButton.vue';
 import ColorButton from '../components/ColorButton.vue';
-import ObjectCache from '../idb/ObjectCache';
+import ObjectCache from '../idb/ObjectCacheClass';
 import QuantityInput from '../components/QuantityInput.vue';
+import { getCartPageCart, getCartPageCartItem, setCartQuantity } from '../idb/carts';
+import { getDbConnection } from '../idb/idb';
 
 async function updateCartQuantity(item: CartPageCartItem, newQuantity: number, index: number) {
   console.log(item, newQuantity)

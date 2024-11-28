@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { PropType } from 'vue';
-import { ActiveSearch, type UiInvItem } from '../options/types'
+import { ActiveSearch, type UiInvItem } from '../types'
 import { formatAmount, formatInteger, formatFloat } from '@/options/utils';
 import PartVariantButton from '@/options/components/PartVariantButton.vue';
 import StoreButton from '@/options/components/StoreButton.vue';
-import { getActiveSearch, setCartQuantity } from '@/options/idb/idb';
+import { getActiveSearch } from '@/options/idb/searches';
+import { setCartQuantity } from '@/options/idb/carts';
 import ColorButton from '@/options/components/ColorButton.vue';
 import ConditionButton from '@/options/components/ConditionButton.vue';
 import * as math from 'mathjs'
@@ -26,7 +27,7 @@ interface StoreItemsTableInvItem extends UiInvItem {
 }
 const search = ref<ActiveSearch | undefined>(undefined)
 onMounted(async () => {
-  search.value = getActiveSearch()
+  search.value = await getActiveSearch()
 })
 
 const costOfCheapest = computed<number | undefined>(() => {

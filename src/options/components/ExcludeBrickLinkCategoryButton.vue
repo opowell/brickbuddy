@@ -1,7 +1,7 @@
 <script setup lang="ts">
+import { excludeBrickLinkCategory } from '../idb/categories';
 import { Category } from '../types';
 import { PropType } from 'vue'
-import { excludeBrickLinkCategory } from '../idb/idb';
 const { category } = defineProps({
   category: Object as PropType<Category>
 })

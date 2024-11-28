@@ -3,8 +3,9 @@ import HomeButton from '../components/HomeButton.vue';
 import PartsButton from '../components/PartsButton.vue';
 import PartButton from '../components/PartButton.vue';
 import { ActiveSearch, UiShopList, VariantPageVariant, type UiItemVariant } from '../types'
-import { getActiveSearch, getVariantPageVariant } from '../idb/idb';
-import StoreItemsTable from '@/components/StoreItemsTable.vue';
+import { getVariantPageVariant } from '../idb/variants';
+import { getActiveSearch } from '../idb/searches';
+import StoreItemsTable from '../components/StoreItemsTable.vue';
 import ActiveCartButton from '../components/ActiveCartButton.vue';
 
 const addToListId = ref<number | undefined>()
@@ -22,7 +23,7 @@ const lists = ref<UiShopList[] | undefined>(undefined)
 const search = ref<ActiveSearch | undefined>(undefined)
 onMounted(async () => {
   variant.value = await getVariantPageVariant(route.params.partId, route.params.colorId)
-  search.value = getActiveSearch()
+  search.value = await getActiveSearch()
 })
 
 const addToListItem = computed(() => {

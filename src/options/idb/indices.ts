@@ -8,6 +8,8 @@ export interface IndexDefinition {
 const indices: {
   STORES_BY_TYPE_AND_LAST_SCRAPED: IndexDefinition
   CARTS_BY_ACTIVE: IndexDefinition
+  SEARCH_FILTERS_BY_SEARCH: IndexDefinition
+  SEARCHES_BY_ACTIVE: IndexDefinition
   CART_ITEMS_BY_CART: IndexDefinition
   BRICKLINK_CATEGORIES_BY_CATEGORY: IndexDefinition
   PARTS_BY_CATEGORY: IndexDefinition
@@ -40,6 +42,16 @@ const indices: {
     store: stores.CARTS.name,
     name: 'active',
     keyPath: 'active'
+  },
+  SEARCHES_BY_ACTIVE: {
+    store: stores.SEARCHES.name,
+    name: 'active',
+    keyPath: 'active'
+  },
+  SEARCH_FILTERS_BY_SEARCH: {
+    store: stores.SEARCH_FILTERS.name,
+    name: 'search',
+    keyPath: 'searchId'
   },
   INV_ITEMS_BY_STORE: {
     store: stores.INVENTORY_ITEMS.name,

@@ -20,7 +20,7 @@ function includeCategory(index: number) {
 }
 import CategoryButton from '../components/CategoryButton.vue';
 import HomeButton from '../components/HomeButton.vue';
-import { getBrickLinkCategoriesPageCategories } from '../idb/idb';
+import { getBrickLinkCategoriesPageCategories } from '../idb/categories';
 import ActiveSearchButton from '../components/ActiveSearchButton.vue';
 </script>
 
@@ -31,7 +31,7 @@ import ActiveSearchButton from '../components/ActiveSearchButton.vue';
   <div v-else>
     <HomeButton />
     <ActiveSearchButton />
-    <h4>BrickLink Categories {{ categories ? '(' + categories.length + ')' : '' }}</h4>
+    <h4>BL Categories {{ categories ? '(' + categories.length + ')' : '' }}</h4>
     <table>
       <thead>
         <tr>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { UiShopList } from '../types'
-import { lists } from '../idb/idb'
+import { lists } from '../idb/lists'
 import HomeButton from '../components/HomeButton.vue';
 const newListName = ref('')
 function open(list: UiShopList) {

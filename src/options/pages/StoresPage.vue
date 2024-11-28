@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { StoreType, type StoresPageStore } from '../types';
 import StoreButton from '../components/StoreButton.vue';
-import { stopFetching, startFetching, addNewStore, getStoresPageStores } from '../idb/idb'
+import { addNewStore, getStoresPageStores } from '../idb/storeMethods'
+import { stopFetching, startFetching } from '../idb/scraping'
 const newStoreId = ref('')
 const newStoreName = ref('')
 const scrapingOn = ref(true)

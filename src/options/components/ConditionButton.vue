@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { Category } from '../types';
 import { Crumbs } from '../idb/constants';
 import { useRouter } from 'vue-router'
 import {PropType} from 'vue'

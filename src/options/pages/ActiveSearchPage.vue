@@ -1,14 +1,15 @@
 <script setup lang="ts">
 import HomeButton from '../components/HomeButton.vue';
-import { getActiveSearchPageSearch, setPriceScoreQuantity } from '../idb/idb';
-
-import { ActiveSearchPageSearch } from '../types';
-const search = ref<ActiveSearchPageSearch | undefined>(undefined)
+import { getSearchPageSearch, setPriceScoreQuantity } from '../idb/searches'
+import { SearchPageSearch } from '../types';
+const search = ref<SearchPageSearch | undefined>(undefined)
 const priceScoreQuantity = ref<number>(100)
+const route = useRoute()
 onMounted(async () => {
-  search.value = await getActiveSearchPageSearch()
+  search.value = await getSearchPageSearch(route.params.id)
   priceScoreQuantity.value = search.value.priceScoreQuantity
 })
+import NameIdLabel from '../components/NameIdLabel.vue';
 import CategoriesTable from '../components/CategoriesTable.vue';
 import ConditionsTable from '../components/ConditionsTable.vue';
 </script>
@@ -16,7 +17,7 @@ import ConditionsTable from '../components/ConditionsTable.vue';
 <template>
   <div v-if="search">
     <HomeButton />
-    <h4>Active Search</h4>
+    <h4>Search <NameIdLabel :id="search.id" :name="search.name" /></h4>
     <div>Price score quantity: <input v-model="priceScoreQuantity" type="number">
     <button @click="setPriceScoreQuantity(priceScoreQuantity)">Set</button></div>
     <template v-if="search.categories.included.length">

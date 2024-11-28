@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { excludedCategories, getExcludedCategories } from '../idb/idb';
+import { excludedCategories, getExcludedCategories } from '../idb/categories';
 import { Category } from '../types';
 
 // const excludedCategories = ref<Category[] | undefined>(undefined)

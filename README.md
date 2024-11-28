@@ -18,6 +18,7 @@
 - "buy" a list
   - shop order cost.
 - active search: include/exclude stores/colors/categories/parts.
+- Parts page: add part price range.
 
 ### v2
 - scrape in background?
@@ -31,6 +32,7 @@
 - combine similar lots.
 - alert if scraping not working.
 - scrape more often on first initialization.
+- verify/update cart prices
 
 ### v3
 - copy of idb for each search

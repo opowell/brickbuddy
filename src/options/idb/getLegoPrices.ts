@@ -1,9 +1,11 @@
 import { IDBPDatabase } from "idb";
 import { Category, Color, Item, LegoItem, Store } from "../types";
-import { addCategory, addColor, addInvItem, addItem, addLegoItem, getCategory, getFromIndex, getLegoItem, getPartByLegoId, updateCategory, updateStore } from "./idb";
-import * as math from 'mathjs'
 import INDICES from './indices'
-import stores from "./stores";
+import { getCategory, updateCategory } from "./categories";
+import { getFromIndex } from "./db";
+import { addInvItem } from "./invItems";
+import { getLegoItem, addLegoItem } from "./parts";
+import { updateStore } from "./storeMethods";
 
 async function getColorByLegoId(db: IDBPDatabase, legoId: string | number): Promise<Color> {
   legoId = legoId.toString()

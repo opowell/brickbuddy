@@ -23,8 +23,10 @@ export const LINKS = {
   PART: 'part',
   PART_VARIANT: 'partVariant',
   STORE: 'store',
+  SEARCH: 'search',
   COLOR: 'color',
   CART: 'cart',
+  BRICK_LINK_CATEGORY: 'brickLinkCategory',
   CATEGORY: 'category',
   CONDITION: 'condition'
 }
@@ -42,6 +44,9 @@ export const Routes = {
   parts: '/parts',
   searches: '/searches',
   lists: '/lists',
+  brickLinkCategory(id: string) {
+    return '/' + LINKS.BRICK_LINK_CATEGORY + '/' + encodeURIComponent(id)
+  },
   category(id: string) {
     return '/' + LINKS.CATEGORY + '/' + encodeURIComponent(id)
   },
@@ -51,7 +56,7 @@ export const Routes = {
   condition(id: string) {
     return '/' + LINKS.CONDITION + '/' + encodeURIComponent(id)
   },
-  color(id: number) {
+  color(id: string) {
     return '/' + LINKS.COLOR + '/' + encodeURIComponent(id)
   },
   part(id: string) {
@@ -62,6 +67,9 @@ export const Routes = {
   },
   store(id: string) {
     return '/' + LINKS.STORE + '/' + encodeURIComponent(id)
+  },
+  search(id: number) {
+    return '/' + LINKS.SEARCH + '/' + encodeURIComponent(id)
   },
 }
 
@@ -84,10 +92,13 @@ export const Hrefs = {
   category(id: string) {
     return Routes.category(id)
   },
+  brickLinkCategory(id: string) {
+    return Routes.brickLinkCategory(id)
+  },
   condition(id: string) {
     return Routes.condition(id)
   },
-  color(id: number) {
+  color(id: string) {
     return Routes.color(id)
   },
   part(id: string) {
@@ -95,6 +106,9 @@ export const Hrefs = {
   },
   partVariant(itemId: string, colorId: string) {
     return Routes.partVariant(itemId, colorId)
+  },
+  search(id: number) {
+    return Routes.search(id)
   },
   store(id: string) {
     return Routes.store(id)
@@ -105,14 +119,6 @@ export const Crumbs = {
   home: {
     title: 'Home',
     href: Hrefs.home
-  },
-  activeCart: {
-    title: 'Active cart',
-    href: Hrefs.activeCart
-  },
-  activeSearch: {
-    title: 'Active search',
-    href: Hrefs.activeSearch
   },
   carts: {
     title: 'Carts',
@@ -150,10 +156,28 @@ export const Crumbs = {
     title: 'Shopping Lists',
     href: Hrefs.lists
   },
+  search(id: number) {
+    return {
+      title: 'Search',
+      href: Hrefs.search(id)
+    }
+  },
+  cart(id: number) {
+    return {
+      title: 'Cart',
+      href: Hrefs.cart(id)
+    }
+  },
   condition(id: string) {
     return {
       id,
       href: Hrefs.condition(id)
+    }
+  },
+  brickLinkCategory(title: string, id: string) {
+    return {
+      title,
+      href: Hrefs.brickLinkCategory(id)
     }
   },
   category(title: string, id: string) {
@@ -162,13 +186,7 @@ export const Crumbs = {
       href: Hrefs.category(id)
     }
   },
-  cart(title: string, id: number) {
-    return {
-      title,
-      href: Hrefs.cart(id)
-    }
-  },
-  color(title: string, id: number) {
+  color(title: string, id: string) {
     return {
       title,
       href: Hrefs.color(id)

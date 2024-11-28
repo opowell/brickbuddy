@@ -1,8 +1,12 @@
 import { IDBPDatabase } from "idb";
 import { BrickLinkItem, Category, Color, Item, Store } from "../types";
-import { addBrickLinkCategory, addBrickLinkItem, addCategory, addCategoryToBrickLinkCategory, addInvItem, addItem, getBrickLinkItem, getCategory, getFromIndex, getPart, getPartByBrickLinkId, updateCategory, updatePart, updateStore } from "./idb";
 import * as math from 'mathjs'
 import INDICES from './indices'
+import { addBrickLinkCategory, getCategory, addCategoryToBrickLinkCategory, updateCategory } from "./categories";
+import { getFromIndex } from "./db";
+import { addInvItem } from "./invItems";
+import { getBrickLinkItem, addBrickLinkItem } from "./parts";
+import { updateStore } from "./storeMethods";
 
 async function getColorByBrickLinkId(db: IDBPDatabase, brickLinkId: string): Promise<Color> {
   return getFromIndex(db, INDICES.COLOR_BY_BRICKLINK_ID, brickLinkId + '')

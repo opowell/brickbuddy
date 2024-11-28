@@ -1,6 +1,6 @@
 <script setup lang="ts">
 const { isSpan } = defineProps({
-  id: String,
+  id: [String, Number],
   name: String,
   isSpan: Boolean
 })

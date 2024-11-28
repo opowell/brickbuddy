@@ -1,7 +1,9 @@
 import { IDBPDatabase } from "idb";
 import INDICES from './indices'
 import { ActiveSearchButtonActiveSearch, ActiveSearchPageCondition, ConditionsPageCondition, UiCategory, UiSearch, UiShopList, UiStore } from "../types";
-import { countFromIndex, getActiveSearch, getDbConnection } from "./idb";
+import { countFromIndex } from "./db";
+import { getDbConnection } from "./idb";
+import { getActiveSearch, storeActiveSearch } from "./searches";
 
 export const openSearch = ref<UiSearch | null>(null)
 export const openStore = ref<UiStore | null>(null)
@@ -14,7 +16,7 @@ export async function getCondition(db: IDBPDatabase, id: string): Promise<Active
   }
 }
 export async function excludeCondition(condition: string) {
-  const activeSearch: ActiveSearchButtonActiveSearch = getActiveSearch()
+  const activeSearch: ActiveSearchButtonActiveSearch = await getActiveSearch()
   if (!activeSearch.conditions) {
     activeSearch.conditions = {
       ids: [],
