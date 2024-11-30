@@ -1,5 +1,3 @@
-import { categories } from "./idb"
-
 export const DB_NAME = 'brickbuddy'
 
 export const PAGES = {
@@ -47,7 +45,7 @@ export const Routes = {
   brickLinkCategory(id: string) {
     return '/' + LINKS.BRICK_LINK_CATEGORY + '/' + encodeURIComponent(id)
   },
-  category(id: string) {
+  category(id: number) {
     return '/' + LINKS.CATEGORY + '/' + encodeURIComponent(id)
   },
   cart(id: number) {
@@ -89,7 +87,7 @@ export const Hrefs = {
   cart(id: number) {
     return Routes.cart(id)
   },
-  category(id: string) {
+  category(id: number) {
     return Routes.category(id)
   },
   brickLinkCategory(id: string) {
@@ -174,13 +172,7 @@ export const Crumbs = {
       href: Hrefs.condition(id)
     }
   },
-  brickLinkCategory(title: string, id: string) {
-    return {
-      title,
-      href: Hrefs.brickLinkCategory(id)
-    }
-  },
-  category(title: string, id: string) {
+  category(title: string | undefined, id: number) {
     return {
       title,
       href: Hrefs.category(id)

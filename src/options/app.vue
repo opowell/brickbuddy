@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import { importRbPartsToMemory, loadModels } from './idb/idb';
+import { importRbPartsToMemory } from './idb/idb';
 import { startFetching } from './idb/scraping';
 
 onMounted(async () => {
   await importRbPartsToMemory()
-  await loadModels()
-  startFetching()
+  // startFetching()
 })
 </script>
 <template>

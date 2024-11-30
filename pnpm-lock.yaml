@@ -81,6 +81,9 @@ importers:
       eslint:
         specifier: ^9.13.0
         version: 9.13.0(jiti@1.21.6)
+      eslint-plugin-vue:
+        specifier: ^9.31.0
+        version: 9.31.0(eslint@9.13.0(jiti@1.21.6))
       globals:
         specifier: ^15.11.0
         version: 15.11.0
@@ -1786,8 +1789,8 @@ packages:
       '@typescript-eslint/eslint-plugin':
         optional: true
 
-  eslint-plugin-vue@9.30.0:
-    resolution: {integrity: sha512-CyqlRgShvljFkOeYK8wN5frh/OGTvkj1S7wlr2Q2pUvwq+X5VYiLd6ZjujpgSgLnys2W8qrBLkXQ41SUYaoPIQ==}
+  eslint-plugin-vue@9.31.0:
+    resolution: {integrity: sha512-aYMUCgivhz1o4tLkRHj5oq9YgYPM4/EJc0M7TAKRLCUA5OYxRLAhYEVD2nLtTwLyixEFI+/QXSvKU9ESZFgqjQ==}
     engines: {node: ^14.17.0 || >=16.0.0}
     peerDependencies:
       eslint: ^6.2.0 || ^7.0.0 || ^8.0.0 || ^9.0.0
@@ -3989,7 +3992,7 @@ snapshots:
       eslint-plugin-toml: 0.11.1(eslint@9.13.0(jiti@1.21.6))
       eslint-plugin-unicorn: 56.0.0(eslint@9.13.0(jiti@1.21.6))
       eslint-plugin-unused-imports: 4.1.4(@typescript-eslint/eslint-plugin@8.12.2(@typescript-eslint/parser@8.12.2(eslint@9.13.0(jiti@1.21.6))(typescript@5.6.3))(eslint@9.13.0(jiti@1.21.6))(typescript@5.6.3))(eslint@9.13.0(jiti@1.21.6))
-      eslint-plugin-vue: 9.30.0(eslint@9.13.0(jiti@1.21.6))
+      eslint-plugin-vue: 9.31.0(eslint@9.13.0(jiti@1.21.6))
       eslint-plugin-yml: 1.14.0(eslint@9.13.0(jiti@1.21.6))
       eslint-processor-vue-blocks: 0.1.2(@vue/compiler-sfc@3.5.12)(eslint@9.13.0(jiti@1.21.6))
       globals: 15.11.0
@@ -5753,7 +5756,7 @@ snapshots:
     optionalDependencies:
       '@typescript-eslint/eslint-plugin': 8.12.2(@typescript-eslint/parser@8.12.2(eslint@9.13.0(jiti@1.21.6))(typescript@5.6.3))(eslint@9.13.0(jiti@1.21.6))(typescript@5.6.3)
 
-  eslint-plugin-vue@9.30.0(eslint@9.13.0(jiti@1.21.6)):
+  eslint-plugin-vue@9.31.0(eslint@9.13.0(jiti@1.21.6)):
     dependencies:
       '@eslint-community/eslint-utils': 4.4.1(eslint@9.13.0(jiti@1.21.6))
       eslint: 9.13.0(jiti@1.21.6)

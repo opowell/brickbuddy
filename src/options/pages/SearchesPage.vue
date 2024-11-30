@@ -6,7 +6,6 @@ const searches = ref<SearchesPageSearch[] | undefined>(undefined)
 onMounted(async () => {
   searches.value = await getSearchesPagesSearches()
 })
-const newName = ref<string>('')
 </script>
 
 <template>
@@ -30,8 +29,7 @@ const newName = ref<string>('')
       </tbody>
     </table>
     <h4>Add</h4>
-    <div>Name:<input v-model="newName" type="text"></div>
-    <button @click="addNewSearch(newName)">
+    <button @click="addNewSearch">
       Add
     </button>
   </div>

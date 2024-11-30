@@ -53,7 +53,6 @@ export interface AddNewStore {
 
 export interface HomeData {
   stores: number
-  brickLinkCategories: number
   categories: number
   colors: number
   parts: number
@@ -76,38 +75,38 @@ export interface Store extends AddNewStore {
   type: StoreType
 }
 
-export interface BrickLinkItem {
-  categoryId: string
-  brickLinkId: string
-  name: string
-  partId: string
-  part?: Item
+export interface BrickLinkItem extends ExternalItem {
+  type: "BrickLink"
 }
-export interface LegoItem {
-  legoId: string
-  name: string
-  partId: string
-  part?: Item
+export interface LegoItem extends ExternalItem {
+  type: "Lego"
 }
 
-export interface BrickLinkCategory {
+export interface LegoCategory {
   id: string
   name: string
   categoryIds: string[]
 }
 export interface Item {
-  brickLinkCategoryId: string
+  itemId: number
+}
+export interface RebrickableItem extends ExternalItem {
+  legoPartIds: string[] | undefined
+  brickLinkIds: string[] | undefined
+  type: "Rebrickable"
+}
+export interface ExternalItem {
   categoryId: string
-  itemId: string
-  itemName: string
-  legoPartIds?: string[]
-  brickLinkIds?: string[]
+  itemId: IDBValidKey
+  externalItemId: string
+  name?: string
+  type: 'Rebrickable' | 'Lego' | 'BrickLink'
 }
 export interface StorePageInvItemItem extends Item {
   variants: ItemVariant[]
 }
 export interface ItemVariant {
-  itemId: string
+  itemId: number
   colorId: string
   image: string
 }
@@ -165,7 +164,7 @@ export interface VariantPagePart extends Item {
 }
 export interface PartsPagePart extends Item {
   variants: PartsPageVariant[]
-  category?: Category
+  externalItems: ExternalItem[]
 }
 export interface StorePagePart extends Item {
   variants: UiItemVariant[]
@@ -175,7 +174,6 @@ export interface PartPagePart extends Item {
   variants: PartPageVariant[]
   invItems: PartPageVariantInvItem[]
   category: Category
-  brickLinkCategories: BrickLinkCategory[]
 }
 export interface InvItem {
   invId: string
@@ -252,22 +250,18 @@ export interface Search {
   id: IDBValidKey | string
   name: string
   active: number
-  filters: SearchFilter[]
+  filters?: SearchFilter[]
   priceScoreQuantity: number
   priceScoreIgnoreColor: boolean
 }
 export interface ActiveSearch extends Search {
   categories: {
-    included: string[]
-    excluded: string[]
-  }
-  categoriesBrickLink: {
-    included: string[]
-    excluded: string[]
+    included: number[]
+    excluded: number[]
   }
   colors: {
-    included: string[]
-    excluded: string[]
+    included: number[]
+    excluded: number[]
   }
   conditions: {
     included: string[]
@@ -292,12 +286,6 @@ export interface ActiveCartButtonCart extends Cart {
 }
 export interface ActiveSearchButtonActiveSearch extends ActiveSearch {
   categories: {
-    included: string[]
-    excluded: string[]
-    includedNames: string[]
-    excludedNames: string[]
-  }
-  categoriesBrickLink: {
     included: string[]
     excluded: string[]
     includedNames: string[]
@@ -346,10 +334,6 @@ export interface SearchPageSearch extends ActiveSearch {
   colorObjects: UiColor[] 
   partObjects: ActiveSearchPagePart[] 
   storeObjects: ActiveSearchPageStore[]
-}
-export interface UiSearch extends Search {
-  shoppingList?: UiShopList
-  listItems?: UiListItem[]
 }
 export interface SearchesPageSearch extends Search {
 
@@ -401,12 +385,22 @@ export interface ColorsPageColor extends Color {
 }
 
 export interface Category {
+  id: number
+}
+
+export interface BrickLinkCategory extends ExternalCategory {
+  type: "BrickLink"
+}
+
+export interface CategoryWithExternals extends Category {
+  externalCategories: ExternalCategory[]
+}
+
+export interface ExternalCategory {
   id: string
   name: string
-  brickLinkId?: string
-  brickLinkName?: string
-  legoId?: string
-  legoName?: string
+  categoryId: IDBValidKey
+  type: 'BrickLink' | 'Lego' | 'Rebrickable'
 }
 
 export interface CategoryPagePart extends Item {
@@ -417,15 +411,9 @@ export interface CategoryPageCategory extends Category {
   parts: CategoryPagePart[]
 }
 
-export interface CategoriesPageCategory extends Category {
+export interface CategoriesPageCategory extends CategoryWithExternals {
   numParts: number
   image?: string
-}
-
-export interface BrickLinkCategoriesPageCategory extends Category {
-  numParts: number
-  image?: string
-  categoryIds: string[]
 }
 
 export interface UiCategory extends Category {

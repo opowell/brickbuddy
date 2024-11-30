@@ -1,8 +1,10 @@
 import antfu from '@antfu/eslint-config'
 import globals from 'globals'
 import AutoImportGlobals from './src/types/.eslintrc-auto-import.json' with { type: 'json' }
+import pluginVue from 'eslint-plugin-vue'
 
 export default antfu(
+  ...pluginVue.configs['flat/recommended'],
   {
     stylistic: false,
     typescript: true,

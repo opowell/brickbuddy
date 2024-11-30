@@ -21,7 +21,6 @@ function includeCategory(index: number) {
 import CategoryButton from '../components/CategoryButton.vue';
 import HomeButton from '../components/HomeButton.vue';
 import ActiveSearchButton from '../components/ActiveSearchButton.vue';
-import NameIdLabel from '../components/NameIdLabel.vue';
 import { getCategoriesPageCategories } from '../idb/categories';
 </script>
 
@@ -37,10 +36,7 @@ import { getCategoriesPageCategories } from '../idb/categories';
       <thead>
         <tr>
           <th>Image</th>
-          <th>Id</th>
-          <th>Name</th>
-          <th>BrickLink</th>
-          <th>Lego</th>
+          <th>Names</th>
           <th>Parts</th>
           <th>Actions</th>
         </tr>
@@ -49,16 +45,7 @@ import { getCategoriesPageCategories } from '../idb/categories';
         <tr v-for="(category, index) in categories" :key="category.id">
           <td><img v-if="category.image" :src="category.image"></td>
           <td>
-            {{ category.id }}
-          </td>
-          <td>
             <CategoryButton :category="category" />
-          </td>
-          <td>
-            <NameIdLabel :name="category.brickLinkName" :id="category.brickLinkId" />
-          </td>
-          <td>
-            <NameIdLabel :name="category.legoName" :id="category.legoId" />
           </td>
           <td>
             {{ category.numParts }}

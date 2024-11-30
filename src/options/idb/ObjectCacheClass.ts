@@ -1,14 +1,13 @@
 import { IDBPDatabase } from 'idb';
-import { ActiveSearch, CartWithItems, Category, InvItem, Item, Search, SearchFilter, Store, UiColor } from '../types';
+import { ActiveSearch, CartWithItems, Category, InvItem, Item, PartPageCategory, Search, SearchFilter, Store, UiColor } from '../types';
 import STORES from './stores'
 import { getFirstActiveCart, getCartItems } from './carts';
-import { getCategory } from './categories';
+import { getCategory, getPartPageCategory } from './categories';
 import { getColor } from './colors';
 import { getInvItemFromId } from './invItems';
 import { getStorePagePart } from './parts';
 import { getFirstActiveSearch, getSearchFilters } from './searches';
 import { getStore } from './storeMethods';
-
 function getTypeFilters(filters: SearchFilter[], type: string) {
   const matching = filters.filter(f => f.type === type)
   const included = matching.filter(f => !f.isExcluded).map(f => f.objectId)
@@ -22,6 +21,7 @@ function getTypeFilters(filters: SearchFilter[], type: string) {
 export default class ObjectCache {
   colors: Map<string, UiColor>
   categories: Map<string, Category>
+  partPageCategories: Map<string, Category>
   parts: Map<string, Item>
   stores: Map<string, Store>
   activeCart: CartWithItems | undefined
@@ -32,6 +32,7 @@ export default class ObjectCache {
     this.db = db
     this.colors = new Map<string, UiColor>()
     this.categories = new Map<string, Category>()
+    this.partPageCategories = new Map<string, Category>()
     this.parts = new Map<string, Item>()
     this.invItems = new Map<string, InvItem>()
     this.stores = new Map<string, Store>()
@@ -69,7 +70,7 @@ export default class ObjectCache {
     }
     return this.activeCart
   }
-  async getActiveSearch(): Promise<Search> {
+  async getActiveSearch(): Promise<ActiveSearch> {
     if (!this.activeSearch) {
       let search = await getFirstActiveSearch(this.db)
       if (!search) {
@@ -88,7 +89,6 @@ export default class ObjectCache {
       }
       const filters = await getSearchFilters(this.db, search)
       const categories = getTypeFilters(filters, 'category')
-      const categoriesBrickLink = getTypeFilters(filters, 'categoryBrickLink')
       const colors = getTypeFilters(filters, 'color')
       const conditions = getTypeFilters(filters, 'condition')
       const parts = getTypeFilters(filters, 'part')
@@ -97,7 +97,6 @@ export default class ObjectCache {
         ...search,
         filters,
         categories,
-        categoriesBrickLink,
         colors,
         conditions,
         parts,
@@ -117,6 +116,9 @@ export default class ObjectCache {
   }
   async getCategory(categoryId: string): Promise<Category | undefined> {
     return this.getObject<Category | undefined>(this.categories, categoryId, async () => await getCategory(this.db, categoryId))
+  }
+  async getPartPageCategory(categoryId: string): Promise<PartPageCategory | undefined> {
+    return this.getObject<PartPageCategory | undefined>(this.partPageCategories, categoryId, async () => await getPartPageCategory(this.db, categoryId))
   }
   async getStorePagePart(partId: string): Promise<Item | undefined> {
     return this.getObject<Item | undefined>(this.parts, partId, async () => await getStorePagePart(partId, this))

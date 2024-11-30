@@ -7,9 +7,6 @@ import STORES from "./stores"
 import INDICES from './indices'
 import { getPart } from "./parts"
 
-export const lists = ref<UiShopList[]>([])
-
-
 export async function addNewListItem(item) {
   const db = await getDbConnection()
   await addShopListItem(
@@ -30,16 +27,7 @@ export async function addShopList(name: string) {
 }
 
 export async function addShopListDb(name: string, db: IDBPDatabase) {
-  const id = await db.put(STORES.LISTS.name, { name })
-  if (!id) {
-    return
-  }
-  const list: UiShopList = {
-    id: Number(id),
-    name,
-    items: []
-  }
-  lists.value.push(list)
+  await db.put(STORES.LISTS.name, { name })
 }
 
 export async function addShopListItem(
@@ -87,14 +75,4 @@ async function loadShopListItems(db: IDBPDatabase, listId: string) {
     console.log('error getting shop list items', e, listId)
   }
   return []
-}
-
-export async function loadShopLists() {
-  const db = await getDbConnection()
-  const x = await db.getAll(STORES.LISTS.name)
-  for (let i = 0; i < x.length; i++) {
-    const list = x[i]
-    list.items = await loadShopListItems(db, list.id)
-    lists.value.push(list)
-  }
 }

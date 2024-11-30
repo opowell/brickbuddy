@@ -95,6 +95,9 @@ export async function getInvItemsWithColor(db: IDBPDatabase, id: string): Promis
 }
 
 async function getInvItem(db: IDBPDatabase, storeId: string, itemId: string, condition: string, colorId: string): Promise<InvItem | undefined> {
+  if (!db || !storeId || !itemId || !condition || !colorId) {
+    debugger
+  }
   return await db.get(STORES.INVENTORY_ITEMS.name, [storeId, itemId, condition, colorId])
 }
 
@@ -135,10 +138,10 @@ export async function getStorePageInvItem(objectCache: ObjectCacheClass, invItem
   if (!color) {
     return
   }
-  const category = await objectCache.getCategory(part.categoryId)
-  if (!category) {
-    return
-  }
+  // const category = await objectCache.getCategory(part.categoryId)
+  // if (!category) {
+  //   return
+  // }
   const variant = await getFromIndex(objectCache.db, INDICES.PART_VARIANTS_BY_PART_AND_COLOR, [part.itemId, color.id])
   let allMatchingInvItems
   if (search.priceScoreIgnoreColor) {
@@ -180,7 +183,6 @@ export async function getStorePageInvItem(objectCache: ObjectCacheClass, invItem
     ...invItem,
     item: part,
     colorName: color?.name,
-    category,
     variant,
     priceScore: priceScoreString,
     cartQuantity,

@@ -1,17 +1,25 @@
 <script setup lang="ts">
-import { getPartsPageParts } from '../idb/parts';
+import { getPartsPagePart, getPartsPageParts } from '../idb/parts';
 import type { PartsPagePart } from '../types';
 import PartButton from '../components/PartButton.vue';
 const search = ref('')
 const items = ref<PartsPagePart[] | undefined>(undefined)
+const loadedItems = ref<PartsPagePart[]>([])
 onMounted(async () => {
   items.value = await getPartsPageParts()
+  // for (let i = 0; i < items.value?.length; i++) {
+  //   loadedItems.value.push(await getPartsPagePart(items.value[i]))
+  // }
 })
 const filteredParts = computed(() => {
   if (!items.value) {
     return []
   }
-  return items.value.filter((item: PartsPagePart) => item.itemName.includes(search.value))
+  // return items.value
+  return items.value.filter((item) => {
+    const itemName = ''
+    return itemName.includes(search.value)
+  })
 })
 import HomeButton from '../components/HomeButton.vue'
 import CategoryButton from '../components/CategoryButton.vue';
@@ -50,10 +58,9 @@ import ActiveCartButton from '../components/ActiveCartButton.vue';
           <td>
             <PartButton :part="item" />
           </td>
-          <td><CategoryButton :category="item.category" /></td>
+          <!-- <td><CategoryButton :category="item.category" /></td> -->
+          <td>CategoryButton :category="item.category"</td>
           <td>{{ item.variants.length }}</td>
-          <td><NameIdLabel :id="item.brickLinkIds?.join(', ')" /></td>
-          <td><NameIdLabel :id="item.legoPartIds?.join(', ')" /></td>
           <td>1-5</td>
           <td><QuantityInput :current="0" :max="1000" /></td>
         </tr>

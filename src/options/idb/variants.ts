@@ -14,9 +14,13 @@ import { addShopListItem } from "./lists"
 
 export async function getItemVariant(
   db: IDBPDatabase,
-  itemId: string,
+  itemId: number,
   colorId: string
 ) {
+  if (!itemId || !colorId) {
+    console.log('no item variant', itemId, colorId)
+    return
+  }
   return await get(db, STORES.PART_VARIANTS, [itemId, colorId])
 }
 

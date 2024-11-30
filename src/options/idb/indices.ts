@@ -11,11 +11,11 @@ const indices: {
   SEARCH_FILTERS_BY_SEARCH: IndexDefinition
   SEARCHES_BY_ACTIVE: IndexDefinition
   CART_ITEMS_BY_CART: IndexDefinition
-  BRICKLINK_CATEGORIES_BY_CATEGORY: IndexDefinition
+  EXTERNAL_CATEGORIES_BY_TYPE: IndexDefinition
+  EXTERNAL_CATEGORIES_BY_CATEGORY: IndexDefinition
+  EXTERNAL_PARTS_BY_PART: IndexDefinition
+  EXTERNAL_PARTS_BY_TYPE_AND_EXTERNAL_ID: IndexDefinition
   PARTS_BY_CATEGORY: IndexDefinition
-  BRICKLINK_PARTS_BY_CATEGORY: IndexDefinition
-  PARTS_BY_BRICKLINK_ID: IndexDefinition
-  PARTS_BY_LEGO_ID: IndexDefinition
   PART_VARIANTS_BY_PART: IndexDefinition
   PART_VARIANTS_BY_COLOR: IndexDefinition
   PART_VARIANTS_BY_PART_AND_COLOR: IndexDefinition
@@ -43,6 +43,26 @@ const indices: {
     name: 'active',
     keyPath: 'active'
   },
+  EXTERNAL_CATEGORIES_BY_TYPE: {
+    store: stores.EXTERNAL_CATEGORIES.name,
+    name: 'type',
+    keyPath: 'type'
+  },
+  EXTERNAL_CATEGORIES_BY_CATEGORY: {
+    store: stores.EXTERNAL_CATEGORIES.name,
+    name: 'categoryId',
+    keyPath: 'categoryId'
+  },
+  EXTERNAL_PARTS_BY_PART: {
+    store: stores.EXTERNAL_PARTS.name,
+    name: 'partId',
+    keyPath: 'itemId'
+  },
+  EXTERNAL_PARTS_BY_TYPE_AND_EXTERNAL_ID: {
+    store: stores.EXTERNAL_PARTS.name,
+    name: 'type + externalId',
+    keyPath: ['type', 'externalItemId']
+  },
   SEARCHES_BY_ACTIVE: {
     store: stores.SEARCHES.name,
     name: 'active',
@@ -62,26 +82,6 @@ const indices: {
     store: stores.PARTS.name,
     name: 'category',
     keyPath: 'categoryId'
-  },
-  BRICKLINK_PARTS_BY_CATEGORY: {
-    store: stores.PARTS_BRICK_LINK.name,
-    name: 'category',
-    keyPath: 'categoryId'
-  },
-  BRICKLINK_CATEGORIES_BY_CATEGORY: {
-    store: stores.CATEGORIES_BRICKLINK.name,
-    name: 'category',
-    keyPath: 'categoryId'
-  },
-  PARTS_BY_BRICKLINK_ID: {
-    store: stores.PARTS.name,
-    name: 'brickLinkId',
-    keyPath: 'brickLinkId'
-  },
-  PARTS_BY_LEGO_ID: {
-    store: stores.PARTS.name,
-    name: 'legoId',
-    keyPath: 'legoId'
   },
   PART_VARIANTS_BY_PART: {
     store: stores.PART_VARIANTS.name,

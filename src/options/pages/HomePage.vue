@@ -21,7 +21,6 @@ import CardComponent from '../components/CardComponent.vue';
     <div class="cards">
       <CardComponent v-if="homeData" name="Stores" :count="homeData.stores" :href="Crumbs.stores.href" />
       <CardComponent v-if="homeData" name="Colors" :count="homeData.colors" :href="Crumbs.colors.href" />
-      <CardComponent v-if="homeData" name="BL Categories" :count="homeData.brickLinkCategories" :href="Crumbs.brickLinkCategories.href" />
       <CardComponent v-if="homeData" name="Categories" :count="homeData.categories" :href="Crumbs.categories.href" />
       <CardComponent v-if="homeData" name="Parts" :count="homeData.parts" :href="Crumbs.parts.href" />
       <CardComponent v-if="homeData" name="Searches" :count="homeData.searches" :href="Crumbs.searches.href" />

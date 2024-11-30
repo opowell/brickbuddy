@@ -1,8 +1,8 @@
 import { IDBPDatabase } from "idb";
-import { BrickLinkItem, Category, Color, Item, Store } from "../types";
+import { BrickLinkCategory, BrickLinkItem, Category, Color, ExternalItem, Item, Store } from "../types";
 import * as math from 'mathjs'
 import INDICES from './indices'
-import { addBrickLinkCategory, getCategory, addCategoryToBrickLinkCategory, updateCategory } from "./categories";
+import { addBrickLinkCategory, getBrickLinkCategory, getCategory, updateCategory } from "./categories";
 import { getFromIndex } from "./db";
 import { addInvItem } from "./invItems";
 import { getBrickLinkItem, addBrickLinkItem } from "./parts";
@@ -47,13 +47,13 @@ export async function getBrickLinkPrices(db: IDBPDatabase, store: Store) {
   }
   store.fetchMaxPageIndex = Math.ceil(json.result.totalLotCnt / 100) + 1
   await updateStore(db, store)
-  const partCategories = json.result.categories.find(c => c.type === 'P')
-  const blCategories = {}
+  const partCategories = json.result.categories.find((c: { type: string }) => c.type === 'P')
+  const blCategories = new Map<string, string>()
   if (partCategories) {
     for (let i = 0; i < partCategories.categories.length; i++) {
       const partCategory = partCategories.categories[i]
-      blCategories[partCategory.id + ''] = partCategory.name + ''
-      await addBrickLinkCategory(db, partCategory.catstr, partCategory.name)
+      // blCategories[partCategory.id + ''] = partCategory.name + ''
+      blCategories.set(partCategory.catstr, partCategory.name)
     }
   }
   for (let i = 0; i < json.result.groups.length; i++) {
@@ -66,46 +66,43 @@ export async function getBrickLinkPrices(db: IDBPDatabase, store: Store) {
           console.log('no color!!', resultItem.colorID, resultItem)
           continue
         }
-        const blItem: BrickLinkItem | undefined = await getBrickLinkItem(db, resultItem.itemNo)
+        const blItem: BrickLinkItem | undefined = await getBrickLinkItem(db, resultItem.itemNo + '')
         if (!blItem) {
           continue
         }
-        const item = blItem.part
-        delete blItem.part
-        blItem.name = resultItem.itemName
+        const item: Item = blItem.part
         if (!item) {
           continue
         }
-        const category: Category = await getCategory(db, item.categoryId)
-        if (category) {
-          const blCategoryName = blCategories[resultItem.categoryString]
-          category.brickLinkId = resultItem.categoryString + ''
+        delete blItem.part
+        blItem.name = resultItem.itemName
+        blItem.categoryId = resultItem.categoryString
+        const brickLinkCategory: BrickLinkCategory = await getBrickLinkCategory(db, blItem.categoryId)
+        if (!brickLinkCategory) {
+          const blCategoryName = blCategories.get(resultItem.categoryString)
           if (!blCategoryName) {
-            console.log('NO BL NAME!', category, blItem, blCategories, resultItem.categoryString)
+            console.log('NO BL NAME!', blItem, blCategories, resultItem.categoryString)
+            continue
           }
-          category.brickLinkName = blCategoryName
-          await addCategoryToBrickLinkCategory(db, category.brickLinkId, category.id)
-          await updateCategory(db, category)
+          await addBrickLinkCategory(db, blItem.categoryId, blCategoryName)
         }
+        blItem.name = resultItem.itemName
         await addBrickLinkItem(
-          item.categoryId + '',
-          color.id + '',
+          color.id,
           blItem,
           item,
-          resultItem.itemName,
           resultItem.newThumb1Img,
-          resultItem.categoryString,
           db
         )
         await addInvItem(
           db,
           resultItem.invID + '',
           store,
-          color.id + '',
+          color.id,
           resultItem.invNew,
           resultItem.invQty,
           math.number(math.multiply(math.bignumber(100), math.bignumber(resultItem.rawConvertedPrice))),
-          item.itemId + '',
+          item.itemId,
         )
       } catch (e) {
         console.log('error adding item', resultItem, e)

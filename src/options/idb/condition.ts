@@ -1,12 +1,8 @@
 import { IDBPDatabase } from "idb";
 import INDICES from './indices'
-import { ActiveSearchButtonActiveSearch, ActiveSearchPageCondition, ConditionsPageCondition, UiCategory, UiSearch, UiShopList, UiStore } from "../types";
+import { ActiveSearchPageCondition, ConditionsPageCondition } from "../types";
 import { countFromIndex } from "./db";
 import { getDbConnection } from "./idb";
-import { getActiveSearch, storeActiveSearch } from "./searches";
-
-export const openSearch = ref<UiSearch | null>(null)
-export const openStore = ref<UiStore | null>(null)
 
 export async function getCondition(db: IDBPDatabase, id: string): Promise<ActiveSearchPageCondition> {
   const numInvItems = await countFromIndex(db, INDICES.INV_ITEMS_BY_CONDITION, id)
@@ -16,16 +12,6 @@ export async function getCondition(db: IDBPDatabase, id: string): Promise<Active
   }
 }
 export async function excludeCondition(condition: string) {
-  const activeSearch: ActiveSearchButtonActiveSearch = await getActiveSearch()
-  if (!activeSearch.conditions) {
-    activeSearch.conditions = {
-      ids: [],
-      excluded: false
-    }
-  }
-  activeSearch.conditions.excluded = true
-  activeSearch.conditions.ids.push(condition)
-  storeActiveSearch(activeSearch)
 }
 
 export async function getConditionsPageConditions(): Promise<ConditionsPageCondition[]> {

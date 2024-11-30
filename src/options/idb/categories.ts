@@ -1,6 +1,6 @@
 import { IDBPDatabase } from "idb"
-import { BrickLinkCategoriesPageCategory, BrickLinkCategory, CategoriesPageCategory, Category, CategoryPageCategory, CategoryPagePart, Item, ItemVariant, SearchFilter, UiCategory } from "../types"
-import { get, getAllKeys, getFromIndex, put } from "./db"
+import { BrickLinkCategory, CategoriesPageCategory, Category, CategoryPageCategory, CategoryPagePart, ExternalCategory, Item, ItemVariant, SearchFilter, UiCategory } from "../types"
+import { get, getAllFromIndex, getAllKeys, getFromIndex, put } from "./db"
 import STORES from './stores'
 import INDICES from './indices'
 import { getDbConnection, getBrickLinkCategoryImage } from "./idb"
@@ -34,13 +34,6 @@ export async function getCategories(ids: string[]): Promise<Category[]> {
   }))
 }
 
-export async function getBrickLinkCategories(ids: string[]): Promise<Category[]> {
-  const db = await getDbConnection()
-  return await Promise.all(ids.map(id => {
-     return get(db, STORES.CATEGORIES_BRICKLINK, id)
-  }))
-}
-
 export async function excludeCategory(category: Category) {
   const activeSearch = await getActiveSearch()
   const db = await getDbConnection()
@@ -52,30 +45,44 @@ export async function excludeCategory(category: Category) {
   }
   await db.put(STORES.SEARCH_FILTERS.name, filter)
 }
-export async function excludeBrickLinkCategory(category: Category) {
+export async function filterBrickLinkCategory(category: BrickLinkCategory, isExcluded: boolean) {
   const activeSearch = await getActiveSearch()
-  activeSearch.categoriesBrickLink.excluded.push(category.id)
-  storeActiveSearch(activeSearch)
+  const db = await getDbConnection()
+  const filter: SearchFilter = {
+    searchId: activeSearch.id,
+    type: 'brickLinkCategory',
+    objectId: category.id,
+    isExcluded: true
+  }
+  db.put(STORES.SEARCH_FILTERS.name, filter, [activeSearch.id, 'brickLinkCategory', category.id])
 }
-export async function includeCategory(category: Category) {
-  const activeSearch = await getActiveSearch()
-  activeSearch.categories.included.push(category.id)
-  storeActiveSearch(activeSearch)
+export async function excludeBrickLinkCategory(category: BrickLinkCategory) {
+  return await filterBrickLinkCategory(category, true)
+}
+export async function includeCategory(category: BrickLinkCategory) {
+  return await filterBrickLinkCategory(category, false)
 }
 export const excludedCategories = ref<Category[]>([])
 export async function getExcludedCategories(): Promise<Category[] | undefined> {
   return excludedCategories.value
 }
+
+async function getExternalCategories(db: IDBPDatabase, categoryId: number) {
+  return await getAllFromIndex(db, INDICES.EXTERNAL_CATEGORIES_BY_CATEGORY, categoryId)
+}
+
 export async function getCategoriesPageCategory(db: IDBPDatabase, category: Category): Promise<CategoriesPageCategory> {
   const numParts = await getNumPartsInCategory(db, category.id)
   const image = await getCategoryImage(db, category.id)
+  const externalCategories = await getExternalCategories(db, category.id)
   return {
     ...category,
     numParts,
-    image
+    image,
+    externalCategories
   }
 }
-export async function getCategoryImage(db: IDBPDatabase, id: string): Promise<string | undefined> {
+export async function getCategoryImage(db: IDBPDatabase, id: number): Promise<string | undefined> {
   const part: Item = await getFromIndex(db, INDICES.PARTS_BY_CATEGORY, id)
   if (!part) {
     return
@@ -87,38 +94,6 @@ export async function getCategoryImage(db: IDBPDatabase, id: string): Promise<st
   return variant.image
 }
 
-export async function getBrickLinkCategoriesPageCategory(db: IDBPDatabase, category: BrickLinkCategory): Promise<BrickLinkCategoriesPageCategory> {
-  const numParts = await getNumPartsInBrickLinkCategory(db, category)
-  const image = await getBrickLinkCategoryImage(db, category)
-  return {
-    ...category,
-    numParts,
-    image
-  }
-}
-export async function getBrickLinkCategoriesPageCategories(): Promise<BrickLinkCategoriesPageCategory[]> {
-  const db = await getDbConnection()
-  const categories = await db.getAll(STORES.CATEGORIES_BRICKLINK.name)
-  const categoriesPageCategories: BrickLinkCategoriesPageCategory[] = []
-  const activeSearch = await getActiveSearch()
-  for (let i = 0; i < categories.length; i++) {
-    const category: BrickLinkCategory = categories[i]
-    if (
-      activeSearch.categoriesBrickLink.excluded.includes(category.id)
-    ) {
-      continue
-    }
-    if (
-      activeSearch.categoriesBrickLink.included.length > 0 &&
-      !activeSearch.categoriesBrickLink.included.includes(category.id)
-    ) {
-      continue
-    }
-    const categoriesPageCategory: BrickLinkCategoriesPageCategory = await getBrickLinkCategoriesPageCategory(db, category)
-    categoriesPageCategories.push(categoriesPageCategory)
-  }
-  return categoriesPageCategories.sort((a, b) => Number.parseInt(a.id) - Number.parseInt(b.id))
-}
 export async function getCategoriesPageCategories(): Promise<CategoriesPageCategory[]> {
   const db = await getDbConnection()
   const categories = await db.getAll(STORES.CATEGORIES.name)
@@ -126,21 +101,23 @@ export async function getCategoriesPageCategories(): Promise<CategoriesPageCateg
   const activeSearch = await getActiveSearch()
   for (let i = 0; i < categories.length; i++) {
     const category: Category = categories[i]
-    // if (
-    //   activeSearch.categories.excluded.includes(category.id)
-    // ) {
-    //   continue
-    // }
-    // if (
-    //   activeSearch.categories.included.length > 0 &&
-    //   !activeSearch.categories.included.includes(category.id)
-    // ) {
-    //   continue
-    // }
+    if (
+      activeSearch.categories.excluded.includes(category.id)
+    ) {
+      continue
+    }
+    if (
+      activeSearch.categories.included.length > 0 &&
+      !activeSearch.categories.included.includes(category.id)
+    ) {
+      continue
+    }
     const categoriesPageCategory: CategoriesPageCategory = await getCategoriesPageCategory(db, category)
     categoriesPageCategories.push(categoriesPageCategory)
   }
-  return categoriesPageCategories.filter(category => category.numParts > 0).sort((a, b) => Number.parseInt(a.id) - Number.parseInt(b.id))
+  return categoriesPageCategories
+    // .filter(category => category.numParts > 0)
+    .sort((a, b) => a.id - b.id)
 }
 
 export async function getCategoryPageCategory(id: string): Promise<CategoryPageCategory | undefined> {
@@ -161,37 +138,26 @@ export async function getCategoryPageCategory(id: string): Promise<CategoryPageC
   }
 }
 
-export async function addBrickLinkCategory(db: IDBPDatabase, id: string, name: string) {
-  await put(db, STORES.CATEGORIES_BRICKLINK, { id, name, categoryIds: [] })
+export async function addCategory(db: IDBPDatabase): Promise<IDBValidKey> {
+  return await db.put(STORES.CATEGORIES.name, {})
 }
 
-export async function addCategory(
-  db: IDBPDatabase,
-  id: string,
-  name: string,
-) {
-  const category = {
-    id,
-    name
-  }
-  await db.put(STORES.CATEGORIES.name, category)
-  await addUiCategory(db, category)
-}
-
-export async function addCategoryToBrickLinkCategory(
+export async function addBrickLinkCategory(
   db: IDBPDatabase,
   brickLinkCategoryId: string,
-  categoryId: string
+  brickLinkCategoryName: string
 ) {
-  const brickLinkCategory = await get(db, STORES.CATEGORIES_BRICKLINK, brickLinkCategoryId)
-  if (!brickLinkCategory.categoryIds) {
-    brickLinkCategory.categoryIds = []
+  const categoryId = await addCategory(db)
+  const brickLinkCategory: ExternalCategory = {
+    categoryId,
+    id: brickLinkCategoryId,
+    name: brickLinkCategoryName,
+    type: "BrickLink"
   }
-  if (brickLinkCategory.categoryIds.includes(categoryId)) {
-    return
-  }
-  brickLinkCategory.categoryIds.push(categoryId)
-  await put(db, STORES.CATEGORIES_BRICKLINK, brickLinkCategory)
+  await putExternalCategory(db, brickLinkCategory)
+}
+async function putExternalCategory(db: IDBPDatabase, category: ExternalCategory) {
+  return await put(db, STORES.EXTERNAL_CATEGORIES, category)
 }
 export async function updateCategory(
   db: IDBPDatabase,
@@ -200,27 +166,13 @@ export async function updateCategory(
   await put(db, STORES.CATEGORIES, category)
 }
 
-export async function loadCategories(db: IDBPDatabase) {
-  const x = await db.getAll(STORES.CATEGORIES.name)
-  for (let i = 0; i < x.length; i++) {
-    const category: Category = x[i]
-    addUiCategory(db, category)
-  }
-}
-
-async function addUiCategory(db: IDBPDatabase, category: Category) {
-  try {
-    const numParts = await db.countFromIndex(STORES.PARTS.name, INDICES.PARTS_BY_CATEGORY.name, category.id)
-    categories.value.set(category.id, {
-      ...category,
-      numParts
-    })
-  } catch (e) {
-    console.log(e)
-  }
-}
-
 export async function getCategory(db: IDBPDatabase, id: string): Promise<Category> {
+  return await get(db, STORES.CATEGORIES, id)
+}
+export async function getBrickLinkCategory(db: IDBPDatabase, id: string): Promise<BrickLinkCategory> {
+  return await get(db, STORES.EXTERNAL_CATEGORIES, id)
+}
+export async function getPartPageCategory(db: IDBPDatabase, id: string): Promise<PartPageCategory> {
   return await get(db, STORES.CATEGORIES, id)
 }
 
