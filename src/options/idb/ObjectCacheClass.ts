@@ -1,8 +1,8 @@
 import { IDBPDatabase } from 'idb';
-import { ActiveSearch, CartWithItems, Category, ExternalItem, InvItem, Item, PartPageCategory, Search, SearchFilter, Store, UiColor } from '../types';
+import { ActiveSearch, CartWithItems, Category, ExternalCategory, ExternalItem, InvItem, Item, PartPageCategory, Search, SearchFilter, Store, UiColor } from '../types';
 import STORES from './stores'
 import { getFirstActiveCart, getCartItems } from './carts';
-import { getCategory, getPartPageCategory } from './categories';
+import { getCategory, getExternalCategory, getPartPageCategory } from './categories';
 import { getColor } from './colors';
 import { getInvItemFromId } from './invItems';
 import { getStorePageExternalPart, getStorePagePart } from './parts';
@@ -21,6 +21,7 @@ function getTypeFilters(filters: SearchFilter[], type: string) {
 export default class ObjectCache {
   colors: Map<string, UiColor>
   categories: Map<string, Category>
+  externalCategories: Map<string, ExternalCategory>
   partPageCategories: Map<string, Category>
   parts: Map<string, Item>
   externalParts: Map<string, ExternalItem>
@@ -33,6 +34,7 @@ export default class ObjectCache {
     this.db = db
     this.colors = new Map<string, UiColor>()
     this.categories = new Map<string, Category>()
+    this.externalCategories = new Map<string, ExternalCategory>()
     this.partPageCategories = new Map<string, Category>()
     this.parts = new Map<string, Item>()
     this.externalParts = new Map<string, ExternalItem>()
@@ -118,6 +120,9 @@ export default class ObjectCache {
   }
   async getCategory(categoryId: string): Promise<Category | undefined> {
     return this.getObject<Category | undefined>(this.categories, categoryId, async () => await getCategory(this.db, categoryId))
+  }
+  async getExternalCategory(categoryId: string, type: "BrickLink" | "Lego" | "Rebrickable"): Promise<ExternalCategory | undefined> {
+    return this.getObject<ExternalCategory | undefined>(this.externalCategories, categoryId, async () => await getExternalCategory(this.db, categoryId, type))
   }
   async getPartPageCategory(categoryId: string): Promise<PartPageCategory | undefined> {
     return this.getObject<PartPageCategory | undefined>(this.partPageCategories, categoryId, async () => await getPartPageCategory(this.db, categoryId))

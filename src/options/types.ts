@@ -82,10 +82,8 @@ export interface LegoItem extends ExternalItem {
   type: "Lego"
 }
 
-export interface LegoCategory {
-  id: string
-  name: string
-  categoryIds: string[]
+export interface LegoCategory extends ExternalCategory {
+  type: 'Lego'
 }
 export interface Item {
   itemId: number
@@ -201,10 +199,10 @@ export interface PartsPageVariantInvItem extends InvItem {
 export interface StorePageInvItem extends InvItem {
   item: StorePageInvItemItem
   colorName: string
-  category: Category
+  category: CategoryWithExternals
   variant: ItemVariant
   cartQuantity: number
-  priceScore: number
+  priceScore: string
 }
 
 export interface ColorPageInvItem extends InvItem {
@@ -401,7 +399,7 @@ export interface CategoryWithExternals extends Category {
 export interface ExternalCategory {
   id: string
   name: string
-  categoryId: IDBValidKey
+  categoryId: string
   type: 'BrickLink' | 'Lego' | 'Rebrickable'
 }
 

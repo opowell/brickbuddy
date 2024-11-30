@@ -128,7 +128,7 @@ export async function getPartPageInvItems(db: IDBPDatabase, itemId: number): Pro
   return partPageInvItems
 }
 
-export async function getStorePageInvItem(objectCache: ObjectCacheClass, invItem: InvItem, type: string): Promise<StorePageInvItem | undefined> {
+export async function getStorePageInvItem(objectCache: ObjectCacheClass, invItem: InvItem, type: "Lego" | "BrickLink"): Promise<StorePageInvItem | undefined> {
   const search = await getActiveSearch()
   const part: ExternalItem | undefined = await objectCache.getStorePageExternalPart(invItem, type)
   if (!part) {
@@ -138,17 +138,26 @@ export async function getStorePageInvItem(objectCache: ObjectCacheClass, invItem
   if (!color) {
     return
   }
-  // const category = await objectCache.getCategory(part.categoryId)
-  // if (!category) {
-  //   return
-  // }
+  const externalCategory = await objectCache.getExternalCategory(part.categoryId, part.type)
+  if (!externalCategory) {
+    return
+  }
+  const category = await objectCache.getCategory(externalCategory.categoryId)
+  if (!category) {
+    return
+  }
   const variant = await getFromIndex(objectCache.db, INDICES.PART_VARIANTS_BY_PART_AND_COLOR, [invItem.itemId, color.id])
-  let allMatchingInvItems
-  if (search.priceScoreIgnoreColor) {
-    allMatchingInvItems= await getAllFromIndex(objectCache.db, INDICES.INV_ITEMS_BY_ITEM, part.itemId)
-  } else {
-    allMatchingInvItems= await getAllFromIndex(objectCache.db, INDICES.INV_ITEMS_BY_ITEM_AND_COLOR, [part.itemId, color.id])
-  } 
+  let allMatchingInvItems = []
+  const matchingParts = await getAllFromIndex(objectCache.db, INDICES.EXTERNAL_PARTS_BY_PART, part.itemId)
+  for (let i = 0; i < matchingParts.length; i++) {
+    const matchingPart = matchingParts[i]
+    if (search.priceScoreIgnoreColor) {
+      allMatchingInvItems.push(...await getAllFromIndex(objectCache.db, INDICES.INV_ITEMS_BY_ITEM, matchingPart.externalItemId))
+    } else {
+      allMatchingInvItems.push(...await getAllFromIndex(objectCache.db, INDICES.INV_ITEMS_BY_ITEM_AND_COLOR, [matchingPart.externalItemId, color.id]))
+    }
+  }
+  console.info(allMatchingInvItems, part.itemId)
   if (!search) {
     return
   }
@@ -186,6 +195,12 @@ export async function getStorePageInvItem(objectCache: ObjectCacheClass, invItem
     variant,
     priceScore: priceScoreString,
     cartQuantity,
+    category: {
+      id: category.id,
+      externalCategories: [
+        externalCategory
+      ]
+    }
   }
 }
 

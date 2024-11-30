@@ -188,11 +188,14 @@ export async function updateCategory(
 export async function getCategory(db: IDBPDatabase, id: string): Promise<Category> {
   return await get(db, STORES.CATEGORIES, id)
 }
+export async function getExternalCategory<T extends ExternalCategory>(db: IDBPDatabase, id: string, type: "BrickLink" | "Lego"): Promise<T> {
+  return await get(db, STORES.EXTERNAL_CATEGORIES, [type, id])
+}
 export async function getBrickLinkCategory(db: IDBPDatabase, id: string): Promise<BrickLinkCategory> {
-  return await get(db, STORES.EXTERNAL_CATEGORIES, ['BrickLink', id])
+  return await getExternalCategory<BrickLinkCategory>(db, id, 'BrickLink')
 }
 export async function getLegoCategory(db: IDBPDatabase, id: string): Promise<LegoCategory> {
-  return await get(db, STORES.EXTERNAL_CATEGORIES, ['Lego', id])
+  return await getExternalCategory<LegoCategory>(db, id, 'Lego')
 }
 export async function getPartPageCategory(db: IDBPDatabase, id: string): Promise<PartPageCategory> {
   return await get(db, STORES.CATEGORIES, id)
