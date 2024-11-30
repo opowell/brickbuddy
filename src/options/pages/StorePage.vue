@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import HomeButton from '../components/HomeButton.vue';
 import StoresButton from '../components/StoresButton.vue';
-import { ActiveSearch, StorePageInvItem, StorePageStore, StoreType, type UiInvItem } from '../types';
+import { ActiveSearch, Category, Item, StorePageInvItem, StorePageStore, StoreType, type UiInvItem } from '../types';
 import { useRoute } from 'vue-router'
 import { getStorePrices } from '../idb/scraping';
 import { getStorePageStore } from '../idb/storeMethods';
@@ -24,7 +24,7 @@ const route = useRoute()
 const store = ref<StorePageStore | undefined>(undefined)
 const search = ref<ActiveSearch | undefined>(undefined)
 const db = ref<IDBPDatabase | undefined>(undefined)
-const items = ref<StorePageInvItem[]>([])
+const invItems = ref<StorePageInvItem[]>([])
 onMounted(async () => {
   search.value = await getActiveSearch()
   db.value = await getDbConnection()
@@ -34,24 +34,14 @@ onMounted(async () => {
     return
   }
   for (let i = 0; i < store.value.items.length; i++) {
-    const storePageInvItem = await getStorePageInvItem(objectCache, store.value.items[i])
+    const storePageInvItem = await getStorePageInvItem(objectCache, store.value.items[i], store.value.type === StoreType.BrickLink ? 'BrickLink' : 'Lego')
     if (!storePageInvItem) {
       continue
     }
-    items.value.push(storePageInvItem)
+    invItems.value.push(storePageInvItem)
   }
 })
 
-function getImageSrc(invItem: StorePageInvItem) {
-  const variant = getVariant(invItem)
-  if (!variant) {
-    return
-  }
-  return variant.image
-}
-function getVariant(invItem: StorePageInvItem) {
-  return invItem.item.variants.find(v => v.colorId === invItem.colorId)
-}
 // URL for shipping terms:
 // https://store.bricklink.com/ajax/clone/store/policy.ajax?sid=2066952
 
@@ -96,7 +86,7 @@ const cartButton = ref<typeof ActiveCartButton | undefined>(undefined)
     <div>Last scraped: {{ store.lastScraped.toISOString() }}</div>
     <div>Price adjustment: {{ store.priceAdjustment }}%</div>
     <div>Link: <a target="_blank" :href="url">{{ url }}</a></div>
-    <h4>Inventory ({{ items.length }} / {{ store.items.length }})</h4>
+    <h4>Inventory ({{ invItems.length }} / {{ store.items.length }})</h4>
     <table>
       <thead>
         <tr>
@@ -112,26 +102,26 @@ const cartButton = ref<typeof ActiveCartButton | undefined>(undefined)
         </tr>
       </thead>
       <tbody>
-        <tr v-for="item in items" :key="item.invId">
+        <tr v-for="invItem in invItems" :key="invItem.invId">
           <td>
-            <PartVariantButton :part="item.item" :variant="item.variant">
-              <img :src="getImageSrc(item)">
+            <PartVariantButton :part="invItem.item" :variant="invItem.variant">
+              <img :src="invItem.variant.image">
             </PartVariantButton>
           </td>
           <td>
-            <PartButton :part="item.item" />
+            <PartButton :part="invItem.item" />
           </td>
-          <td v-if="search && search.conditions.excluded.length < 1"><ConditionButton :condition="item.condition" /></td>
-          <td><ColorButton :color="{ id: item.colorId, name: item.colorName }" /></td>
-          <td><CategoryButton :category="item.category" /></td>
-          <td>{{ formatInteger(item.quantity) }}</td>
-          <td>{{ formatAmount(item.price*store.priceAdjustment/100) }}</td>
-          <td>{{ item.priceScore }}</td>
+          <td v-if="search && search.conditions.excluded.length < 1"><ConditionButton :condition="invItem.condition" /></td>
+          <td><ColorButton :color="{ id: invItem.colorId, name: invItem.colorName }" /></td>
+          <td><CategoryButton v-if="invItem.category" :category="invItem.category" /></td>
+          <td>{{ formatInteger(invItem.quantity) }}</td>
+          <td>{{ formatAmount(invItem.price*store.priceAdjustment/100) }}</td>
+          <td>{{ invItem.priceScore }}</td>
           <td>
             <QuantityInput
-              :current="item.cartQuantity"
-              :max="item.quantity"
-              @update-quantity="updateCartQuantity(item, $event)"
+              :current="invItem.cartQuantity"
+              :max="invItem.quantity"
+              @update-quantity="updateCartQuantity(invItem, $event)"
             />
           </td>
         </tr>

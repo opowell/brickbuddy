@@ -1,12 +1,12 @@
 import { IDBPDatabase } from "idb"
-import { BrickLinkItem, CategoryPagePart, ExternalCategory, ExternalItem, Item, ItemVariant, LegoItem, ObjectCache, PartPagePart, PartPageVariant, PartPageVariantInvItem, PartsPagePart, RebrickableItem, StorePageInvItemItem, UiItem, UiItemVariant, VariantPagePart } from "../types"
+import { BrickLinkItem, CategoryPagePart, ExternalCategory, ExternalItem, InvItem, Item, ItemVariant, LegoItem, ObjectCache, PartPagePart, PartPageVariant, PartPageVariantInvItem, PartsPagePart, RebrickableItem, StorePageInvItemItem, UiItem, UiItemVariant, VariantPagePart } from "../types"
 import { countFromIndex, get, getAllFromIndex, getFromIndex, put } from "./db"
 import STORES from './stores'
 import { toDataURL } from "../utils"
 import { getItemVariant, getPartPageVariants, getPartsPageVariants, getUiPartVariants } from "./variants"
 import { getCategory } from "./categories"
 import { colors, getColor } from "./colors"
-import { getDbConnection, getObjectCache, rbPartsBrickLinkId } from "./idb"
+import { getDbConnection, getObjectCache, rbPartsBrickLinkId, rbPartsLegoId } from "./idb"
 import INDICES from "./indices"
 import { getNumInvItemsByPart, getPartPageInvItems, getVariantInvItems } from "./invItems"
 import ObjectCacheClass from "./ObjectCacheClass"
@@ -22,13 +22,14 @@ export async function addBrickLinkItem(
   blItem.type = "BrickLink"
   await putBrickLinkItem(db, blItem)
 
-  let variant: ItemVariant = await getItemVariant(db, item.itemId, colorId)
+  let variant: ItemVariant = await getItemVariant(db, 'BrickLink', blItem.externalItemId, colorId)
   if (!variant) {
     const image: string = await toDataURL('https:' + imageUrl)
     variant = {
-      itemId: item.itemId,
+      itemId: blItem.externalItemId,
       colorId,
-      image
+      image,
+      type: 'BrickLink'
     }
     await putVariant(db, variant)
   }
@@ -159,20 +160,25 @@ export async function getBrickLinkItem(db: IDBPDatabase, brickLinkId: string): P
   return blItem
 }
 export async function getLegoItem(db: IDBPDatabase, legoId: string): Promise<LegoItem | undefined> {
-  let blItem: LegoItem = await get(db, STORES.PARTS_LEGO, legoId)
+  let blItem: LegoItem = await getFromIndex(db, INDICES.EXTERNAL_PARTS_BY_TYPE_AND_EXTERNAL_ID, ['Lego', legoId])
   if (!blItem) {
-    const item: Item = rbPartsLegoId[legoId]
-    if (item) {
-      await storeItem(db, item)
-    } else {
-      // console.log('no item', legoId, item, Object.keys(rbPartsLegoId).includes(legoId))
+    const rebrickableItem: RebrickableItem | undefined = rbPartsLegoId.get(legoId)
+    if (!rebrickableItem) {
+      console.log('no item', legoId, rebrickableItem, Object.keys(rbPartsLegoId).includes(legoId))
+      return
     }
+    const itemId = await put(db, STORES.PARTS, {})
+    if (!itemId) {
+      return
+    }
+    rebrickableItem.itemId = itemId
+    await storeRebrickableItem(db, rebrickableItem)
   }
-  blItem = await get(db, STORES.PARTS_LEGO, legoId)
+  blItem = await getFromIndex(db, INDICES.EXTERNAL_PARTS_BY_TYPE_AND_EXTERNAL_ID, ['Lego', legoId])
   if (!blItem) {
     return
   }
-  blItem.part = await getPart(db, blItem.partId)
+  blItem.part = await getPart(db, blItem.itemId)
   return blItem
 }
 
@@ -222,22 +228,25 @@ async function getParts(db: IDBPDatabase): Promise<Item[]> {
   })
 }
 
-export async function getPartPagePart(id: string): Promise<PartPagePart | undefined> {
+export async function getPartPagePart(id: number): Promise<PartPagePart | undefined> {
   const db = await getDbConnection()
-  const part: Item = await get(db, STORES.PARTS, id)
+  const part: Item = await getPart(db, id)
   if (!part) {
     return
   }
+  const externalParts: ExternalItem[] = await getExternalParts(db, part.itemId)
   const variants: PartPageVariant[] = await getPartPageVariants(db, part.itemId)
   const invItems: PartPageVariantInvItem[] = await getPartPageInvItems(db, part.itemId)
-  const brickLinkCategories: BrickLinkCategory[] = await getAllFromIndex(db, INDICES.BRICKLINK_CATEGORIES_BY_CATEGORY, part.categoryId)
   return {
     ...part,
     variants,
     invItems,
-    category: await getCategory(db, part.categoryId),
-    brickLinkCategories
+    externalParts
   }
+}
+
+async function getExternalParts(db: IDBPDatabase, id: number): Promise<ExternalItem[]> {
+  return await getAllFromIndex(db, INDICES.EXTERNAL_PARTS_BY_PART, id)
 }
 
 async function getUiPartFromPart(db: IDBPDatabase, part: Item, objectCache?: ObjectCache): Promise<UiItem | undefined> {
@@ -271,17 +280,20 @@ export async function getPartsPagePart(part: Item): Promise<PartsPagePart> {
   //   console.log('no variants')
   //   continue
   // }
-  // const externalItems = await getPartsPageExternalItems(objectCache, part)
+  const externalParts = await getPartsPageExternalItems(objectCache, part)
   return {
     ...part,
     variants,
-    // externalItems,
+    externalParts,
   }
 
 }
 
-async function getPartsPageExternalItems(objectCache: ObjectCacheClass, part: Item): Promise<ExternalItem[]> {
-  return getAllFromIndex(objectCache.db, INDICES.EXTERNAL_PARTS_BY_PART, part.itemId)
+interface PartsPageExternalItem extends ExternalItem {
+  category: ExternalCategory
+}
+async function getPartsPageExternalItems(objectCache: ObjectCacheClass, itemId: IDBValidKey): Promise<PartsPageExternalItem[]> {
+  return getAllFromIndex(objectCache.db, INDICES.EXTERNAL_PARTS_BY_PART, itemId)
 }
 
 export async function getStorePagePart(id: string, objectCache?: ObjectCacheClass): Promise<StorePageInvItemItem | undefined> {
@@ -318,6 +330,40 @@ export async function getStorePagePart(id: string, objectCache?: ObjectCacheClas
   }
 }
 
+export async function getStorePageExternalPart(invItem: InvItem, type: 'BrickLink' | 'Lego', objectCache?: ObjectCacheClass): Promise<StorePageInvItemItem | undefined> {
+  const db = await getDbConnection()
+  const externalPart: ExternalItem = await get(db, STORES.EXTERNAL_PARTS, [type, invItem.itemId])
+  if (!externalPart) {
+    console.log('getStorePageExternalPart: error, no part', invItem.itemId, type, invItem)
+    return
+  }
+  if (!objectCache) {
+    objectCache = new ObjectCacheClass(db)
+  }
+  const variants: ItemVariant[] = await getAllFromIndex(db, INDICES.PART_VARIANTS_BY_TYPE_AND_PART, [type, externalPart.itemId])
+  for (let i = 0; i < variants.length; i++) {
+    const variant = variants[i]
+    variant.color = await objectCache.getColor(variant.colorId)
+    variant.invItems = await getAllFromIndex(
+      db,
+      INDICES.INV_ITEMS_BY_ITEM_AND_COLOR,
+      [variant.itemId, variant.colorId]
+    )
+  }
+  const externalParts = await getPartsPageExternalItems(objectCache, externalPart.itemId)
+  for (let i = 0; i < externalParts.length; i++) {
+    const e = externalParts[i]
+    if (e.categoryId) {
+      e.category = await getExternalCategory(objectCache, externalPart.categoryId, externalPart.type)
+    }
+  }
+  return {
+    ...externalPart,
+    variants,
+    externalParts
+  }
+}
+
 async function getExternalCategory(objectCache: ObjectCacheClass, id: IDBValidKey, type: string): Promise<ExternalCategory> {
   return await get(objectCache.db, STORES.EXTERNAL_CATEGORIES, [type, id])
 }
@@ -349,42 +395,33 @@ export async function getVariantPagePart(id: string, objectCache?: ObjectCache):
 }
 
 export async function addLegoItem(
-  categoryId: string,
   colorId: string,
-  legoItem: LegoItem,
+  blItem: LegoItem,
   item: Item,
-  legoName: string,
-  newThumb1Img: string,
+  imageUrl: string,
   db: IDBPDatabase
 ) {
-  legoItem.name = legoName
-  await put(db, STORES.PARTS_LEGO, legoItem)
-  item.categoryId = categoryId
-  await put(db, STORES.PARTS, item)
+  blItem.type = "Lego"
+  await putLegoItem(db, blItem)
 
   let variant: ItemVariant = await getItemVariant(db, item.itemId, colorId)
   if (!variant) {
-    const image: string = await toDataURL('https:' + newThumb1Img)
+    const image: string = await toDataURL('https:' + imageUrl)
     variant = {
       itemId: item.itemId,
       colorId,
       image
     }
-    await put(db, STORES.PART_VARIANTS, variant)
+    await putVariant(db, variant)
   }
 }
 
 export async function getNumPartsInCategory(db: IDBPDatabase, id: number): Promise<number> {
-  return await countFromIndex(db, INDICES.PARTS_BY_CATEGORY, id)
-}
-export async function getNumPartsInBrickLinkCategory(db: IDBPDatabase, category: BrickLinkCategory): Promise<number> {
-  const categoryIds = category.categoryIds
-  if (!categoryIds) {
-    return 0
-  }
+  const externalCategories: ExternalCategory[] = await getAllFromIndex(db, INDICES.EXTERNAL_CATEGORIES_BY_CATEGORY, id)
   let count = 0
-  for (let i = 0; i < categoryIds.length; i++) {
-    count += await countFromIndex(db, INDICES.PARTS_BY_CATEGORY, categoryIds[i])
+  for (let i = 0; i < externalCategories.length; i++) {
+    const category = externalCategories[i]
+    count += await countFromIndex(db, INDICES.EXTERNAL_PARTS_BY_TYPE_AND_CATEGORY, [category.type, category.categoryId])
   }
   return count
 }

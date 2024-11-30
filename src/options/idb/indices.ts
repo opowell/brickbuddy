@@ -15,7 +15,8 @@ const indices: {
   EXTERNAL_CATEGORIES_BY_CATEGORY: IndexDefinition
   EXTERNAL_PARTS_BY_PART: IndexDefinition
   EXTERNAL_PARTS_BY_TYPE_AND_EXTERNAL_ID: IndexDefinition
-  PARTS_BY_CATEGORY: IndexDefinition
+  EXTERNAL_PARTS_BY_TYPE_AND_CATEGORY: IndexDefinition
+  PART_VARIANTS_BY_TYPE_AND_PART: IndexDefinition
   PART_VARIANTS_BY_PART: IndexDefinition
   PART_VARIANTS_BY_COLOR: IndexDefinition
   PART_VARIANTS_BY_PART_AND_COLOR: IndexDefinition
@@ -53,6 +54,11 @@ const indices: {
     name: 'categoryId',
     keyPath: 'categoryId'
   },
+  EXTERNAL_PARTS_BY_TYPE_AND_CATEGORY: {
+    store: stores.EXTERNAL_PARTS.name,
+    name: 'typeAndCategoryId',
+    keyPath: ['type', 'categoryId']
+  },
   EXTERNAL_PARTS_BY_PART: {
     store: stores.EXTERNAL_PARTS.name,
     name: 'partId',
@@ -78,15 +84,15 @@ const indices: {
     name: 'store',
     keyPath: 'storeId'
   },
-  PARTS_BY_CATEGORY: {
-    store: stores.PARTS.name,
-    name: 'category',
-    keyPath: 'categoryId'
-  },
   PART_VARIANTS_BY_PART: {
     store: stores.PART_VARIANTS.name,
     name: 'part',
     keyPath: 'itemId'
+  },
+  PART_VARIANTS_BY_TYPE_AND_PART: {
+    store: stores.PART_VARIANTS.name,
+    name: 'typePart',
+    keyPath: ['type', 'itemId']
   },
   PART_VARIANTS_BY_PART_AND_COLOR: {
     store: stores.PART_VARIANTS.name,

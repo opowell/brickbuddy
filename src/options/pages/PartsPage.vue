@@ -7,17 +7,16 @@ const items = ref<PartsPagePart[] | undefined>(undefined)
 const loadedItems = ref<PartsPagePart[]>([])
 onMounted(async () => {
   items.value = await getPartsPageParts()
-  // for (let i = 0; i < items.value?.length; i++) {
-  //   loadedItems.value.push(await getPartsPagePart(items.value[i]))
-  // }
+  for (let i = 0; i < items.value?.length; i++) {
+    loadedItems.value.push(await getPartsPagePart(items.value[i]))
+  }
 })
 const filteredParts = computed(() => {
   if (!items.value) {
     return []
   }
-  // return items.value
+  const itemName = ''
   return items.value.filter((item) => {
-    const itemName = ''
     return itemName.includes(search.value)
   })
 })

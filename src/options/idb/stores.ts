@@ -66,7 +66,7 @@ const stores: {
   },
   PART_VARIANTS: {
     name: 'partVariants',
-    keyPath: ['itemId', 'colorId']
+    keyPath: ['type', 'itemId', 'colorId']
   },
   PARTS: {
     name: 'parts',

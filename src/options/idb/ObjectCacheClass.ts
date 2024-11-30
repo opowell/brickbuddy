@@ -1,11 +1,11 @@
 import { IDBPDatabase } from 'idb';
-import { ActiveSearch, CartWithItems, Category, InvItem, Item, PartPageCategory, Search, SearchFilter, Store, UiColor } from '../types';
+import { ActiveSearch, CartWithItems, Category, ExternalItem, InvItem, Item, PartPageCategory, Search, SearchFilter, Store, UiColor } from '../types';
 import STORES from './stores'
 import { getFirstActiveCart, getCartItems } from './carts';
 import { getCategory, getPartPageCategory } from './categories';
 import { getColor } from './colors';
 import { getInvItemFromId } from './invItems';
-import { getStorePagePart } from './parts';
+import { getStorePageExternalPart, getStorePagePart } from './parts';
 import { getFirstActiveSearch, getSearchFilters } from './searches';
 import { getStore } from './storeMethods';
 function getTypeFilters(filters: SearchFilter[], type: string) {
@@ -23,6 +23,7 @@ export default class ObjectCache {
   categories: Map<string, Category>
   partPageCategories: Map<string, Category>
   parts: Map<string, Item>
+  externalParts: Map<string, ExternalItem>
   stores: Map<string, Store>
   activeCart: CartWithItems | undefined
   activeSearch: ActiveSearch | undefined
@@ -34,6 +35,7 @@ export default class ObjectCache {
     this.categories = new Map<string, Category>()
     this.partPageCategories = new Map<string, Category>()
     this.parts = new Map<string, Item>()
+    this.externalParts = new Map<string, ExternalItem>()
     this.invItems = new Map<string, InvItem>()
     this.stores = new Map<string, Store>()
     this.activeCart = undefined
@@ -122,5 +124,8 @@ export default class ObjectCache {
   }
   async getStorePagePart(partId: string): Promise<Item | undefined> {
     return this.getObject<Item | undefined>(this.parts, partId, async () => await getStorePagePart(partId, this))
+  }
+  async getStorePageExternalPart(invItem: InvItem, type: "BrickLink" | "Lego"): Promise<ExternalItem | undefined> {
+    return this.getObject<ExternalItem | undefined>(this.externalParts, invItem.itemId, async () => await getStorePageExternalPart(invItem, type, this))
   }
 }

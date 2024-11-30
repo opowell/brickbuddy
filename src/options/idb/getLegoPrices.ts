@@ -1,7 +1,7 @@
 import { IDBPDatabase } from "idb";
-import { Category, Color, Item, LegoItem, Store } from "../types";
+import { Category, Color, ExternalCategory, Item, LegoCategory, LegoItem, Store } from "../types";
 import INDICES from './indices'
-import { getCategory, updateCategory } from "./categories";
+import { addCategory, getCategory, getLegoCategory, putExternalCategory, updateCategory } from "./categories";
 import { getFromIndex } from "./db";
 import { addInvItem } from "./invItems";
 import { getLegoItem, addLegoItem } from "./parts";
@@ -69,45 +69,58 @@ export async function getLegoPrices(db: IDBPDatabase, store: Store) {
         console.log('no color?!', legoInvItem.facets.color.key)
       }
       const colorId = color?.id || legoInvItem.facets.color.key
+
       const legoItem: LegoItem | undefined = await getLegoItem(db, legoInvItem.designId)
       if (!legoItem) {
         continue
       }
-      const item = legoItem.part
-      delete legoItem.part
+      const item: Item = legoItem.part
       if (!item) {
-        console.log('no item, skipping', legoInvItem, legoInvItem.designId)
         continue
       }
-      const category: Category = await getCategory(db, item.categoryId)
-      if (category) {
-        category.legoId = legoInvItem.facets.subcategory.key
-        category.legoName = legoInvItem.facets.subcategory.name
-        await updateCategory(db, category)
+      delete legoItem.part
+      legoItem.name = legoInvItem.name
+      legoItem.categoryId = legoInvItem.facets.subcategory.key
+      const legoCategory: LegoCategory = await getLegoCategory(db, legoItem.categoryId)
+      if (!legoCategory) {
+        await addLegoCategory(db, legoItem.categoryId, legoInvItem.facets.subcategory.name)
       }
       await addLegoItem(
-        item.categoryId + '',
-        colorId + '',
+        colorId,
         legoItem,
         item,
-        legoInvItem.name,
         '//www.lego.com/cdn/product-assets/element.img.photoreal.192x192/' + legoInvItem.id + '.jpg',
         db
       )
       await addInvItem(
         db,
-        legoInvItem.id + '',
+        legoInvItem.id,
         store,
-        colorId + '',
+        colorId,
         'New',
         1000000,
         legoInvItem.price.centAmount,
-        item.itemId + '',
+        item.itemId,
       )
     } catch (e) {
       console.log('error adding item', legoInvItem, e)
     }
   }
+}
+
+export async function addLegoCategory(
+  db: IDBPDatabase,
+  legoCategoryId: string,
+  legoCategoryName: string
+) {
+  const categoryId = await addCategory(db)
+  const brickLinkCategory: ExternalCategory = {
+    categoryId,
+    id: legoCategoryId,
+    name: legoCategoryName,
+    type: "Lego"
+  }
+  await putExternalCategory(db, brickLinkCategory)
 }
 
 // interface LegoPiece {

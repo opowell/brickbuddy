@@ -102,7 +102,7 @@ export async function getBrickLinkPrices(db: IDBPDatabase, store: Store) {
           resultItem.invNew,
           resultItem.invQty,
           math.number(math.multiply(math.bignumber(100), math.bignumber(resultItem.rawConvertedPrice))),
-          item.itemId,
+          blItem.externalItemId,
         )
       } catch (e) {
         console.log('error adding item', resultItem, e)

@@ -102,16 +102,17 @@ export interface ExternalItem {
   name?: string
   type: 'Rebrickable' | 'Lego' | 'BrickLink'
 }
-export interface StorePageInvItemItem extends Item {
+export interface StorePageInvItemItem extends ExternalItem {
   variants: ItemVariant[]
 }
 export interface ItemVariant {
-  itemId: number
+  itemId: string
   colorId: string
   image: string
+  type: 'Rebrickable' | 'Lego' | 'BrickLink'
 }
 export interface PartsPageVariant extends ItemVariant {
-  item: Item
+  item: ExternalItem
   color: Color
   invItems: PartsPageVariantInvItem[]
 }
@@ -174,6 +175,7 @@ export interface PartPagePart extends Item {
   variants: PartPageVariant[]
   invItems: PartPageVariantInvItem[]
   category: Category
+  externalParts: ExternalItem[]
 }
 export interface InvItem {
   invId: string

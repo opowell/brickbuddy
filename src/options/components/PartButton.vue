@@ -9,16 +9,25 @@ const { part } = defineProps({
 })
 const router = useRouter()
 const href = computed(() => {
+  if (!part || !name.value) {
+    return
+  }
+  return Crumbs.part(name.value, part.itemId).href
+})
+const name = computed(() => {
   if (!part) {
     return
   }
-  return Crumbs.part(part.itemName, part.itemId).href
+  if (part.externalParts) {
+    return part.externalParts.find(e => e.name).name
+  }
+  return ''
 })
 </script>
 
 
 <template>
   <button v-if="part" @click="router.push(href)">
-    <NameIdLabel :name="part.itemName" :id="part.itemId" />
+    <NameIdLabel :name="name" :id="part.itemId" />
   </button>
 </template>

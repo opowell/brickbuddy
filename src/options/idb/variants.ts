@@ -14,14 +14,15 @@ import { addShopListItem } from "./lists"
 
 export async function getItemVariant(
   db: IDBPDatabase,
-  itemId: number,
+  type: 'Rebrickable' | 'Lego' | 'BrickLink',
+  externalItemId: string,
   colorId: string
 ) {
-  if (!itemId || !colorId) {
-    console.log('no item variant', itemId, colorId)
+  if (!externalItemId || !colorId) {
+    console.log('no item variant', externalItemId, colorId)
     return
   }
-  return await get(db, STORES.PART_VARIANTS, [itemId, colorId])
+  return await get(db, STORES.PART_VARIANTS, [type, externalItemId, colorId])
 }
 
 export async function getUiPartVariant(partId: string, colorId: string): Promise<UiItemVariant> {
@@ -104,14 +105,14 @@ export async function getUiPartVariants(db: IDBPDatabase, id: string, objectCach
   }
   return variants
 }
-export async function getPartPageVariants(db: IDBPDatabase, id: string, objectCache?: ObjectCache): Promise<PartPageVariant[]> {
+export async function getPartPageVariants(db: IDBPDatabase, id: number, objectCache?: ObjectCache): Promise<PartPageVariant[]> {
   const variants: ItemVariant[] = await getAllFromIndex(db, INDICES.PART_VARIANTS_BY_PART, id)
   const partPageVariants: PartPageVariant[] = []
   for (let i = 0; i < variants.length; i++) {
     const variant = variants[i]
     const partPageVariant = {
       ...variant,
-      color: await getColor(db, variant.colorId + ''),
+      color: await getColor(db, variant.colorId),
       invItems: await getPartPageVariantInvItems(db, variant)
     }
     partPageVariants.push(partPageVariant)

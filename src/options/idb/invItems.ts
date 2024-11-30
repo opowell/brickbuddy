@@ -1,6 +1,6 @@
 import { IDBPDatabase } from "idb"
 import * as math from "mathjs"
-import { InvItem, SearchBase, ColorPageInvItem, ItemVariant, Item, PartPageVariantInvItem, StorePageInvItem, UiInvItem, PartsPageVariantInvItem, Store } from "../types"
+import { InvItem, SearchBase, ColorPageInvItem, ItemVariant, Item, PartPageVariantInvItem, StorePageInvItem, UiInvItem, PartsPageVariantInvItem, Store, ExternalItem } from "../types"
 import { getColor, colors } from "./colors"
 import { countFromIndex, get, getAllFromIndex, getFromIndex } from "./db"
 import { getDbConnection } from "./idb"
@@ -24,7 +24,7 @@ export async function addInvItem(
   price: number,
   itemId: string,
 ) {
-  let invItem: InvItem | undefined = await getInvItem(db, store.sId, itemId, condition, colorId)
+  let invItem: InvItem | undefined = await getInvItem(db, store.sId, invId)
   if (!invItem) {
     invItem = {
       storeId: store.sId,
@@ -94,11 +94,11 @@ export async function getInvItemsWithColor(db: IDBPDatabase, id: string): Promis
   return colorPageInvItems
 }
 
-async function getInvItem(db: IDBPDatabase, storeId: string, itemId: string, condition: string, colorId: string): Promise<InvItem | undefined> {
-  if (!db || !storeId || !itemId || !condition || !colorId) {
-    debugger
+async function getInvItem(db: IDBPDatabase, storeId: string, invId: string): Promise<InvItem | undefined> {
+  if (!db || !storeId || !invId) {
+    return
   }
-  return await db.get(STORES.INVENTORY_ITEMS.name, [storeId, itemId, condition, colorId])
+  return await db.get(STORES.INVENTORY_ITEMS.name, [storeId, invId])
 }
 
 export async function getInvItemFromId(db: IDBPDatabase, storeId: string, invItemId: string) {
@@ -109,11 +109,11 @@ export async function getNumInvItemsByPart(db: IDBPDatabase, part: Item): Promis
   return await countFromIndex(db, INDICES.INV_ITEMS_BY_ITEM, part.itemId)
 }
 
-export async function getPartPageInvItems(db: IDBPDatabase, itemId: string): Promise<PartPageVariantInvItem[]> {
+export async function getPartPageInvItems(db: IDBPDatabase, itemId: number): Promise<PartPageVariantInvItem[]> {
   const invItems = await getAllFromIndex(
     db,
     INDICES.INV_ITEMS_BY_ITEM,
-    itemId + ''
+    itemId
   )
   const partPageInvItems = []
   for (let i = 0; i < invItems.length; i++) {
@@ -128,9 +128,9 @@ export async function getPartPageInvItems(db: IDBPDatabase, itemId: string): Pro
   return partPageInvItems
 }
 
-export async function getStorePageInvItem(objectCache: ObjectCacheClass, invItem: InvItem): Promise<StorePageInvItem | undefined> {
+export async function getStorePageInvItem(objectCache: ObjectCacheClass, invItem: InvItem, type: string): Promise<StorePageInvItem | undefined> {
   const search = await getActiveSearch()
-  const part: Item | undefined = await objectCache.getStorePagePart(invItem.itemId)
+  const part: ExternalItem | undefined = await objectCache.getStorePageExternalPart(invItem, type)
   if (!part) {
     return
   }
@@ -142,7 +142,7 @@ export async function getStorePageInvItem(objectCache: ObjectCacheClass, invItem
   // if (!category) {
   //   return
   // }
-  const variant = await getFromIndex(objectCache.db, INDICES.PART_VARIANTS_BY_PART_AND_COLOR, [part.itemId, color.id])
+  const variant = await getFromIndex(objectCache.db, INDICES.PART_VARIANTS_BY_PART_AND_COLOR, [invItem.itemId, color.id])
   let allMatchingInvItems
   if (search.priceScoreIgnoreColor) {
     allMatchingInvItems= await getAllFromIndex(objectCache.db, INDICES.INV_ITEMS_BY_ITEM, part.itemId)
@@ -279,7 +279,7 @@ export async function getPartPageVariantInvItems(db: IDBPDatabase, variant: Item
   const invItems = await getAllFromIndex(
     db,
     INDICES.INV_ITEMS_BY_ITEM_AND_COLOR,
-    [variant.itemId + '', variant.colorId + '']
+    [variant.itemId, variant.colorId]
   )
   const partPageVariantInvItems = []
   for (let i = 0; i < invItems.length; i++) {
@@ -288,8 +288,8 @@ export async function getPartPageVariantInvItems(db: IDBPDatabase, variant: Item
     const partPageVariantInvItem: PartPageVariantInvItem = {
       ...invItem,
       cartQuantity,
-      color: await getColor(db, invItem.colorId + ''),
-      store: await getStore(db, invItem.storeId + '')
+      color: await getColor(db, invItem.colorId),
+      store: await getStore(db, invItem.storeId)
     }
     partPageVariantInvItems.push(partPageVariantInvItem)
   }

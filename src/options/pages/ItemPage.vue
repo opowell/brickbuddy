@@ -9,6 +9,7 @@ import CategoryButton from '../components/CategoryButton.vue';
 import { formatInteger } from '../utils';
 import ActiveCartButton from '../components/ActiveCartButton.vue';
 import StoreItemsTable from '../components/StoreItemsTable.vue';
+import ExternalPartButton from '../components/ExternalPartButton.vue';
 interface VariantWithPriceQuantity extends PartPageVariant {
   price: number
   maxPrice: number
@@ -20,7 +21,7 @@ const route = useRoute()
 
 const item = ref<PartPagePart | undefined>(undefined)
 onMounted(async () => {
-  item.value = await getPartPagePart(route.params.id)
+  item.value = await getPartPagePart(Number.parseInt(route.params.id))
 })
 const maxPrice = ref<number | undefined>(Number.POSITIVE_INFINITY)
 const minQuantity = ref(0)
@@ -97,9 +98,22 @@ function setCartQuantity({ invItem, newQuantity }: { invItem: InvItem, newQuanti
     </p>
     <HomeButton />
     <PartsButton />
-    <h4>{{ item.itemName }} ({{ item.itemId }})</h4>
-    <div>Bricklink: {{ item.brickLinkName }} ({{ item.brickLinkIds?.join(',') }})</div>
-    <div>Lego: {{ item.legoName }} ({{ item.legoPartIds?.join(',') }})</div>
+    <h4>Item {{ item.itemId }}</h4>
+    <h4>External parts ({{ item.externalParts.length }})</h4>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="(externalPart, index) in item.externalParts" :key="index">
+          <td>
+            <ExternalPartButton :part="externalPart" />
+          </td>
+        </tr>
+      </tbody>
+    </table>
     <div>Min quantity:<input v-model="minQuantity" type="number"></div>
     <div>Min quantity:<input v-model="minQuantity" type="number"></div>
     <div>Max price:<input v-model="maxPrice" type="number"></div>

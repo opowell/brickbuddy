@@ -1,5 +1,5 @@
 import { IDBPDatabase } from "idb"
-import { BrickLinkCategory, CategoriesPageCategory, Category, CategoryPageCategory, CategoryPagePart, ExternalCategory, Item, ItemVariant, SearchFilter, UiCategory } from "../types"
+import { BrickLinkCategory, CategoriesPageCategory, Category, CategoryPageCategory, CategoryPagePart, ExternalCategory, ExternalItem, Item, ItemVariant, LegoCategory, SearchFilter, UiCategory } from "../types"
 import { get, getAllFromIndex, getAllKeys, getFromIndex, put } from "./db"
 import STORES from './stores'
 import INDICES from './indices'
@@ -67,27 +67,46 @@ export async function getExcludedCategories(): Promise<Category[] | undefined> {
   return excludedCategories.value
 }
 
-async function getExternalCategories(db: IDBPDatabase, categoryId: number) {
+async function getExternalCategories(db: IDBPDatabase, categoryId: number): Promise<ExternalCategory[]> {
   return await getAllFromIndex(db, INDICES.EXTERNAL_CATEGORIES_BY_CATEGORY, categoryId)
 }
 
 export async function getCategoriesPageCategory(db: IDBPDatabase, category: Category): Promise<CategoriesPageCategory> {
   const numParts = await getNumPartsInCategory(db, category.id)
-  const image = await getCategoryImage(db, category.id)
   const externalCategories = await getExternalCategories(db, category.id)
+  let image = undefined
+  for (let i = 0; i < externalCategories.length; i++) {
+    image = await getExternalCategoryImage(db, externalCategories[i])
+    if (image) {
+      break
+    }
+  }
   return {
     ...category,
     numParts,
     image,
-    externalCategories
+    externalCategories,
   }
 }
 export async function getCategoryImage(db: IDBPDatabase, id: number): Promise<string | undefined> {
+  const externalCategories = await getExternalCategories(db, id)
   const part: Item = await getFromIndex(db, INDICES.PARTS_BY_CATEGORY, id)
   if (!part) {
     return
   }
   const variant: ItemVariant = await getFromIndex(db, INDICES.PART_VARIANTS_BY_PART, part.itemId)
+  if (!variant) {
+    return
+  }
+  return variant.image
+}
+
+export async function getExternalCategoryImage(db: IDBPDatabase, category: ExternalCategory): Promise<string | undefined> {
+  const externalPart: ExternalItem = await getFromIndex(db, INDICES.EXTERNAL_PARTS_BY_TYPE_AND_CATEGORY, [category.type, category.id])
+  if (!externalPart) {
+    return
+  }
+  const variant: ItemVariant = await getFromIndex(db, INDICES.PART_VARIANTS_BY_TYPE_AND_PART, [externalPart.type, externalPart.itemId])
   if (!variant) {
     return
   }
@@ -156,7 +175,7 @@ export async function addBrickLinkCategory(
   }
   await putExternalCategory(db, brickLinkCategory)
 }
-async function putExternalCategory(db: IDBPDatabase, category: ExternalCategory) {
+export async function putExternalCategory(db: IDBPDatabase, category: ExternalCategory) {
   return await put(db, STORES.EXTERNAL_CATEGORIES, category)
 }
 export async function updateCategory(
@@ -170,7 +189,10 @@ export async function getCategory(db: IDBPDatabase, id: string): Promise<Categor
   return await get(db, STORES.CATEGORIES, id)
 }
 export async function getBrickLinkCategory(db: IDBPDatabase, id: string): Promise<BrickLinkCategory> {
-  return await get(db, STORES.EXTERNAL_CATEGORIES, id)
+  return await get(db, STORES.EXTERNAL_CATEGORIES, ['BrickLink', id])
+}
+export async function getLegoCategory(db: IDBPDatabase, id: string): Promise<LegoCategory> {
+  return await get(db, STORES.EXTERNAL_CATEGORIES, ['Lego', id])
 }
 export async function getPartPageCategory(db: IDBPDatabase, id: string): Promise<PartPageCategory> {
   return await get(db, STORES.CATEGORIES, id)

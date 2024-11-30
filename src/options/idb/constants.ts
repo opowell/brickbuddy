@@ -19,6 +19,7 @@ export const PAGES = {
 
 export const LINKS = {
   PART: 'part',
+  EXTERNAL_PART: 'externalPart',
   PART_VARIANT: 'partVariant',
   STORE: 'store',
   SEARCH: 'search',
@@ -57,7 +58,10 @@ export const Routes = {
   color(id: string) {
     return '/' + LINKS.COLOR + '/' + encodeURIComponent(id)
   },
-  part(id: string) {
+  externalPart(id: string) {
+    return '/' + LINKS.EXTERNAL_PART + '/' + encodeURIComponent(id)
+  },
+  part(id: number) {
     return '/' + LINKS.PART + '/' + encodeURIComponent(id)
   },
   partVariant(itemId: string, colorId: string) {
@@ -99,8 +103,11 @@ export const Hrefs = {
   color(id: string) {
     return Routes.color(id)
   },
-  part(id: string) {
+  part(id: number) {
     return Routes.part(id)
+  },
+  externalPart(id: string) {
+    return Routes.externalPart(id)
   },
   partVariant(itemId: string, colorId: string) {
     return Routes.partVariant(itemId, colorId)
@@ -184,13 +191,19 @@ export const Crumbs = {
       href: Hrefs.color(id)
     }
   },
-  part(title: string, id: string) {
+  part(title: string, id: number) {
     return {
       title,
       href: Hrefs.part(id)
     }
   },
-  partVariant(title: string, itemId: string, colorId: string) {
+  externalPart(title: string, id: string) {
+    return {
+      title,
+      href: Hrefs.externalPart(id)
+    }
+  },
+  partVariant(title: string | undefined, itemId: string, colorId: string) {
     return {
       title,
       href: Hrefs.partVariant(itemId, colorId)

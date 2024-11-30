@@ -37,6 +37,7 @@ import { getCategoriesPageCategories } from '../idb/categories';
         <tr>
           <th>Image</th>
           <th>Names</th>
+          <th>External</th>
           <th>Parts</th>
           <th>Actions</th>
         </tr>
@@ -46,6 +47,9 @@ import { getCategoriesPageCategories } from '../idb/categories';
           <td><img v-if="category.image" :src="category.image"></td>
           <td>
             <CategoryButton :category="category" />
+          </td>
+          <td>
+            {{ category.externalCategories.length }}
           </td>
           <td>
             {{ category.numParts }}

@@ -23,7 +23,7 @@ export async function getFromIndex(
 export async function get(db: IDBPDatabase, store: StoreDefinition, query: IDBKeyRange | IDBValidKey) {
   return await db.get(store.name, query)
 }
-export async function countFromIndex(db: IDBPDatabase, index: IndexDefinition, query?: string | (string | number)[] | number) {
+export async function countFromIndex(db: IDBPDatabase, index: IndexDefinition, query?: IDBKeyRange | IDBValidKey | null | undefined) {
   return await db.countFromIndex(index.store, index.name, query)
 }
 export async function put(db: IDBPDatabase, storeDef: StoreDefinition, value: any) {
