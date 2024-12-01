@@ -1,6 +1,6 @@
 import { IDBPDatabase } from "idb"
 import { get, getAllFromIndex, getFromIndex, put } from "./db"
-import { Color, ColorPageColor, ColorPageInvItem, ColorsPageColor, InvItem, ItemVariant, Store, UiColor } from "../types"
+import { Color, ColorPageColor, ColorPageInvItem, ColorsPageColor, InvItem, ItemVariant, Store, StoreType, UiColor } from "../types"
 import STORES from './stores'
 import INDICES from './indices'
 import { getDbConnection } from "./idb"
@@ -30,8 +30,9 @@ export async function getColorPageColor(id: string): Promise<ColorPageColor> {
     const invItem = invItems[i]
     const part = await getPart(db, invItem.itemId)
     const color = await getColor(db, invItem.colorId)
-    const variant: ItemVariant = await getItemVariant(db, invItem.itemId, id)
     const store: Store = await getStore(db, invItem.storeId)
+    const type = store.type === StoreType.BrickLink ? 'BrickLink' : 'Lego'
+    const variant: ItemVariant = await getItemVariant(db, type, invItem.itemId, id)
     colorPageInvItems.push({
       ...invItem,
       item: part,

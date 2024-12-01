@@ -14,6 +14,7 @@ const indices: {
   EXTERNAL_CATEGORIES_BY_TYPE: IndexDefinition
   EXTERNAL_CATEGORIES_BY_CATEGORY: IndexDefinition
   EXTERNAL_PARTS_BY_PART: IndexDefinition
+  EXTERNAL_PARTS_BY_CATEGORY: IndexDefinition
   EXTERNAL_PARTS_BY_TYPE_AND_EXTERNAL_ID: IndexDefinition
   EXTERNAL_PARTS_BY_TYPE_AND_CATEGORY: IndexDefinition
   PART_VARIANTS_BY_TYPE_AND_PART: IndexDefinition
@@ -58,6 +59,11 @@ const indices: {
     store: stores.EXTERNAL_PARTS.name,
     name: 'typeAndCategoryId',
     keyPath: ['type', 'categoryId']
+  },
+  EXTERNAL_PARTS_BY_CATEGORY: {
+    store: stores.EXTERNAL_PARTS.name,
+    name: 'categoryId',
+    keyPath: 'categoryId'
   },
   EXTERNAL_PARTS_BY_PART: {
     store: stores.EXTERNAL_PARTS.name,

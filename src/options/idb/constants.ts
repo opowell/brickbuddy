@@ -25,7 +25,7 @@ export const LINKS = {
   SEARCH: 'search',
   COLOR: 'color',
   CART: 'cart',
-  BRICK_LINK_CATEGORY: 'brickLinkCategory',
+  EXTERNAL_CATEGORY: 'externalCategory',
   CATEGORY: 'category',
   CONDITION: 'condition'
 }
@@ -43,11 +43,11 @@ export const Routes = {
   parts: '/parts',
   searches: '/searches',
   lists: '/lists',
-  brickLinkCategory(id: string) {
-    return '/' + LINKS.BRICK_LINK_CATEGORY + '/' + encodeURIComponent(id)
-  },
   category(id: number) {
     return '/' + LINKS.CATEGORY + '/' + encodeURIComponent(id)
+  },
+  externalCategory(id: string) {
+    return '/' + LINKS.EXTERNAL_CATEGORY + '/' + encodeURIComponent(id)
   },
   cart(id: number) {
     return '/' + LINKS.CART + '/' + id
@@ -94,8 +94,8 @@ export const Hrefs = {
   category(id: number) {
     return Routes.category(id)
   },
-  brickLinkCategory(id: string) {
-    return Routes.brickLinkCategory(id)
+  externalCategory(id: string) {
+    return Routes.externalCategory(id)
   },
   condition(id: string) {
     return Routes.condition(id)
@@ -177,6 +177,12 @@ export const Crumbs = {
     return {
       id,
       href: Hrefs.condition(id)
+    }
+  },
+  externalCategory(title: string | undefined, id: string) {
+    return {
+      title,
+      href: Hrefs.externalCategory(id)
     }
   },
   category(title: string | undefined, id: number) {

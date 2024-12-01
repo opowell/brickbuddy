@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { Item } from '../types';
+import { PartButtonPart } from '../types';
 import { Crumbs } from '../idb/constants';
 import { useRouter } from 'vue-router'
 import {PropType} from 'vue'
 import NameIdLabel from './NameIdLabel.vue';
 const { part } = defineProps({
-  part: Object as PropType<Item>
+  part: Object as PropType<PartButtonPart>
 })
 const router = useRouter()
 const href = computed(() => {
@@ -19,7 +19,11 @@ const name = computed(() => {
     return
   }
   if (part.externalParts) {
-    return part.externalParts.find(e => e.name).name
+    const partWithName = part.externalParts.find(e => e.name)
+    if (!partWithName) {
+      return
+    }
+    return partWithName.name
   }
   return ''
 })

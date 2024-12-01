@@ -5,7 +5,7 @@ import { getColor, colors } from "./colors"
 import { get, getAllFromIndex } from "./db"
 import { getDbConnection } from "./idb"
 import INDICES from "./indices"
-import { getPartPageVariantInvItems, getPartsPageVariantInvItems, getVariantInvItems } from "./invItems"
+import { getPartPageVariantInvItems, getPartsPageVariantInvItems } from "./invItems"
 import ObjectCacheClass from "./ObjectCacheClass"
 import { getUiPart, getVariantPagePart } from "./parts"
 import { getActiveCart } from "./searches"
@@ -145,34 +145,6 @@ export async function getPartsPageVariants(db: IDBPDatabase, item: Item, objectC
       })
     }
     return partsPageVariants
-  } catch (e) {
-    console.log('error getting store items', e, item.itemId)
-  }
-  return []
-}
-
-async function loadItemVariants(db: IDBPDatabase, item: Item) {
-  try {
-    const variants = await getAllFromIndex(
-      db,
-      INDICES.PART_VARIANTS_BY_PART,
-      item.itemId
-    )
-    const itemVariants = []
-    for (let i = 0; i < variants.length; i++) {
-      const variant = variants[i]
-      const invItems = await getVariantInvItems(db, variant, item)
-      if (invItems.length === 0) {
-        continue
-      }
-      itemVariants.push({
-        ...variant,
-        item,
-        color: colors.value[variant.colorId],
-        invItems
-      })
-    }
-    return itemVariants
   } catch (e) {
     console.log('error getting store items', e, item.itemId)
   }

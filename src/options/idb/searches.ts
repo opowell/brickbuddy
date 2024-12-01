@@ -1,5 +1,5 @@
 import { IDBPDatabase } from "idb"
-import { Search, UiStore, CartWithItems, ActiveSearch, ActiveSearchButtonActiveSearch, SearchesPageSearch, Item, SearchPageSearch, SearchFilter } from "../types"
+import { Search, UiStore, CartWithItems, ActiveSearch, ActiveSearchButtonActiveSearch, SearchesPageSearch, Item, SearchPageSearch, SearchFilter, ExternalItem } from "../types"
 import { getCategories, getCategory, getCategoriesPageCategory } from "./categories"
 import { getCondition } from "./condition"
 import { getAllFromIndex, getFromIndex } from "./db"
@@ -86,7 +86,7 @@ export async function getSearchesPagesSearches(): Promise<SearchesPageSearch[]> 
   return searchesPageSearches
 }
 
-export async function searchAllowsPart(db: IDBPDatabase, search: Search, part: Item) {
+export async function searchAllowsPart(db: IDBPDatabase, search: Search, part: ExternalItem) {
   return true // TODO
 }
 

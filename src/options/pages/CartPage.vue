@@ -37,7 +37,7 @@ async function updateCartQuantity(item: CartPageCartItem, newQuantity: number, i
   if (!item.store) {
     return
   }
-  const response = await setCartQuantity(item.store, item, newQuantity)
+  const response = await setCartQuantity(item.store, item.invItemId, item.price, newQuantity)
   if (response) {
     if (newQuantity === 0) {
       items.value.splice(index, 1)

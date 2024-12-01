@@ -66,31 +66,25 @@ export async function getBrickLinkPrices(db: IDBPDatabase, store: Store) {
           console.log('no color!!', resultItem.colorID, resultItem)
           continue
         }
-        const blItem: BrickLinkItem | undefined = await getBrickLinkItem(db, resultItem.itemNo + '')
+        const blItem: BrickLinkItem | undefined = await getBrickLinkItem(db, resultItem.itemNo + '', resultItem.categoryString)
         if (!blItem) {
           continue
         }
-        const item: Item = blItem.part
-        if (!item) {
-          continue
-        }
-        delete blItem.part
         blItem.name = resultItem.itemName
-        blItem.categoryId = resultItem.categoryString
-        const brickLinkCategory: BrickLinkCategory = await getBrickLinkCategory(db, blItem.categoryId)
+        blItem.externalCategoryId = resultItem.categoryString
+        const brickLinkCategory: BrickLinkCategory = await getBrickLinkCategory(db, blItem.externalCategoryId)
         if (!brickLinkCategory) {
           const blCategoryName = blCategories.get(resultItem.categoryString)
           if (!blCategoryName) {
             console.log('NO BL NAME!', blItem, blCategories, resultItem.categoryString)
             continue
           }
-          await addBrickLinkCategory(db, blItem.categoryId, blCategoryName)
+          await addBrickLinkCategory(db, blItem.externalCategoryId, blCategoryName)
         }
         blItem.name = resultItem.itemName
         await addBrickLinkItem(
           color.id,
           blItem,
-          item,
           resultItem.newThumb1Img,
           db
         )
@@ -101,7 +95,7 @@ export async function getBrickLinkPrices(db: IDBPDatabase, store: Store) {
           color.id,
           resultItem.invNew,
           resultItem.invQty,
-          math.number(math.multiply(math.bignumber(100), math.bignumber(resultItem.rawConvertedPrice))),
+          math.number(math.multiply(math.bignumber(100), math.bignumber(resultItem.rawConvertedPrice))).toString(),
           blItem.externalItemId,
         )
       } catch (e) {

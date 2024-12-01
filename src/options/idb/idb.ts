@@ -1,4 +1,4 @@
-import { BrickLinkCategoriesPageCategory, BrickLinkCategory, ExternalCategory, ExternalItem, RebrickableItem } from './../types';
+import { BrickLinkCategory, ExternalCategory, RebrickableItem } from './../types';
 import { IDBPDatabase, openDB } from "idb";
 import STORES from './stores'
 import INDICES from './indices'
@@ -7,51 +7,33 @@ import { DB_NAME } from "./constants";
 
 export async function getHomeData(): Promise<HomeData> {
   const db = await getDbConnection()
+  const objectCache = new ObjectCacheClass(db)
   return {
     stores: await count(db, STORES.STORES),
     colors: await count(db, STORES.COLORS),
     categories: await getCategoriesCount(db),
-    parts: await getNumParts(db),
+    parts: await getNumParts(objectCache),
     conditions: 2,
     lists: await count(db, STORES.LISTS),
     searches: await count(db, STORES.SEARCHES),
     carts: await count(db, STORES.CARTS),
   }
 }
-function partExcluded(part: Item, search: ActiveSearch) {
+function isCategoryExcluded(categoryId: number, search: ActiveSearch) {
   const categories = search.categories
   if (categories.excluded.length) {
-    if (categories.excluded.includes(part.categoryId)) {
+    if (categories.excluded.includes(categoryId)) {
       return true
     }
   }
   if (
     categories.included.length > 0 &&
-    !categories.included.includes(part.categoryId)
+    !categories.included.includes(categoryId)
   ) {
     return true
   }   
   return false
 }
-export async function getBrickLinkCategoryImage(db: IDBPDatabase, category: BrickLinkCategory): Promise<string | undefined> {
-  const categoryIds = category.categoryIds
-  if (!categoryIds) {
-    return
-  }
-  for (let i = 0; i < categoryIds.length; i++) {
-    const id = categoryIds[i]
-    const part: Item = await getFromIndex(db, INDICES.PARTS_BY_CATEGORY, id)
-    if (!part) {
-      continue
-    }
-    const variant: ItemVariant = await getFromIndex(db, INDICES.PART_VARIANTS_BY_PART, part.itemId)
-    if (!variant) {
-      continue
-    }
-    return variant.image
-  }
-}
-
 export async function getDbCreateInitialStores() {
   const db = await getDbConnection()
   return await createInitialStores(db)
@@ -91,8 +73,8 @@ import { getNumParts } from './parts';
 async function importRbCategories(db: IDBPDatabase) {
   for (let i = 0; i < rbCategories.length; i++) {
     const rbCategory = rbCategories[i]
-    const categoryId = await putCategory(db, {})
-    if (!categoryId) {
+    const categoryId = await putCategory(db)
+    if (!categoryId || typeof categoryId !== 'number') {
       return
     }
     await putExternalCategory(db, {
@@ -108,8 +90,8 @@ async function putExternalCategory(db: IDBPDatabase, externalCategory: ExternalC
   return await put(db, STORES.EXTERNAL_CATEGORIES, externalCategory)
 }
 
-async function putCategory(db: IDBPDatabase, category: Category) {
-  return await put(db, STORES.CATEGORIES, category)
+async function putCategory(db: IDBPDatabase) {
+  return await put(db, STORES.CATEGORIES, {})
 }
 
 async function createInitialData(db: IDBPDatabase) {
@@ -122,11 +104,22 @@ async function createInitialData(db: IDBPDatabase) {
 }
 
 import rbParts from '../rbPartMappings.json'
+interface RbPart {
+  part_cat_id: number;
+  name: string;
+  part_num: string;
+  external_ids: {
+    BrickLink: string[];
+    LEGO: string[]
+  }
+}
 export const rbPartsLegoId: Map<string, RebrickableItem> = new Map<string, RebrickableItem>()
 export const rbPartsBrickLinkId: Map<string, RebrickableItem> = new Map<string, RebrickableItem>()
 export async function importRbPartsToMemory() {
-  for (let i = 0; i < rbParts.length; i++) {
-    const rbPart = rbParts[i]
+  // @ts-ignore
+  const rbArray: RbPart[] = rbParts
+  for (let i = 0; i < rbArray.length; i++) {
+    const rbPart = rbArray[i]
     let legoPartIds: string[] | undefined
     if (rbPart.external_ids.LEGO) {
       legoPartIds = rbPart.external_ids.LEGO
@@ -137,12 +130,12 @@ export async function importRbPartsToMemory() {
     }
     const part: RebrickableItem = {
       externalItemId: rbPart.part_num,
-      categoryId: rbPart.part_cat_id,
+      externalCategoryId: rbPart.part_cat_id + '',
       name: rbPart.name,
       legoPartIds,
       brickLinkIds,
       type: 'Rebrickable',
-      itemId: ''
+      itemId: -1
     }
     if (legoPartIds) {
       legoPartIds.forEach(legoPartId => {
@@ -156,34 +149,6 @@ export async function importRbPartsToMemory() {
     }
   }
 }
-
-
-// import rbParts from '../rbPartMappings.json'
-// async function importParts(db: IDBPDatabase) {
-//   for (let i = 0; i < rbParts.length; i++) {
-//     const rbPart = rbParts[i]
-//     const itemId = await db.put(STORES.PARTS.name, rbPart)
-//     rbPart.external_ids?.LEGO?.forEach(async (legoPartId: string) => {
-//       await putExternalItem(db, {
-//         itemId,
-//         externalItemId: legoPartId,
-//         type: 'Lego'
-//       })
-//     })
-//     rbPart.external_ids?.BrickLink?.forEach(async (brickLinkId: string) => {
-//       await putExternalItem(db, {
-//         itemId,
-//         externalItemId: brickLinkId,
-//         type: 'BrickLink'
-//       })
-//     })
-//   }
-// }
-
-// async function putExternalItem(db: IDBPDatabase, externalItem: ExternalItem) {
-//   return put(db, STORES.EXTERNAL_PARTS, externalItem)
-// }
-
 
 import ObjectCacheClass from './ObjectCacheClass'
 let dbConnection: IDBPDatabase | undefined
@@ -206,37 +171,16 @@ export async function getDbConnection(): Promise<IDBPDatabase> {
       switch (oldVersion) {
         case 0: {
           Object.keys(STORES).forEach((key) => {
+            // @ts-ignore
             createStore(db, STORES[key])
           })
           Object.keys(INDICES).forEach((key) => {
+            // @ts-ignore
             createIndex(transaction, INDICES[key])
           })
           createData = true
           break
         }
-        // case 1:
-        //   db.createObjectStore(STORES.CATEGORIES_BRICKLINK.name, {
-        //     keyPath: STORES.CATEGORIES_BRICKLINK.keyPath
-        //   })
-        //   break
-        // case 2: {
-        //   createIndex(transaction, INDICES.BRICKLINK_CATEGORIES_BY_CATEGORY)
-        // }
-        // case 3: {
-        //   db.createObjectStore(STORES.CART_ITEMS.name, {
-        //     keyPath: STORES.CART_ITEMS.keyPath
-        //   })
-        //   createIndex(transaction, INDICES.CART_ITEMS_BY_CART)
-        // }
-        // case 4: {
-        //   createIndex(transaction, INDICES.CARTS_BY_ACTIVE)
-        // }
-        // case 5: {
-        //   createIndex(transaction, INDICES.SEARCHES_BY_ACTIVE)
-        // }
-        // case 6: {
-        //   createStore(db, STORES.SEARCH_FILTERS)
-        // }
       }
     }
   })

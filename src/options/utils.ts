@@ -1,3 +1,5 @@
+import * as math from "mathjs"
+
 export async function toDataURL(url: string): Promise<string> {
   return new Promise(resolve => {
     var xhr = new XMLHttpRequest()
@@ -76,4 +78,57 @@ export function formatInteger(x: number) {
     return (x/1000).toFixed(0) + 'k'
   }
   return (x/1000000).toFixed(1) + 'm'
+}
+
+export function cheapestPrice(
+  items: { price: number | string, quantity: number }[],
+  targetQ: number,
+  sort: boolean = false
+) {
+  let sortedItems = items
+  if (sort) {
+    sortedItems = items.sort((a, b) => {
+      return (
+        (typeof a.price === 'number' ? a.price : Number.parseInt(a.price)) -
+        (typeof b.price === 'number' ? b.price : Number.parseInt(b.price))
+      )
+    })
+  }
+  let cost = 0
+  let quantity = 0
+  for (let i = 0; i < sortedItems.length; i++) {
+    const item = sortedItems[i]
+    const toTake = Math.min(item.quantity, targetQ - quantity)
+    const price = typeof item.price === 'number' ? item.price : Number.parseFloat(item.price)
+    try {
+      quantity += toTake
+      cost += price * toTake
+      console.log(price, toTake, cost, quantity)
+    } catch (e) {
+      console.log(e)
+    }
+    if (toTake >= targetQ) {
+      break
+    }
+  }
+  console.log(cost, quantity)
+  return cost / quantity
+}
+
+export function getScore(
+  items: { price: number | string, quantity: number }[],
+  targetQ: number,
+  actualPrice: number | string,
+  sort: boolean = false
+) {
+  const cheapP = cheapestPrice(items, targetQ, sort)
+  const priceScore = math.divide(math.bignumber(actualPrice), math.bignumber(cheapP))
+  const percent = math.multiply(100, math.subtract(priceScore, 1))
+  let sign = ''
+  if (math.larger(percent, 0)) {
+    sign = '+'
+  }
+  // @ts-ignore
+  console.log(items, actualPrice, cheapP, priceScore.toString(), percent.toString())
+  return sign + math.round(percent, 2) + '%'
 }

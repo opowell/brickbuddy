@@ -1,5 +1,4 @@
 import { IDBPDatabase } from "idb"
-import * as math from "mathjs"
 import { ActiveCartButtonCart, Cart, CartsPageCart, CartItem, CartPageCartItem, InvItem, CartWithItems, StorePageInvItem, Store } from "../types"
 import { put, getAllFromIndex, getFromIndex, getAll } from "./db"
 import { getDbConnection } from "./idb"
@@ -8,6 +7,7 @@ import { getItemVariant } from "./variants"
 import STORES from './stores'
 import INDICES from './indices'
 import ObjectCacheClass from './ObjectCacheClass'
+import { getScore } from "../utils"
 
 export async function addCart() {
   const db = await getDbConnection()
@@ -78,7 +78,6 @@ export async function getCartItems(db: IDBPDatabase, cart: Cart): Promise<CartIt
 export async function getCartPageCartItem(objectCache: ObjectCacheClass, cartItem: CartItem): Promise<CartPageCartItem | undefined> {
   const search = await getActiveSearch()
   const invItem: InvItem | undefined = await objectCache.getInvItem(cartItem.storeId, cartItem.invItemId)
-  console.log(invItem, cartItem)
   if (!invItem) {
     return
   }
@@ -112,32 +111,7 @@ export async function getCartPageCartItem(objectCache: ObjectCacheClass, cartIte
   if (!search) {
     return
   }
-  const sortedItems = allMatchingInvItems.sort((a, b) => a.price - b.price)
-  const targetQ = search.priceScoreQuantity
-  let cost = 0
-  let quantity = 0
-  for (let i = 0; i < sortedItems.length; i++) {
-    const item = sortedItems[i]
-    const toTake = Math.min(item.quantity, targetQ - quantity)
-    try {
-      quantity += toTake
-      cost += item.price * toTake
-    } catch (e) {
-      console.log(e)
-    }
-    if (toTake >= targetQ) {
-      break
-    }
-  }
-  const cheapestPrice = cost / quantity
-  console.log(invItem.itemId, cost, quantity, cheapestPrice)
-  const priceScore = math.number(math.divide(math.bignumber(invItem.price), math.bignumber(cheapestPrice)))
-  const percent = math.number(math.multiply(100, math.number(math.subtract(priceScore, 1))))
-  let sign = ''
-  if (percent > 0) {
-    sign = '+'
-  }
-  const priceScoreString = sign + percent.toFixed(2) + '%'
+  const priceScoreString = getScore(allMatchingInvItems, search.priceScoreQuantity, invItem.price, true)
   return {
     ...cartItem,
     invItem,
@@ -159,24 +133,24 @@ export function getCartQuantity(cart: CartWithItems, invItem: InvItem): number {
   return cartItem.quantity
 }
 
-export async function setCartQuantity(store: Store, invItem: StorePageInvItem, newQuantity: number): Promise<boolean> {
+export async function setCartQuantity(store: Store, invId: string, price: string, newQuantity: number): Promise<boolean> {
   const activeCart = await getActiveCart()
   const db = await getDbConnection()
-  let foundItem: CartItem = await db.get(STORES.CART_ITEMS.name, [activeCart.id, store.sId, invItem.invId])
+  let foundItem: CartItem = await db.get(STORES.CART_ITEMS.name, [activeCart.id, store.sId, invId])
   if (!foundItem) {
     foundItem = {
       cartId: activeCart.id,
-      invItemId: invItem.invId,
+      invItemId: invId,
       storeId: store.sId,
       quantity: 0,
-      price: invItem.price,
+      price,
       lastUpdated: new Date()
     }
   }
   foundItem.quantity = newQuantity
   foundItem.lastUpdated = new Date()
   if (foundItem.quantity === 0) {
-    await db.delete(STORES.CART_ITEMS.name, [activeCart.id, store.sId, invItem.invId])
+    await db.delete(STORES.CART_ITEMS.name, [activeCart.id, store.sId, invId])
   } else {
     await db.put(STORES.CART_ITEMS.name, foundItem)
   }

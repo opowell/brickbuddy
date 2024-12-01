@@ -45,8 +45,6 @@ import ActiveCartButton from '../components/ActiveCartButton.vue';
           <th>Name</th>
           <th>Category</th>
           <th>Colors</th>
-          <th>BrickLink</th>
-          <th>Lego</th>
           <th>Price</th>
           <th>List</th>
         </tr>

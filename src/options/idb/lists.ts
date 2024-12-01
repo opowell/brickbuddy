@@ -7,20 +7,6 @@ import STORES from "./stores"
 import INDICES from './indices'
 import { getPart } from "./parts"
 
-export async function addNewListItem(item) {
-  const db = await getDbConnection()
-  await addShopListItem(
-    item.listId,
-    item.itemId,
-    item.condition,
-    item.minQ,
-    item.maxQ,
-    item.maxP,
-    item.colors,
-    db
-  )
-}
-
 export async function addShopList(name: string) {
   const db = await getDbConnection()
   return await addShopListDb(name, db)
@@ -40,11 +26,7 @@ export async function addShopListItem(
   colors: string,
   db: IDBPDatabase
 ) {
-  const shopList = lists.value.find(list => list.id === listId)
-  console.log('addShopListItem', shopList, listId)
-  if (!shopList) {
-    return
-  }
+  console.log('addShopListItem', listId)
   const item: ShopListItem = {
     listId,
     itemId,
@@ -55,24 +37,4 @@ export async function addShopListItem(
     colors: colors.toString().split(',')
   }
   await db.put(STORES.LIST_ITEMS.name, item)
-  shopList.items.push(item)
-}
-
-async function loadShopListItems(db: IDBPDatabase, listId: string) {
-  try {
-    const listItems = await getAllFromIndex(
-      db,
-      INDICES.SHOP_LIST_ITEMS_BY_SHOP_LIST,
-      listId
-    )
-    for (let i = 0; i < listItems.length; i++) {
-      const shopListItem = listItems[i]
-      shopListItem.item = getPart(db, shopListItem.itemId)
-      shopListItem.colorNames = shopListItem.colors.map(colorId => colors.value[colorId])
-    }
-    return listItems
-  } catch (e) {
-    console.log('error getting shop list items', e, listId)
-  }
-  return []
 }

@@ -61,7 +61,7 @@ async function updateCartQuantity(item: StorePageInvItem, newQuantity: number) {
   if (!store.value) {
     return
   }
-  const response = await setCartQuantity(store.value, item, newQuantity)
+  const response = await setCartQuantity(store.value, item.invId, item.price, newQuantity)
   if (response) {
     item.cartQuantity = newQuantity
   }

@@ -74,21 +74,15 @@ export async function getLegoPrices(db: IDBPDatabase, store: Store) {
       if (!legoItem) {
         continue
       }
-      const item: Item = legoItem.part
-      if (!item) {
-        continue
-      }
-      delete legoItem.part
       legoItem.name = legoInvItem.name
-      legoItem.categoryId = legoInvItem.facets.subcategory.key
-      const legoCategory: LegoCategory = await getLegoCategory(db, legoItem.categoryId)
+      legoItem.externalCategoryId = legoInvItem.facets.subcategory.key
+      const legoCategory: LegoCategory = await getLegoCategory(db, legoItem.externalCategoryId)
       if (!legoCategory) {
-        await addLegoCategory(db, legoItem.categoryId, legoInvItem.facets.subcategory.name)
+        await addLegoCategory(db, legoItem.externalCategoryId, legoInvItem.facets.subcategory.name)
       }
       await addLegoItem(
         colorId,
         legoItem,
-        item,
         '//www.lego.com/cdn/product-assets/element.img.photoreal.192x192/' + legoInvItem.id + '.jpg',
         db
       )
@@ -100,7 +94,7 @@ export async function getLegoPrices(db: IDBPDatabase, store: Store) {
         'New',
         1000000,
         legoInvItem.price.centAmount,
-        item.itemId,
+        legoItem.externalItemId,
       )
     } catch (e) {
       console.log('error adding item', legoInvItem, e)
@@ -114,13 +108,16 @@ export async function addLegoCategory(
   legoCategoryName: string
 ) {
   const categoryId = await addCategory(db)
-  const brickLinkCategory: ExternalCategory = {
+  if (!categoryId) {
+    return
+  }
+  const legoCategory: ExternalCategory = {
     categoryId,
     id: legoCategoryId,
     name: legoCategoryName,
     type: "Lego"
   }
-  await putExternalCategory(db, brickLinkCategory)
+  await putExternalCategory(db, legoCategory)
 }
 
 // interface LegoPiece {

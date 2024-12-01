@@ -1,6 +1,6 @@
 import { IDBPDatabase } from "idb"
 import * as math from "mathjs"
-import { InvItem, SearchBase, ColorPageInvItem, ItemVariant, Item, PartPageVariantInvItem, StorePageInvItem, UiInvItem, PartsPageVariantInvItem, Store, ExternalItem } from "../types"
+import { InvItem, ColorPageInvItem, ItemVariant, Item, PartPageVariantInvItem, StorePageInvItem, UiInvItem, PartsPageVariantInvItem, Store, ExternalItem, Search, ActiveSearch, StoreType, StorePageExternalPart, StorePageInvItemItem } from "../types"
 import { getColor, colors } from "./colors"
 import { countFromIndex, get, getAllFromIndex, getFromIndex } from "./db"
 import { getDbConnection } from "./idb"
@@ -13,6 +13,7 @@ import { getItemVariant } from "./variants"
 import STORES from './stores'
 import INDICES from './indices'
 import { getCartQuantity } from "./carts"
+import { getScore } from "../utils"
 
 export async function addInvItem(
   db: IDBPDatabase,
@@ -21,7 +22,7 @@ export async function addInvItem(
   colorId: string,
   condition: string,
   quantity: number,
-  price: number,
+  price: string,
   itemId: string,
 ) {
   let invItem: InvItem | undefined = await getInvItem(db, store.sId, invId)
@@ -42,7 +43,7 @@ export async function addInvItem(
   await db.put(STORES.INVENTORY_ITEMS.name, invItem)
 }
 
-export async function countInvItems(db: IDBPDatabase, storeId: string, search: SearchBase): Promise<number> {
+export async function countInvItems(db: IDBPDatabase, storeId: string, search: ActiveSearch): Promise<number> {
   const conditions = search.conditions
   const entries = []
   for (let i = 0; i < conditions.excluded.length; i++) {
@@ -83,7 +84,9 @@ export async function getInvItemsWithColor(db: IDBPDatabase, id: string): Promis
     const invItem = invItems[i]
     const part = await getPart(db, invItem.itemId)
     const color = await getColor(db, invItem.colorId)
-    const variant: ItemVariant = await getItemVariant(db, invItem.itemId, id)
+    const store = await getStore(db, invItem.storeId)
+    const type = store.type === StoreType.BrickLink ? 'BrickLink' : 'Lego'
+    const variant: ItemVariant = await getItemVariant(db, type, invItem.itemId, id)
     colorPageInvItems.push({
       ...invItem,
       item: part,
@@ -121,7 +124,8 @@ export async function getPartPageInvItems(db: IDBPDatabase, itemId: number): Pro
     const partPageVariantInvItem: PartPageVariantInvItem = {
       ...invItem,
       color: await getColor(db, invItem.colorId),
-      store: await getStore(db, invItem.storeId)
+      store: await getStore(db, invItem.storeId),
+      cartQuantity: -1
     }
     partPageInvItems.push(partPageVariantInvItem)
   }
@@ -130,7 +134,7 @@ export async function getPartPageInvItems(db: IDBPDatabase, itemId: number): Pro
 
 export async function getStorePageInvItem(objectCache: ObjectCacheClass, invItem: InvItem, type: "Lego" | "BrickLink"): Promise<StorePageInvItem | undefined> {
   const search = await getActiveSearch()
-  const part: ExternalItem | undefined = await objectCache.getStorePageExternalPart(invItem, type)
+  const part: StorePageInvItemItem | undefined = await objectCache.getStorePageExternalPart(invItem, type)
   if (!part) {
     return
   }
@@ -138,7 +142,7 @@ export async function getStorePageInvItem(objectCache: ObjectCacheClass, invItem
   if (!color) {
     return
   }
-  const externalCategory = await objectCache.getExternalCategory(part.categoryId, part.type)
+  const externalCategory = await objectCache.getExternalCategory(part.externalCategoryId, part.type)
   if (!externalCategory) {
     return
   }
@@ -147,45 +151,22 @@ export async function getStorePageInvItem(objectCache: ObjectCacheClass, invItem
     return
   }
   const variant = await getFromIndex(objectCache.db, INDICES.PART_VARIANTS_BY_PART_AND_COLOR, [invItem.itemId, color.id])
-  let allMatchingInvItems = []
+  const allMatchingInvItems = new Map<string, InvItem>()
   const matchingParts = await getAllFromIndex(objectCache.db, INDICES.EXTERNAL_PARTS_BY_PART, part.itemId)
   for (let i = 0; i < matchingParts.length; i++) {
     const matchingPart = matchingParts[i]
+    let matches: InvItem[] = []
     if (search.priceScoreIgnoreColor) {
-      allMatchingInvItems.push(...await getAllFromIndex(objectCache.db, INDICES.INV_ITEMS_BY_ITEM, matchingPart.externalItemId))
+      matches = await getAllFromIndex(objectCache.db, INDICES.INV_ITEMS_BY_ITEM, matchingPart.externalItemId)
     } else {
-      allMatchingInvItems.push(...await getAllFromIndex(objectCache.db, INDICES.INV_ITEMS_BY_ITEM_AND_COLOR, [matchingPart.externalItemId, color.id]))
+      matches = await getAllFromIndex(objectCache.db, INDICES.INV_ITEMS_BY_ITEM_AND_COLOR, [matchingPart.externalItemId, color.id])
     }
+    matches.forEach((match) => allMatchingInvItems.set(match.storeId + '//' + match.invId, match))
   }
-  console.info(allMatchingInvItems, part.itemId)
   if (!search) {
     return
   }
-  const sortedItems = allMatchingInvItems.sort((a, b) => a.price - b.price)
-  const targetQ = search.priceScoreQuantity
-  let cost = 0
-  let quantity = 0
-  for (let i = 0; i < sortedItems.length; i++) {
-    const item = sortedItems[i]
-    const toTake = Math.min(item.quantity, targetQ - quantity)
-    try {
-      quantity += toTake
-      cost += item.price * toTake
-    } catch (e) {
-      console.log(e)
-    }
-    if (toTake >= targetQ) {
-      break
-    }
-  }
-  const cheapestPrice = cost / quantity
-  const priceScore = math.number(math.divide(math.bignumber(invItem.price), math.bignumber(cheapestPrice)))
-  const percent = math.number(math.multiply(100, math.number(math.subtract(priceScore, 1))))
-  let sign = ''
-  if (percent > 0) {
-    sign = '+'
-  }
-  const priceScoreString = sign + percent.toFixed(2) + '%'
+  const priceScoreString = getScore(Array.from(allMatchingInvItems.values()), search.priceScoreQuantity, invItem.price, true)
   const cart = await objectCache.getActiveCart()
   const cartQuantity = getCartQuantity(cart, invItem)
   return {
@@ -209,46 +190,6 @@ export async function getStorePageInvItems(db: IDBPDatabase, id: string): Promis
   const search = await getActiveSearch()
   const invItems: InvItem[] = await getAllFromIndex(db, INDICES.INV_ITEMS_BY_STORE, id)
   return invItems
-}
-
-export async function getVariantInvItems(db: IDBPDatabase, variant: ItemVariant, item: Item): Promise<UiInvItem[]> {
-  const search = await getActiveSearch()
-  const conditions = search.conditions
-  const uiInvItems: UiInvItem[] = []
-  try {
-    const storeItems: InvItem[] = await getAllFromIndex(
-      db,
-      INDICES.INV_ITEMS_BY_ITEM_AND_COLOR,
-      [item.itemId, variant.colorId]
-    )
-    for (let i = 0; i < storeItems.length; i++) {
-      const storeItem = storeItems[i]
-      if (conditions.excluded) {
-        if (conditions.ids.includes(storeItem.condition)) {
-          continue
-        }
-      } else {
-        if (conditions.ids.length > 0 && !conditions.ids.includes(storeItem.condition)) {
-          continue
-        }
-      }
-      const color = await getColor(db, variant.colorId)
-      if (!color) {
-        continue
-      }
-      const colorName = color.name
-      uiInvItems.push({
-        ...storeItem,
-        item,
-        colorName
-      })
-    }
-    return storeItems
-  } catch (e) {
-    console.log('error getting variant inventory items', e, variant)
-  }
-
-  return []
 }
 
 export async function getPartsPageVariantInvItems(db: IDBPDatabase, variant: ItemVariant, objectCache?: ObjectCacheClass): Promise<PartsPageVariantInvItem[]> {
@@ -309,26 +250,5 @@ export async function getPartPageVariantInvItems(db: IDBPDatabase, variant: Item
     partPageVariantInvItems.push(partPageVariantInvItem)
   }
   return partPageVariantInvItems
-}
-
-export async function getStoreItems(storeId: string) {
-  const db = await getDbConnection()
-  try {
-    const storeItems = await getAllFromIndex(
-      db,
-      INDICES.INV_ITEMS_BY_STORE,
-      storeId
-    )
-    for (let i = 0; i < storeItems.length; i++) {
-      const storeItem = storeItems[i]
-      storeItem.item = await getUiPart(storeItem.itemId)
-      storeItem.colorName = colors.value[storeItem.color].name
-    }
-    return storeItems
-  } catch (e) {
-    console.log('error getting store items', e, storeId)
-  }
-
-  return []
 }
 

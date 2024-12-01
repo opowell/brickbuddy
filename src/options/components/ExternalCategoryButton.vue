@@ -18,6 +18,6 @@ const href = computed(() => {
 
 <template>
   <button v-if="category" @click="router.push(href)">
-    <NameIdLabel :name="name" :id="category.id" />
+    <NameIdLabel :name="category.name" :id="category.id" />
   </button>
 </template>

@@ -56,7 +56,10 @@ const text = computed(() => {
 </script>
 
 <template>
-  <button v-if="activeSearch && showButton" @click="router.push(Crumbs.search(activeSearch.id).href)">
+  <button
+    v-if="activeSearch && showButton"
+    @click="router.push(Crumbs.search(activeSearch.id).href)"
+  >
     {{ text }}
   </button>
 </template>

@@ -16,7 +16,7 @@ import NameIdLabel from '../components/NameIdLabel.vue';
 const router = useRouter()
 const category = ref<CategoryPageCategory | undefined>(undefined)
 onMounted(async () => {
-  category.value = await getCategoryPageCategory(route.params.id)
+  category.value = await getCategoryPageCategory(route.params.id - 0)
 })
 </script>
 
@@ -25,12 +25,12 @@ onMounted(async () => {
     <HomeButton />
     <CategoriesButton />
     <ActiveSearchButton />
-    <h4>{{ category.name }}</h4>
+    <h4>{{ category.id }}</h4>
     <IncludeCategoryButton :category="category" @include="router.push(Crumbs.categories.href)"/>
     <ExcludeCategoryButton :category="category" @exclude="router.push(Crumbs.categories.href)"/>
     <div>Id: {{ category.id }}</div>
-    <div>Bricklink: <NameIdLabel is-span :id="category.brickLinkId" :name="category.brickLinkName" /></div>
-    <div>Lego: <NameIdLabel is-span :id="category.legoId" :name="category.legoName" /></div>
+    <h4>External categories</h4>
+    <div v-for="externalCategory in category.externalCategories">{{ externalCategory.type }}: <NameIdLabel is-span :id="externalCategory.id" :name="externalCategory.name" /></div>
     <h4>Parts ({{ category.parts.length }})</h4>
     <table>
       <thead>

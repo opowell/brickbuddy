@@ -20,7 +20,7 @@ export interface CartItem {
   storeId: string
   invItemId: string
   quantity: number
-  price: number
+  price: string
   lastUpdated: Date
 }
 
@@ -88,26 +88,38 @@ export interface LegoCategory extends ExternalCategory {
 export interface Item {
   itemId: number
 }
+export interface PartPageCategory extends Category {
+
+}
+export interface PartButtonPart extends Item {
+  itemId: number
+  externalParts: ExternalItem[]
+}
 export interface RebrickableItem extends ExternalItem {
   legoPartIds: string[] | undefined
   brickLinkIds: string[] | undefined
   type: "Rebrickable"
 }
 export interface ExternalItem {
-  categoryId: string
-  itemId: IDBValidKey
+  externalCategoryId: string
+  itemId: number
   externalItemId: string
   name?: string
   type: 'Rebrickable' | 'Lego' | 'BrickLink'
 }
 export interface StorePageInvItemItem extends ExternalItem {
   variants: ItemVariant[]
+  color: UiColor
 }
 export interface ItemVariant {
   itemId: string
   colorId: string
   image: string
   type: 'Rebrickable' | 'Lego' | 'BrickLink'
+}
+export interface StorePageItemVariant extends ItemVariant {
+  color: UiColor
+  invItems: InvItem[]
 }
 export interface PartsPageVariant extends ItemVariant {
   item: ExternalItem
@@ -140,7 +152,7 @@ export interface PartVariantButtonVariant extends ItemVariant {
 }
 export interface StorePageVariant extends ItemVariant {
   color: Color
-  invItems: UiInvItem[]
+  invItems: InvItem[]
   item?: UiItem
 }
 export interface PartPageVariant extends ItemVariant {
@@ -172,7 +184,6 @@ export interface StorePagePart extends Item {
 export interface PartPagePart extends Item {
   variants: PartPageVariant[]
   invItems: PartPageVariantInvItem[]
-  category: Category
   externalParts: ExternalItem[]
 }
 export interface InvItem {
@@ -181,7 +192,7 @@ export interface InvItem {
   itemId: string
   condition: string
   quantity: number
-  price: number
+  price: string
   colorId: string
   condition_New: number
   condition_Used: number
@@ -194,6 +205,10 @@ export interface UiInvItem extends InvItem {
 }
 
 export interface PartsPageVariantInvItem extends InvItem {
+}
+
+export interface StorePageExternalPart extends ExternalItem {
+  
 }
 
 export interface StorePageInvItem extends InvItem {
@@ -243,7 +258,7 @@ export interface ShopListItem {
 export interface SearchFilter {
   searchId: IDBValidKey
   type: 'category' | 'color' | 'store' | 'condition'
-  objectId: string
+  objectId: string | number
   isExcluded: boolean
 }
 export interface Search {
@@ -272,8 +287,8 @@ export interface ActiveSearch extends Search {
     excluded: string[]
   }
   parts: {
-    included: string[]
-    excluded: string[]
+    included: number[]
+    excluded: number[]
   }
 }
 export interface CartPageCart extends CartWithItems {
@@ -286,20 +301,20 @@ export interface ActiveCartButtonCart extends Cart {
 }
 export interface ActiveSearchButtonActiveSearch extends ActiveSearch {
   categories: {
-    included: string[]
-    excluded: string[]
+    included: number[]
+    excluded: number[]
     includedNames: string[]
     excludedNames: string[]
   }
   colors: {
-    included: string[]
-    excluded: string[]
+    included: number[]
+    excluded: number[]
     includedNames: string[]
     excludedNames: string[]
   }
   parts: {
-    included: string[]
-    excluded: string[]
+    included: number[]
+    excluded: number[]
     includedNames: string[]
     excludedNames: string[]
   }
@@ -399,7 +414,7 @@ export interface CategoryWithExternals extends Category {
 export interface ExternalCategory {
   id: string
   name: string
-  categoryId: string
+  categoryId: number
   type: 'BrickLink' | 'Lego' | 'Rebrickable'
 }
 
@@ -409,6 +424,7 @@ export interface CategoryPagePart extends Item {
 
 export interface CategoryPageCategory extends Category {
   parts: CategoryPagePart[]
+  externalCategories: ExternalCategory[]
 }
 
 export interface CategoriesPageCategory extends CategoryWithExternals {

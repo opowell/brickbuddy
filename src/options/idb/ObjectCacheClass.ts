@@ -1,5 +1,5 @@
 import { IDBPDatabase } from 'idb';
-import { ActiveSearch, CartWithItems, Category, ExternalCategory, ExternalItem, InvItem, Item, PartPageCategory, Search, SearchFilter, Store, UiColor } from '../types';
+import { ActiveSearch, CartWithItems, Category, ExternalCategory, ExternalItem, InvItem, Item, PartPageCategory, Search, SearchFilter, Store, StorePageInvItemItem, UiColor } from '../types';
 import STORES from './stores'
 import { getFirstActiveCart, getCartItems } from './carts';
 import { getCategory, getExternalCategory, getPartPageCategory } from './categories';
@@ -8,10 +8,17 @@ import { getInvItemFromId } from './invItems';
 import { getStorePageExternalPart, getStorePagePart } from './parts';
 import { getFirstActiveSearch, getSearchFilters } from './searches';
 import { getStore } from './storeMethods';
-function getTypeFilters(filters: SearchFilter[], type: string) {
+
+interface Filter<T> {
+  included: T[]
+  excluded: T[]
+}
+function getTypeFilters<T extends string | number>(filters: SearchFilter[], type: string): Filter<T> {
   const matching = filters.filter(f => f.type === type)
-  const included = matching.filter(f => !f.isExcluded).map(f => f.objectId)
-  const excluded = matching.filter(f => !f.isExcluded).map(f => f.objectId)
+  // @ts-ignore
+  const included: T[] = matching.filter(f => !f.isExcluded).map(f => f.objectId)
+  // @ts-ignore
+  const excluded: T[] = matching.filter(f => !f.isExcluded).map(f => f.objectId)
   return {
     included,
     excluded
@@ -24,7 +31,7 @@ export default class ObjectCache {
   externalCategories: Map<string, ExternalCategory>
   partPageCategories: Map<string, Category>
   parts: Map<string, Item>
-  externalParts: Map<string, ExternalItem>
+  externalParts: Map<string, StorePageInvItemItem>
   stores: Map<string, Store>
   activeCart: CartWithItems | undefined
   activeSearch: ActiveSearch | undefined
@@ -37,12 +44,12 @@ export default class ObjectCache {
     this.externalCategories = new Map<string, ExternalCategory>()
     this.partPageCategories = new Map<string, Category>()
     this.parts = new Map<string, Item>()
-    this.externalParts = new Map<string, ExternalItem>()
+    this.externalParts = new Map<string, StorePageInvItemItem>()
     this.invItems = new Map<string, InvItem>()
     this.stores = new Map<string, Store>()
     this.activeCart = undefined
   }
-  async getObject<T>(map: Map<string, T>, id: string, getter: Function): Promise<T | undefined> {
+  async getObject<T>(map: Map<string | number, T>, id: string | number, getter: Function): Promise<T | undefined> {
     let object: T | undefined = map.get(id)
     if (!object) {
       object = await getter()
@@ -92,11 +99,11 @@ export default class ObjectCache {
         }
       }
       const filters = await getSearchFilters(this.db, search)
-      const categories = getTypeFilters(filters, 'category')
-      const colors = getTypeFilters(filters, 'color')
-      const conditions = getTypeFilters(filters, 'condition')
-      const parts = getTypeFilters(filters, 'part')
-      const stores = getTypeFilters(filters, 'store')
+      const categories = getTypeFilters<number>(filters, 'category')
+      const colors = getTypeFilters<number>(filters, 'color')
+      const conditions = getTypeFilters<string>(filters, 'condition')
+      const parts = getTypeFilters<number>(filters, 'part')
+      const stores = getTypeFilters<string>(filters, 'store')
       this.activeSearch = {
         ...search,
         filters,
@@ -118,7 +125,7 @@ export default class ObjectCache {
   async getColor(colorId: string) {
     return this.getObject(this.colors, colorId, async () => await getColor(this.db, colorId))
   }
-  async getCategory(categoryId: string): Promise<Category | undefined> {
+  async getCategory(categoryId: number): Promise<Category | undefined> {
     return this.getObject<Category | undefined>(this.categories, categoryId, async () => await getCategory(this.db, categoryId))
   }
   async getExternalCategory(categoryId: string, type: "BrickLink" | "Lego" | "Rebrickable"): Promise<ExternalCategory | undefined> {
@@ -130,7 +137,7 @@ export default class ObjectCache {
   async getStorePagePart(partId: string): Promise<Item | undefined> {
     return this.getObject<Item | undefined>(this.parts, partId, async () => await getStorePagePart(partId, this))
   }
-  async getStorePageExternalPart(invItem: InvItem, type: "BrickLink" | "Lego"): Promise<ExternalItem | undefined> {
-    return this.getObject<ExternalItem | undefined>(this.externalParts, invItem.itemId, async () => await getStorePageExternalPart(invItem, type, this))
+  async getStorePageExternalPart(invItem: InvItem, type: "BrickLink" | "Lego"): Promise<StorePageInvItemItem | undefined> {
+    return this.getObject<StorePageInvItemItem | undefined>(this.externalParts, invItem.itemId, async () => await getStorePageExternalPart(invItem, type, this))
   }
 }
