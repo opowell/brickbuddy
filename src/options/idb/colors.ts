@@ -54,9 +54,9 @@ export async function getColorsPageColors(): Promise<ColorsPageColor[]> {
   for (let i = 0; i < colors.length; i++) {
     const color = colors[i]
     const numInvItems = await countInvItemsWithColor(db, color.id)
-    // if (numInvItems === 0) {
-    //   continue
-    // }
+    if (numInvItems === 0) {
+      continue
+    }
     const invItem: ItemVariant = await getFromIndex(db, INDICES.PART_VARIANTS_BY_COLOR, color.id)
     const image = invItem?.image
     uiColors.push({

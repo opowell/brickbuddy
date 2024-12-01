@@ -4,16 +4,6 @@ const colors = ref<ColorsPageColor[] | undefined>(undefined)
 onMounted(async () => {
   colors.value = await getColorsPageColors()
 })
-const newId = ref('')
-const newName = ref('')
-
-function add() {
-  // emits('add', {
-  //   id: newId.value,
-  //   name: newName.value
-  // })
-}
-
 import ActiveSearchButton from '../components/ActiveSearchButton.vue';
 import ColorButton from '../components/ColorButton.vue';
 import HomeButton from '../components/HomeButton.vue';
@@ -60,11 +50,5 @@ import NameIdLabel from '../components/NameIdLabel.vue';
         </tr>
       </tbody>
     </table>
-    <h4>Add</h4>
-    <div>Id:<input v-model="newId" type="text"></div>
-    <div>Name:<input v-model="newName" type="text"></div>
-    <button @click="add">
-      Add new
-    </button>
   </div>
 </template>

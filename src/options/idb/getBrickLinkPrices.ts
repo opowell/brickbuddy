@@ -1,12 +1,13 @@
 import { IDBPDatabase } from "idb";
-import { BrickLinkCategory, BrickLinkItem, Category, Color, ExternalItem, Item, Store } from "../types";
+import { BrickLinkCategory, BrickLinkItem, Category, Color, ExternalItem, Item, RebrickableCategory, RebrickableItem, Store } from "../types";
 import * as math from 'mathjs'
 import INDICES from './indices'
-import { addBrickLinkCategory, getBrickLinkCategory, getCategory, updateCategory } from "./categories";
+import { addBrickLinkCategory, getBrickLinkCategory, getCategory, getRebrickableCategory, updateCategory } from "./categories";
 import { getFromIndex } from "./db";
 import { addInvItem } from "./invItems";
 import { getBrickLinkItem, addBrickLinkItem } from "./parts";
 import { updateStore } from "./storeMethods";
+import { rbPartsBrickLinkId } from "./idb";
 
 async function getColorByBrickLinkId(db: IDBPDatabase, brickLinkId: string): Promise<Color> {
   return getFromIndex(db, INDICES.COLOR_BY_BRICKLINK_ID, brickLinkId + '')
@@ -52,7 +53,6 @@ export async function getBrickLinkPrices(db: IDBPDatabase, store: Store) {
   if (partCategories) {
     for (let i = 0; i < partCategories.categories.length; i++) {
       const partCategory = partCategories.categories[i]
-      // blCategories[partCategory.id + ''] = partCategory.name + ''
       blCategories.set(partCategory.catstr, partCategory.name)
     }
   }
@@ -79,7 +79,9 @@ export async function getBrickLinkPrices(db: IDBPDatabase, store: Store) {
             console.log('NO BL NAME!', blItem, blCategories, resultItem.categoryString)
             continue
           }
-          await addBrickLinkCategory(db, blItem.externalCategoryId, blCategoryName)
+          const rebrickableItem: RebrickableItem | undefined = rbPartsBrickLinkId.get(blItem.externalItemId)
+          const rebrickableCategory: RebrickableCategory = await getRebrickableCategory(db, rebrickableItem?.externalCategoryId)
+          await addBrickLinkCategory(db, blItem.externalCategoryId, blCategoryName, rebrickableCategory.categoryId)
         }
         blItem.name = resultItem.itemName
         await addBrickLinkItem(

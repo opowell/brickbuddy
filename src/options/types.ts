@@ -407,6 +407,10 @@ export interface BrickLinkCategory extends ExternalCategory {
   type: "BrickLink"
 }
 
+export interface RebrickableCategory extends ExternalCategory {
+  type: "Rebrickable"
+}
+
 export interface CategoryWithExternals extends Category {
   externalCategories: ExternalCategory[]
 }

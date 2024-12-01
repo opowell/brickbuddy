@@ -1,5 +1,5 @@
 import { IDBPDatabase } from "idb"
-import { BrickLinkCategory, CategoriesPageCategory, Category, CategoryPageCategory, CategoryPagePart, ExternalCategory, ExternalItem, Item, ItemVariant, ItemWithExternals, LegoCategory, PartPageCategory, SearchFilter, UiCategory } from "../types"
+import { BrickLinkCategory, CategoriesPageCategory, Category, CategoryPageCategory, CategoryPagePart, ExternalCategory, ExternalItem, Item, ItemVariant, ItemWithExternals, LegoCategory, PartPageCategory, RebrickableCategory, SearchFilter, UiCategory } from "../types"
 import { get, getAllFromIndex, getAllKeys, getFromIndex, put } from "./db"
 import STORES from './stores'
 import INDICES from './indices'
@@ -129,7 +129,7 @@ export async function getCategoriesPageCategories(): Promise<CategoriesPageCateg
     categoriesPageCategories.push(categoriesPageCategory)
   }
   return categoriesPageCategories
-    // .filter(category => category.numParts > 0)
+    .filter(category => category.numParts > 0)
     .sort((a, b) => a.id - b.id)
 }
 
@@ -160,12 +160,9 @@ export async function addCategory(db: IDBPDatabase): Promise<number | undefined>
 export async function addBrickLinkCategory(
   db: IDBPDatabase,
   brickLinkCategoryId: string,
-  brickLinkCategoryName: string
+  brickLinkCategoryName: string,
+  categoryId: number
 ) {
-  const categoryId = await addCategory(db)
-  if (!categoryId) {
-    return
-  }
   const brickLinkCategory: ExternalCategory = {
     categoryId,
     id: brickLinkCategoryId,
@@ -192,6 +189,9 @@ export async function getExternalCategory<T extends ExternalCategory>(db: IDBPDa
 }
 export async function getBrickLinkCategory(db: IDBPDatabase, id: string): Promise<BrickLinkCategory> {
   return await getExternalCategory<BrickLinkCategory>(db, id, 'BrickLink')
+}
+export async function getRebrickableCategory(db: IDBPDatabase, id: string): Promise<RebrickableCategory> {
+  return await getExternalCategory<RebrickableCategory>(db, id, 'Rebrickable')
 }
 export async function getLegoCategory(db: IDBPDatabase, id: string): Promise<LegoCategory> {
   return await getExternalCategory<LegoCategory>(db, id, 'Lego')

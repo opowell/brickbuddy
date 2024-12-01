@@ -1,5 +1,5 @@
 import { IDBPDatabase } from "idb"
-import { BrickLinkItem, CategoryPagePart, ExternalCategory, ExternalItem, InvItem, Item, ItemVariant, LegoItem, ObjectCache, PartPagePart, PartPageVariant, PartPageVariantInvItem, PartsPagePart, RebrickableItem, StorePageInvItemItem, StorePageItemVariant, StorePageVariant, UiItem, UiItemVariant, VariantPagePart } from "../types"
+import { BrickLinkCategory, BrickLinkItem, CategoryPagePart, ExternalCategory, ExternalItem, InvItem, Item, ItemVariant, LegoItem, ObjectCache, PartPagePart, PartPageVariant, PartPageVariantInvItem, PartsPagePart, RebrickableItem, StorePageInvItemItem, StorePageItemVariant, StorePageVariant, UiItem, UiItemVariant, VariantPagePart } from "../types"
 import { countFromIndex, get, getAllFromIndex, getFromIndex, put } from "./db"
 import STORES from './stores'
 import { toDataURL } from "../utils"
@@ -50,6 +50,13 @@ async function putBrickLinkItem(db: IDBPDatabase, item: BrickLinkItem) {
     }
   }
   return await db.put(STORES.EXTERNAL_PARTS.name, newItem)
+}
+async function putBrickLinkCategory(db: IDBPDatabase, id: string, name: string, categoryId: number) {
+  return await db.put(STORES.EXTERNAL_CATEGORIES.name, {
+    name,
+    categoryId,
+    type: 'BrickLink'
+  })
 }
 async function putLegoItem(db: IDBPDatabase, item: LegoItem) {
   return await db.put(STORES.EXTERNAL_PARTS.name, item)
@@ -360,7 +367,10 @@ export async function getCategoryPageParts(db: IDBPDatabase, id: number): Promis
       item.numInvItems += await getNumInvItemsByPart(db, externalPart)
       const variants = await getVariantsByPart(db, externalPart)
       item.numVariants += variants.length
-      item.image = variants[0].image
+      const firstVariantWithImage = variants.find(v => v.image)
+      if (firstVariantWithImage) {
+        item.image = firstVariantWithImage.image
+      }
     }
   }
   return items
@@ -405,7 +415,7 @@ export async function getNumPartsInCategory(db: IDBPDatabase, id: number): Promi
   let count = 0
   for (let i = 0; i < externalCategories.length; i++) {
     const category = externalCategories[i]
-    count += await countFromIndex(db, INDICES.EXTERNAL_PARTS_BY_TYPE_AND_CATEGORY, [category.type, category.categoryId])
+    count += await countFromIndex(db, INDICES.EXTERNAL_PARTS_BY_TYPE_AND_CATEGORY, [category.type, category.id])
   }
   return count
 }
