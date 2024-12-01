@@ -10,8 +10,6 @@ const categories = ref<CategoriesPageCategory[] | undefined>(undefined)
 onMounted(async () => {
   categories.value = await getCategoriesPageCategories()
 })
-function add() {
-}
 function excludeCategory(index: number) {
   categories.value?.splice(index, 1)
 }
@@ -61,11 +59,5 @@ import { getCategoriesPageCategories } from '../idb/categories';
         </tr>
       </tbody>
     </table>
-    <h4>Add</h4>
-    <div>Id:<input v-model="newId" type="text"></div>
-    <div>Name:<input v-model="newName" type="text"></div>
-    <button @click="add">
-      Add new
-    </button>
   </div>
 </template>

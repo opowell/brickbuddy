@@ -1,10 +1,10 @@
 import { IDBPDatabase } from "idb"
-import { BrickLinkCategory, CategoriesPageCategory, Category, CategoryPageCategory, CategoryPagePart, ExternalCategory, ExternalItem, Item, ItemVariant, LegoCategory, PartPageCategory, SearchFilter, UiCategory } from "../types"
+import { BrickLinkCategory, CategoriesPageCategory, Category, CategoryPageCategory, CategoryPagePart, ExternalCategory, ExternalItem, Item, ItemVariant, ItemWithExternals, LegoCategory, PartPageCategory, SearchFilter, UiCategory } from "../types"
 import { get, getAllFromIndex, getAllKeys, getFromIndex, put } from "./db"
 import STORES from './stores'
 import INDICES from './indices'
 import { getDbConnection } from "./idb"
-import { getNumPartsInCategory, getPartsInCategory, getCategoryPagePart } from "./parts"
+import { getNumPartsInCategory, getCategoryPageParts } from "./parts"
 import { getActiveSearch } from "./searches"
 export const categories = ref<Map<string, UiCategory>>(new Map<string, UiCategory>())
 
@@ -139,19 +139,12 @@ export async function getCategoryPageCategory(id: number): Promise<CategoryPageC
   if (!category) {
     return
   }
-  const parts: Item[] = await getPartsInCategory(db, id)
   const externalCategories: ExternalCategory[] = await getExternalCategories(db, id)
-  const uiParts: CategoryPagePart[] = []
-  for (let i = 0; i < parts.length; i++) {
-    const uiPart = await getCategoryPagePart(db, parts[i])
-    if (!uiPart) {
-      continue
-    }
-    uiParts.push(uiPart)
-  }
+  const parts: CategoryPagePart[] = await getCategoryPageParts(db, id)
+  console.log(parts)
   return {
     ...category,
-    parts: uiParts,
+    parts,
     externalCategories
   }
 }

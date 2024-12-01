@@ -6,7 +6,7 @@ import { toDataURL } from "../utils"
 import { getItemVariant, getPartPageVariants, getPartsPageVariants, getUiPartVariants } from "./variants"
 import { getDbConnection, getObjectCache, rbPartsBrickLinkId, rbPartsLegoId } from "./idb"
 import INDICES from "./indices"
-import { getNumInvItemsByPart, getPartPageInvItems } from "./invItems"
+import { getNumInvItemsByPart, getNumVariantsByPart, getPartPageInvItems, getVariantsByPart } from "./invItems"
 import ObjectCacheClass from "./ObjectCacheClass"
 import { getActiveSearch, searchAllowsPart } from "./searches"
 
@@ -114,17 +114,6 @@ export async function getLegoItem(db: IDBPDatabase, legoId: string): Promise<Leg
   return await getFromIndex(db, INDICES.EXTERNAL_PARTS_BY_TYPE_AND_EXTERNAL_ID, ['Lego', legoId])
 }
 
-export async function getCategoryPagePart(db: IDBPDatabase, part: Item): Promise<CategoryPagePart | undefined> {
-  const p = await getUiPartFromPart(db, part)
-  if (!p) {
-    return
-  }
-  const numInvItems = await getNumInvItemsByPart(db, part)
-  return {
-    ...p,
-    numInvItems
-  }
-}
 export async function getPart(db: IDBPDatabase, partId: IDBValidKey): Promise<Item> {
   return await get(db, STORES.PARTS, partId)
 }
@@ -192,12 +181,12 @@ async function getExternalParts(db: IDBPDatabase, id: number): Promise<ExternalI
   return await getAllFromIndex(db, INDICES.EXTERNAL_PARTS_BY_PART, id)
 }
 
-async function getUiPartFromPart(db: IDBPDatabase, part: Item, objectCache?: ObjectCache): Promise<UiItem | undefined> {
+async function getUiPartFromPart(db: IDBPDatabase, part: CategoryPagePart, objectCache?: ObjectCache): Promise<UiItem | undefined> {
   if (!part) {
     console.log('getUiPartFromPart: error, no part', part)
     return
   }
-  const variants: UiItemVariant[] = await getUiPartVariants(db, part.itemId + '', objectCache)
+  const variants: UiItemVariant[] = await getUiPartVariants(db, part.externalItemId, objectCache)
   return {
     ...part,
     variants
@@ -244,7 +233,6 @@ export async function getStorePagePart(id: string, objectCache?: ObjectCacheClas
   const db = await getDbConnection()
   const part: Item = await get(db, STORES.PARTS, id)
   if (!part) {
-    console.log('getUiPartFromPart: error, no part', part)
     return
   }
   if (!objectCache) {
@@ -336,22 +324,44 @@ async function getExternalPartsByTypeAndCategory(db: IDBPDatabase, externalCateg
   return await getAllFromIndex(db, INDICES.EXTERNAL_PARTS_BY_TYPE_AND_CATEGORY, [externalCategory.type, externalCategory.id])
 }
 
-export async function getPartsInCategory(db: IDBPDatabase, id: number): Promise<Item[]> {
+export async function getCategoryPageParts(db: IDBPDatabase, id: number): Promise<CategoryPagePart[]> {
   const search = await getActiveSearch()
   const externalCategories = await getExternalCategoriesByCategory(db, id)
-  const externalParts = []
+  const externalParts: ExternalItem[] = []
   for (let i = 0; i < externalCategories.length; i++) {
     const externalCategory = externalCategories[i]
     externalParts.push(...await getExternalPartsByTypeAndCategory(db, externalCategory))
   }
-  const filteredParts = externalParts.filter(part => searchAllowsPart(db, search, part))
-  const items: Item[] = []
-  for (let i = 0; i < filteredParts.length; i++) {
-    const fp = filteredParts[i]
+  const filteredExternalParts = externalParts.filter(part => searchAllowsPart(db, search, part))
+  const itemsMap = new Map<number, ExternalItem[]>()
+  for (let i = 0; i < filteredExternalParts.length; i++) {
+    const fp = filteredExternalParts[i]
     if (typeof fp.itemId !== 'number') {
       continue
     }
-    items.push({ itemId: fp.itemId })
+    let map = itemsMap.get(fp.itemId)
+    if (!map) {
+      map = []
+      itemsMap.set(fp.itemId, map)
+    }
+    map.push(fp)
+  }
+  const items: CategoryPagePart[] = []
+  itemsMap.forEach((value, key) => items.push({
+    itemId: key,
+    externalParts: value,
+    numInvItems: 0,
+    numVariants: 0
+  }))
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i]
+    for (let j = 0; j < item.externalParts.length; j++) {
+      const externalPart = item.externalParts[j]
+      item.numInvItems += await getNumInvItemsByPart(db, externalPart)
+      const variants = await getVariantsByPart(db, externalPart)
+      item.numVariants += variants.length
+      item.image = variants[0].image
+    }
   }
   return items
 }

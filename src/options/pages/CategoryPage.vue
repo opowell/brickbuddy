@@ -28,7 +28,6 @@ onMounted(async () => {
     <h4>{{ category.id }}</h4>
     <IncludeCategoryButton :category="category" @include="router.push(Crumbs.categories.href)"/>
     <ExcludeCategoryButton :category="category" @exclude="router.push(Crumbs.categories.href)"/>
-    <div>Id: {{ category.id }}</div>
     <h4>External categories</h4>
     <div v-for="externalCategory in category.externalCategories">{{ externalCategory.type }}: <NameIdLabel is-span :id="externalCategory.id" :name="externalCategory.name" /></div>
     <h4>Parts ({{ category.parts.length }})</h4>
@@ -42,13 +41,13 @@ onMounted(async () => {
         </tr>
       </thead>
       <tbody>
-        <tr v-for="item in category.parts" :key="item.itemId">
-          <td><img v-if="item.variants?.length" :src="item.variants[0].image"></td>
+        <tr v-for="part in category.parts" :key="part.itemId">
+          <td><img v-if="part.image" :src="part.image"></td>
           <td>
-            <PartButton :part="item" />
+            <PartButton :part="part" />
           </td>
-          <td>{{ item.variants?.length }}</td>
-          <td>{{ item.numInvItems }}</td>
+          <td>{{ part.numVariants }}</td>
+          <td>{{ part.numInvItems }}</td>
         </tr>
       </tbody>
     </table>

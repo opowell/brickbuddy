@@ -1,12 +1,10 @@
 import { IDBPDatabase } from "idb"
-import * as math from "mathjs"
 import { InvItem, ColorPageInvItem, ItemVariant, Item, PartPageVariantInvItem, StorePageInvItem, UiInvItem, PartsPageVariantInvItem, Store, ExternalItem, Search, ActiveSearch, StoreType, StorePageExternalPart, StorePageInvItemItem } from "../types"
-import { getColor, colors } from "./colors"
+import { getColor } from "./colors"
 import { countFromIndex, get, getAllFromIndex, getFromIndex } from "./db"
-import { getDbConnection } from "./idb"
 import { IndexDefinition } from "./indices"
 import ObjectCacheClass from "./ObjectCacheClass"
-import { getPart, getUiPart } from "./parts"
+import { getPart } from "./parts"
 import { getActiveSearch, getActiveCart } from "./searches"
 import { getStore } from "./storeMethods"
 import { getItemVariant } from "./variants"
@@ -108,8 +106,11 @@ export async function getInvItemFromId(db: IDBPDatabase, storeId: string, invIte
   return get(db, STORES.INVENTORY_ITEMS, [storeId, invItemId])
 }
 
-export async function getNumInvItemsByPart(db: IDBPDatabase, part: Item): Promise<number> {
-  return await countFromIndex(db, INDICES.INV_ITEMS_BY_ITEM, part.itemId)
+export async function getNumInvItemsByPart(db: IDBPDatabase, part: ExternalItem): Promise<number> {
+  return await countFromIndex(db, INDICES.INV_ITEMS_BY_ITEM, part.externalItemId)
+}
+export async function getVariantsByPart(db: IDBPDatabase, part: ExternalItem): Promise<ItemVariant[]> {
+  return await getAllFromIndex(db, INDICES.PART_VARIANTS_BY_PART, part.externalItemId)
 }
 
 export async function getPartPageInvItems(db: IDBPDatabase, itemId: number): Promise<PartPageVariantInvItem[]> {

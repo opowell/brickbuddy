@@ -420,6 +420,9 @@ export interface ExternalCategory {
 
 export interface CategoryPagePart extends Item {
   numInvItems: number
+  numVariants: number
+  externalParts: ExternalItem[]
+  image?: string
 }
 
 export interface CategoryPageCategory extends Category {

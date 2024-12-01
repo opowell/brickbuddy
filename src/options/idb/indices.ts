@@ -58,12 +58,12 @@ const indices: {
   EXTERNAL_PARTS_BY_TYPE_AND_CATEGORY: {
     store: stores.EXTERNAL_PARTS.name,
     name: 'typeAndCategoryId',
-    keyPath: ['type', 'categoryId']
+    keyPath: ['type', 'externalCategoryId']
   },
   EXTERNAL_PARTS_BY_CATEGORY: {
     store: stores.EXTERNAL_PARTS.name,
-    name: 'categoryId',
-    keyPath: 'categoryId'
+    name: 'externalCategoryId',
+    keyPath: 'externalCategoryId'
   },
   EXTERNAL_PARTS_BY_PART: {
     store: stores.EXTERNAL_PARTS.name,

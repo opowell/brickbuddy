@@ -25,39 +25,6 @@ export async function getItemVariant(
   return await get(db, STORES.PART_VARIANTS, [type, externalItemId, colorId])
 }
 
-export async function getUiPartVariant(partId: string, colorId: string): Promise<UiItemVariant> {
-  const db = await getDbConnection()
-  const variant: ItemVariant = await get(db, STORES.PART_VARIANTS, [partId, colorId])
-  const invItems: InvItem[] = await getAllFromIndex(
-    db,
-    INDICES.INV_ITEMS_BY_ITEM_AND_COLOR,
-    [variant.itemId, variant.colorId]
-  )
-  console.log(partId, colorId, invItems)
-  const uiInvItems: UiInvItem[] = []
-  for (let i = 0; i < invItems.length; i++) {
-    const invItem: InvItem = invItems[i]
-    const store = await get(db, STORES.STORES, invItem.storeId)
-    const uiItem: UiItem | undefined = await getUiPart(invItem.itemId)
-    const color: Color | undefined = await getColor(db, invItem.colorId)
-    if (!uiItem || !color) {
-      continue
-    }
-    uiInvItems.push({
-      ...invItem,
-      store,
-      item: uiItem,
-      colorName: color.name
-    })
-  }
-  const uiPartVariant: UiItemVariant = {
-    ...variant,
-    color: await getColor(db, variant.colorId + ''),
-    invItems: uiInvItems,
-    item: await getUiPart(variant.itemId),
-  }
-  return uiPartVariant
-}
 export async function getVariantPageVariant(partId: string, colorId: string): Promise<VariantPageVariant> {
   const db = await getDbConnection()
   const activeCart = await getActiveCart()
@@ -96,7 +63,7 @@ export async function getUiPartVariants(db: IDBPDatabase, id: string, objectCach
   const variants: UiItemVariant[] = await getAllFromIndex(db, INDICES.PART_VARIANTS_BY_PART, id)
   for (let i = 0; i < variants.length; i++) {
     const variant = variants[i]
-    variant.color = colors.value[variant.colorId]
+    variant.color = await getColor(db, variant.colorId)
     variant.invItems = await getAllFromIndex(
       db,
       INDICES.INV_ITEMS_BY_ITEM_AND_COLOR,
