@@ -1,5 +1,5 @@
 import { IDBPDatabase } from "idb"
-import { UiItemVariant, ItemVariant, InvItem, UiInvItem, UiItem, Color, VariantPageVariant, VariantPageInvItem, VariantPagePart, ObjectCache, PartPageVariant, Item, PartsPageVariant } from "../types"
+import { UiItemVariant, ItemVariant, InvItem, UiInvItem, UiItem, Color, VariantPageVariant, VariantPageInvItem, VariantPagePart, ObjectCache, PartPageVariant, Item, PartsPageVariant, ExternalItem } from "../types"
 import { getCartQuantity } from "./carts"
 import { getColor, colors } from "./colors"
 import { get, getAllFromIndex } from "./db"
@@ -87,29 +87,42 @@ export async function getPartPageVariants(db: IDBPDatabase, id: number, objectCa
   return partPageVariants
 }
 
+async function getExternalPartsByPart(db: IDBPDatabase, item: Item): Promise<ExternalItem[]> {
+  return await getAllFromIndex(db, INDICES.EXTERNAL_PARTS_BY_PART, item.itemId)
+}
 export async function getPartsPageVariants(db: IDBPDatabase, item: Item, objectCache?: ObjectCacheClass): Promise<PartsPageVariant[]> {
   if (!objectCache) {
     objectCache = new ObjectCacheClass(db)
   }
   try {
-    const variants: ItemVariant[] = await getAllFromIndex(
-      db,
-      INDICES.PART_VARIANTS_BY_PART,
-      item.itemId
-    )
+    const externalParts = await getExternalPartsByPart(db, item)
     const partsPageVariants: PartsPageVariant[] = []
-    for (let i = 0; i < variants.length; i++) {
-      const variant = variants[i]
-      const invItems = await getPartsPageVariantInvItems(db, variant, objectCache)
-      if (invItems.length === 0) {
-        continue
+    for (let i = 0; i < externalParts.length; i++) {
+      const externalPart = externalParts[i]
+      const variants: ItemVariant[] = await getAllFromIndex(
+        db,
+        INDICES.PART_VARIANTS_BY_TYPE_AND_PART,
+        [externalPart.type, externalPart.externalItemId]
+      )
+      console.info(externalPart)
+      for (let i = 0; i < variants.length; i++) {
+        const variant = variants[i]
+        console.info(variant)
+        const invItems = await getPartsPageVariantInvItems(db, variant, objectCache)
+        if (invItems.length === 0) {
+          continue
+        }
+        const color = await objectCache.getColor(variant.colorId)
+        if (!color) {
+          continue
+        }
+        partsPageVariants.push({
+          ...variant,
+          item: externalPart,
+          color,
+          invItems
+        })
       }
-      partsPageVariants.push({
-        ...variant,
-        item,
-        color: await objectCache.getColor(variant.colorId),
-        invItems
-      })
     }
     return partsPageVariants
   } catch (e) {

@@ -175,7 +175,8 @@ export interface VariantPagePart extends Item {
 }
 export interface PartsPagePart extends Item {
   variants: PartsPageVariant[]
-  externalItems: ExternalItem[]
+  externalParts: ExternalItem[]
+  image?: string
 }
 export interface StorePagePart extends Item {
   variants: UiItemVariant[]

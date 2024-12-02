@@ -209,24 +209,25 @@ export async function getPartsPageParts(): Promise<PartsPagePart[]> {
     promises.push(getPartsPagePart(item))
   })
   const partsPageParts = await Promise.all(promises)
-  return partsPageParts
+  return partsPageParts.filter(p => p.variants.length > 0)
 }
 
 export async function getPartsPagePart(part: Item): Promise<PartsPagePart> {
   const db = await getDbConnection()
   const objectCache = await getObjectCache()
   const variants = await getPartsPageVariants(db, part, objectCache)
-  // if (variants.length === 0) {
-  //   console.log('no variants')
-  //   continue
-  // }
-  const externalItems = await getPartsPageExternalItems(objectCache, part)
+  const externalParts = await getPartsPageExternalItems(objectCache, part)
+  const firstVariant = variants.find(v => v.image)
+  let image = undefined
+  if (firstVariant) {
+    image = firstVariant.image
+  }
   return {
     ...part,
     variants,
-    externalItems,
+    externalParts,
+    image
   }
-
 }
 
 interface PartsPageExternalItem extends ExternalItem {

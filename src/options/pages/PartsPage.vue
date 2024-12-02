@@ -51,7 +51,7 @@ import ActiveCartButton from '../components/ActiveCartButton.vue';
       </thead>
       <tbody>
         <tr v-for="item in filteredParts" :key="item.itemId">
-          <td><img v-if="item.variants.length" :src="item.variants[0].image"></td>
+          <td><img v-if="item.image" :src="item.image"></td>
           <td>
             <PartButton :part="item" />
           </td>

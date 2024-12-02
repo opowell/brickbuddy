@@ -1,5 +1,5 @@
 import { IDBPDatabase } from 'idb';
-import { ActiveSearch, CartWithItems, Category, ExternalCategory, ExternalItem, InvItem, Item, PartPageCategory, Search, SearchFilter, Store, StorePageInvItemItem, UiColor } from '../types';
+import { ActiveSearch, CartWithItems, Category, Color, ExternalCategory, ExternalItem, InvItem, Item, PartPageCategory, Search, SearchFilter, Store, StorePageInvItemItem, UiColor } from '../types';
 import STORES from './stores'
 import { getFirstActiveCart, getCartItems } from './carts';
 import { getCategory, getExternalCategory, getPartPageCategory } from './categories';
@@ -122,7 +122,7 @@ export default class ObjectCache {
   async getStore(storeId: string) {
     return this.getObject(this.stores, storeId, async () => await getStore(this.db, storeId))
   }
-  async getColor(colorId: string) {
+  async getColor(colorId: string): Promise<Color | undefined> {
     return this.getObject(this.colors, colorId, async () => await getColor(this.db, colorId))
   }
   async getCategory(categoryId: number): Promise<Category | undefined> {
