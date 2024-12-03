@@ -46,8 +46,8 @@ export const Routes = {
   category(id: number) {
     return '/' + LINKS.CATEGORY + '/' + encodeURIComponent(id)
   },
-  externalCategory(id: string) {
-    return '/' + LINKS.EXTERNAL_CATEGORY + '/' + encodeURIComponent(id)
+  externalCategory(id: string, type: string) {
+    return '/' + LINKS.EXTERNAL_CATEGORY + '/' + type + '/' + encodeURIComponent(id)
   },
   cart(id: number) {
     return '/' + LINKS.CART + '/' + id
@@ -58,8 +58,8 @@ export const Routes = {
   color(id: string) {
     return '/' + LINKS.COLOR + '/' + encodeURIComponent(id)
   },
-  externalPart(id: string) {
-    return '/' + LINKS.EXTERNAL_PART + '/' + encodeURIComponent(id)
+  externalPart(id: string, type: string) {
+    return '/' + LINKS.EXTERNAL_PART + '/' + type + '/' + encodeURIComponent(id)
   },
   part(id: number) {
     return '/' + LINKS.PART + '/' + encodeURIComponent(id)
@@ -94,8 +94,8 @@ export const Hrefs = {
   category(id: number) {
     return Routes.category(id)
   },
-  externalCategory(id: string) {
-    return Routes.externalCategory(id)
+  externalCategory(id: string, type: string) {
+    return Routes.externalCategory(id, type)
   },
   condition(id: string) {
     return Routes.condition(id)
@@ -106,8 +106,8 @@ export const Hrefs = {
   part(id: number) {
     return Routes.part(id)
   },
-  externalPart(id: string) {
-    return Routes.externalPart(id)
+  externalPart(id: string, type: string) {
+    return Routes.externalPart(id, type)
   },
   partVariant(itemId: string, colorId: string) {
     return Routes.partVariant(itemId, colorId)
@@ -179,10 +179,10 @@ export const Crumbs = {
       href: Hrefs.condition(id)
     }
   },
-  externalCategory(title: string | undefined, id: string) {
+  externalCategory(title: string | undefined, id: string, type: string) {
     return {
       title,
-      href: Hrefs.externalCategory(id)
+      href: Hrefs.externalCategory(id, type)
     }
   },
   category(title: string | undefined, id: number) {
@@ -203,10 +203,10 @@ export const Crumbs = {
       href: Hrefs.part(id)
     }
   },
-  externalPart(title: string, id: string) {
+  externalPart(title: string, id: string, type: string) {
     return {
       title,
-      href: Hrefs.externalPart(id)
+      href: Hrefs.externalPart(id, type)
     }
   },
   partVariant(title: string | undefined, itemId: string, colorId: string) {

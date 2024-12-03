@@ -22,6 +22,7 @@ const indices: {
   PART_VARIANTS_BY_COLOR: IndexDefinition
   PART_VARIANTS_BY_PART_AND_COLOR: IndexDefinition
   INV_ITEMS_BY_ITEM: IndexDefinition
+  INV_ITEMS_BY_TYPE_AND_ITEM: IndexDefinition
   INV_ITEMS_BY_ITEM_AND_COLOR: IndexDefinition
   INV_ITEMS_BY_STORE: IndexDefinition
   INV_ITEMS_BY_COLORS: IndexDefinition
@@ -114,6 +115,11 @@ const indices: {
     store: stores.INVENTORY_ITEMS.name,
     name: 'item',
     keyPath: 'itemId'
+  },
+  INV_ITEMS_BY_TYPE_AND_ITEM: {
+    store: stores.INVENTORY_ITEMS.name,
+    name: 'typeItem',
+    keyPath: ['type', 'itemId']
   },
   INV_ITEMS_BY_ITEM_AND_COLOR: {
     store: stores.INVENTORY_ITEMS.name,

@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { CategoryWithExternals } from '../types';
+import { CategoryButtonCategory } from '../types';
 import { Crumbs } from '../idb/constants';
 import { useRouter } from 'vue-router'
 import {PropType} from 'vue'
 import NameIdLabel from './NameIdLabel.vue';
 const { category } = defineProps({
-  category: Object as PropType<CategoryWithExternals>
+  category: Object as PropType<CategoryButtonCategory>
 })
 const router = useRouter()
 const href = computed(() => {

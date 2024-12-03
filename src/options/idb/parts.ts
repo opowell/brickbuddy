@@ -16,20 +16,7 @@ export async function addBrickLinkItem(
   imageUrl: string,
   db: IDBPDatabase
 ) {
-  blItem.type = "BrickLink"
-  await putBrickLinkItem(db, blItem)
-
-  let variant: ItemVariant = await getItemVariant(db, 'BrickLink', blItem.externalItemId, colorId)
-  if (!variant) {
-    const image: string = await toDataURL('https:' + imageUrl)
-    variant = {
-      itemId: blItem.externalItemId,
-      colorId,
-      image,
-      type: 'BrickLink'
-    }
-    await putVariant(db, variant)
-  }
+  return await addItem(colorId, blItem, imageUrl, db, 'BrickLink')
 }
 
 async function putVariant(db: IDBPDatabase, variant: ItemVariant) {
@@ -126,12 +113,13 @@ export async function getPart(db: IDBPDatabase, partId: IDBValidKey): Promise<It
 }
 
 export async function getNumParts(objectCache: ObjectCacheClass): Promise<number> {
+  console.log('getParts')
   const parts = await getParts(objectCache)
   return parts.length
 }
 
 async function getExternalPartsByPart(db: IDBPDatabase, id: number) {
-  return await getAllFromIndex(db, INDICES.EXTERNAL_PARTS_BY_PART)
+  return await getAllFromIndex(db, INDICES.EXTERNAL_PARTS_BY_PART, id)
 }
 
 async function getParts(objectCache: ObjectCacheClass): Promise<Item[]> {
@@ -396,16 +384,26 @@ export async function addLegoItem(
   imageUrl: string,
   db: IDBPDatabase
 ) {
-  blItem.type = "Lego"
-  await putLegoItem(db, blItem)
+  return await addItem(colorId, blItem, imageUrl, db, 'Lego')
+}
+async function addItem(
+  colorId: string,
+  item: ExternalItem,
+  imageUrl: string,
+  db: IDBPDatabase,
+  type: 'Lego' | 'BrickLink'
+) {
+  item.type = type
+  await db.put(STORES.EXTERNAL_PARTS.name, item)
 
-  let variant: ItemVariant = await getItemVariant(db, blItem.itemId, colorId)
+  let variant: ItemVariant = await getItemVariant(db, type, item.externalItemId, colorId)
   if (!variant) {
     const image: string = await toDataURL('https:' + imageUrl)
     variant = {
-      itemId: blItem.itemId,
+      itemId: item.externalItemId,
       colorId,
-      image
+      image,
+      type
     }
     await putVariant(db, variant)
   }

@@ -7,6 +7,7 @@ import ListsPage from './pages/ListsPage.vue'
 import StoresPage from './pages/StoresPage.vue'
 import { LINKS, Routes } from './idb/constants'
 import ItemPage from './pages/ItemPage.vue'
+import ExternalPartPage from './pages/ExternalPartPage.vue'
 import StorePage from './pages/StorePage.vue'
 import ItemVariantPage from './pages/ItemVariantPage.vue'
 import ColorPage from './pages/ColorPage.vue'
@@ -15,6 +16,8 @@ import ActiveSearchPage from './pages/ActiveSearchPage.vue'
 import CartPage from './pages/CartPage.vue'
 import ConditionsPage from './pages/ConditionsPage.vue'
 import CartsPage from './pages/CartsPage.vue'
+import ExternalCategoryPage from './pages/ExternalCategoryPage.vue'
+
 export default [
   {
     name: 'home',
@@ -65,6 +68,16 @@ export default [
     name: 'store',
     path: '/' + LINKS.STORE + '/:id',
     component: StorePage
+  },
+  {
+    name: 'externalCategory',
+    path: '/' + LINKS.EXTERNAL_CATEGORY + '/:type/:id',
+    component: ExternalCategoryPage
+  },
+  {
+    name: 'externalPart',
+    path: '/' + LINKS.EXTERNAL_PART + '/:type/:id',
+    component: ExternalPartPage
   },
   {
     name: 'categories',

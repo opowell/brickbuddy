@@ -12,7 +12,7 @@ const href = computed(() => {
   if (!part) {
     return
   }
-  return Crumbs.externalPart(part.name || '', part.externalItemId).href
+  return Crumbs.externalPart(part.name || '', part.externalItemId, part.type).href
 })
 </script>
 

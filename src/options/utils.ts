@@ -111,7 +111,6 @@ export function cheapestPrice(
       break
     }
   }
-  console.log(cost, quantity)
   return cost / quantity
 }
 
@@ -129,6 +128,5 @@ export function getScore(
     sign = '+'
   }
   // @ts-ignore
-  console.log(items, actualPrice, cheapP, priceScore.toString(), percent.toString())
   return sign + math.round(percent, 2) + '%'
 }

@@ -197,6 +197,7 @@ export interface InvItem {
   colorId: string
   condition_New: number
   condition_Used: number
+  type: string
 }
 
 export interface UiInvItem extends InvItem {
@@ -416,6 +417,11 @@ export interface CategoryWithExternals extends Category {
   externalCategories: ExternalCategory[]
 }
 
+export interface CategoryButtonCategory {
+  id: number | string
+  externalCategories: ExternalCategory[]
+}
+
 export interface ExternalCategory {
   id: string
   name: string
@@ -435,9 +441,14 @@ export interface CategoryPageCategory extends Category {
   externalCategories: ExternalCategory[]
 }
 
-export interface CategoriesPageCategory extends CategoryWithExternals {
+export interface CategoriesPageExternalCategory extends ExternalCategory {
   numParts: number
+  image: string | undefined
+}
+
+export interface CategoriesPageCategory extends Category {
   image?: string
+  externalCategories: CategoriesPageExternalCategory[]
 }
 
 export interface UiCategory extends Category {

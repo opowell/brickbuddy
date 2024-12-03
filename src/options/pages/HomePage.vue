@@ -18,15 +18,16 @@ import CardComponent from '../components/CardComponent.vue';
       <ActiveSearchButton />
       <ActiveCartButton />
     </p>
-    <div class="cards">
-      <CardComponent v-if="homeData" name="Stores" :count="homeData.stores" :href="Crumbs.stores.href" />
-      <CardComponent v-if="homeData" name="Colors" :count="homeData.colors" :href="Crumbs.colors.href" />
-      <CardComponent v-if="homeData" name="Categories" :count="homeData.categories" :href="Crumbs.categories.href" />
-      <CardComponent v-if="homeData" name="Parts" :count="homeData.parts" :href="Crumbs.parts.href" />
-      <CardComponent v-if="homeData" name="Searches" :count="homeData.searches" :href="Crumbs.searches.href" />
-      <CardComponent v-if="homeData" name="Conditions" :count="homeData.conditions" :href="Crumbs.conditions.href" />
-      <CardComponent v-if="homeData" name="Lists" :count="homeData.lists" :href="Crumbs.lists.href" />
-      <CardComponent v-if="homeData" name="Carts" :count="homeData.carts" :href="Crumbs.carts.href" />
+    <div v-if="!homeData">Loading...</div>
+    <div v-else class="cards">
+      <CardComponent name="Stores" :count="homeData.stores" :href="Crumbs.stores.href" />
+      <CardComponent name="Colors" :count="homeData.colors" :href="Crumbs.colors.href" />
+      <CardComponent name="Categories" :count="homeData.categories" :href="Crumbs.categories.href" />
+      <CardComponent name="Parts" :count="homeData.parts" :href="Crumbs.parts.href" />
+      <CardComponent name="Searches" :count="homeData.searches" :href="Crumbs.searches.href" />
+      <CardComponent name="Conditions" :count="homeData.conditions" :href="Crumbs.conditions.href" />
+      <CardComponent name="Lists" :count="homeData.lists" :href="Crumbs.lists.href" />
+      <CardComponent name="Carts" :count="homeData.carts" :href="Crumbs.carts.href" />
     </div>
   </div>
 </template>

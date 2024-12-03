@@ -1,5 +1,5 @@
 import { IDBPDatabase } from "idb"
-import { BrickLinkCategory, CategoriesPageCategory, Category, CategoryPageCategory, CategoryPagePart, ExternalCategory, ExternalItem, Item, ItemVariant, ItemWithExternals, LegoCategory, PartPageCategory, RebrickableCategory, SearchFilter, UiCategory } from "../types"
+import { BrickLinkCategory, CategoriesPageCategory, CategoriesPageExternalCategory, Category, CategoryPageCategory, CategoryPagePart, ExternalCategory, ExternalItem, Item, ItemVariant, ItemWithExternals, LegoCategory, PartPageCategory, RebrickableCategory, SearchFilter, UiCategory } from "../types"
 import { get, getAllFromIndex, getAllKeys, getFromIndex, put } from "./db"
 import STORES from './stores'
 import INDICES from './indices'
@@ -56,25 +56,29 @@ export async function getExcludedCategories(): Promise<Category[] | undefined> {
   return excludedCategories.value
 }
 
-async function getExternalCategories(db: IDBPDatabase, categoryId: number): Promise<ExternalCategory[]> {
+export async function getExternalCategories(db: IDBPDatabase, categoryId: number): Promise<ExternalCategory[]> {
   return await getAllFromIndex(db, INDICES.EXTERNAL_CATEGORIES_BY_CATEGORY, categoryId)
 }
 
 export async function getCategoriesPageCategory(db: IDBPDatabase, category: Category): Promise<CategoriesPageCategory> {
-  const numParts = await getNumPartsInCategory(db, category.id)
   const externalCategories = await getExternalCategories(db, category.id)
-  let image = undefined
+  const categoriesPageExternalCategory: CategoriesPageExternalCategory[] = []
   for (let i = 0; i < externalCategories.length; i++) {
-    image = await getExternalCategoryImage(db, externalCategories[i])
-    if (image) {
-      break
+    const externalCategory = externalCategories[i]
+    const numParts = await getNumPartsInCategory(db, category.id)
+    const image = await getExternalCategoryImage(db, externalCategory)
+    if (numParts === 0) {
+      continue
     }
+    categoriesPageExternalCategory.push({
+      ...externalCategory,
+      numParts,
+      image
+    })
   }
   return {
     ...category,
-    numParts,
-    image,
-    externalCategories,
+    externalCategories: categoriesPageExternalCategory,
   }
 }
 export async function getCategoryImage(db: IDBPDatabase, id: number): Promise<string | undefined> {
@@ -126,10 +130,12 @@ export async function getCategoriesPageCategories(): Promise<CategoriesPageCateg
       continue
     }
     const categoriesPageCategory: CategoriesPageCategory = await getCategoriesPageCategory(db, category)
+    if (categoriesPageCategory.externalCategories.length === 0) {
+      continue
+    }
     categoriesPageCategories.push(categoriesPageCategory)
   }
   return categoriesPageCategories
-    .filter(category => category.numParts > 0)
     .sort((a, b) => a.id - b.id)
 }
 

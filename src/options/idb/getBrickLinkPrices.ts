@@ -1,5 +1,5 @@
 import { IDBPDatabase } from "idb";
-import { BrickLinkCategory, BrickLinkItem, Category, Color, ExternalItem, Item, RebrickableCategory, RebrickableItem, Store } from "../types";
+import { BrickLinkCategory, BrickLinkItem, Category, Color, ExternalItem, Item, RebrickableCategory, RebrickableItem, Store, StoreType } from "../types";
 import * as math from 'mathjs'
 import INDICES from './indices'
 import { addBrickLinkCategory, getBrickLinkCategory, getCategory, getRebrickableCategory, updateCategory } from "./categories";

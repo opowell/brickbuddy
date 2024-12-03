@@ -35,6 +35,7 @@ export async function addInvItem(
       colorId,
       condition_New: condition === 'New' ? 1 : 0,
       condition_Used: condition === 'Used' ? 1 : 0,
+      type: store.type === StoreType.BrickLink ? 'BrickLink' : 'Lego'
     }
   }
   invItem.quantity += quantity

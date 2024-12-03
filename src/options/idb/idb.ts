@@ -6,8 +6,18 @@ import { ActiveSearch, Category, HomeData, Item, ItemVariant, RbColor, StorePage
 import { DB_NAME } from "./constants";
 
 export async function getHomeData(): Promise<HomeData> {
+  console.log('getHomeData')
   const db = await getDbConnection()
   const objectCache = new ObjectCacheClass(db)
+  console.log(await count(db, STORES.STORES))
+  console.log(await count(db, STORES.COLORS))
+    console.log(await getCategoriesCount(db))
+    console.log(await getNumParts(objectCache))
+    console.log(2)
+    console.log(await count(db, STORES.LISTS))
+    console.log(await count(db, STORES.SEARCHES))
+    console.log(await count(db, STORES.CARTS))
+
   return {
     stores: await count(db, STORES.STORES),
     colors: await count(db, STORES.COLORS),
