@@ -21,7 +21,7 @@ onMounted(async () => {
 
 function add() {
   addNewStore({
-    sId: newStoreId.value,
+    id: newStoreId.value,
     name: newStoreName.value
   })
 }
@@ -53,7 +53,7 @@ import ActiveSearchButton from '../components/ActiveSearchButton.vue';
         </tr>
       </thead>
       <tbody>
-        <tr v-for="store in stores" :key="store.sId">
+        <tr v-for="store in stores" :key="store.id">
           <td>{{ store.type === StoreType.BrickLink ? 'BrickLink' : 'Lego' }}</td>
           <td>
             <StoreButton :store="store" />

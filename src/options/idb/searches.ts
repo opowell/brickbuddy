@@ -2,7 +2,7 @@ import { IDBPDatabase } from "idb"
 import { Search, UiStore, CartWithItems, ActiveSearch, ActiveSearchButtonActiveSearch, SearchesPageSearch, Item, SearchPageSearch, SearchFilter, ExternalItem } from "../types"
 import { getCategories, getCategory, getCategoriesPageCategory } from "./categories"
 import { getCondition } from "./condition"
-import { getAllFromIndex, getFromIndex } from "./db"
+import { getAll, getAllFromIndex, getFromIndex } from "./db"
 import { getDbConnection } from "./idb"
 import STORES from "./stores"
 import INDICES from './indices'
@@ -73,9 +73,13 @@ export async function getFirstActiveSearch(db: IDBPDatabase): Promise<Search | u
   return await getFromIndex(db, INDICES.SEARCHES_BY_ACTIVE, 1)
 }
 
+export async function getAllSearches(db: IDBPDatabase): Promise<Search[]> {
+  return await getAll(db, STORES.SEARCHES)
+}
+
 export async function getSearchesPagesSearches(): Promise<SearchesPageSearch[]> {
   const db = await getDbConnection()
-  const searches = await db.getAll(STORES.SEARCHES.name)
+  const searches = await getAllSearches(db)
   const searchesPageSearches: SearchesPageSearch[] = []
   for (let i = 0; i < searches.length; i++) {
     const search = searches[i]

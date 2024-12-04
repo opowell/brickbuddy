@@ -84,7 +84,7 @@ const stores: {
   },
   STORES: {
     name: 'stores',
-    keyPath: 'sId',
+    keyPath: 'id',
   },
 }
 

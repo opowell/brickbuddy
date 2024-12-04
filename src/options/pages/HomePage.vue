@@ -2,12 +2,8 @@
 import { Crumbs } from '../idb/constants';
 import ActiveSearchButton from '../components/ActiveSearchButton.vue';
 import ActiveCartButton from '../components/ActiveCartButton.vue';
-import { HomeData } from '../types';
-import { getHomeData } from '../idb/idb';
-const homeData = ref<HomeData | undefined>(undefined)
-onMounted(async () => {
-  homeData.value = await getHomeData()
-})
+import { homeData } from '../idb/idb';
+import { objectCache } from '../idb/idb';
 import CardComponent from '../components/CardComponent.vue';
 </script>
 
@@ -18,7 +14,7 @@ import CardComponent from '../components/CardComponent.vue';
       <ActiveSearchButton />
       <ActiveCartButton />
     </p>
-    <div v-if="!homeData">Loading...</div>
+    <div v-if="!homeData && !objectCache">Loading...</div>
     <div v-else class="cards">
       <CardComponent name="Stores" :count="homeData.stores" :href="Crumbs.stores.href" />
       <CardComponent name="Colors" :count="homeData.colors" :href="Crumbs.colors.href" />

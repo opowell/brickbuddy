@@ -23,10 +23,10 @@ export async function addInvItem(
   price: string,
   itemId: string,
 ) {
-  let invItem: InvItem | undefined = await getInvItem(db, store.sId, invId)
+  let invItem: InvItem | undefined = await getInvItem(db, store.id, invId)
   if (!invItem) {
     invItem = {
-      storeId: store.sId,
+      storeId: store.id,
       invId,
       itemId,
       condition,

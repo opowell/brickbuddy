@@ -1,7 +1,7 @@
 import { IDBPDatabase } from "idb"
-import { UiShopList, ShopListItem } from "../types"
+import { UiShopList, ShopListItem, ShopList } from "../types"
 import { colors } from "./colors"
-import { getAllFromIndex } from "./db"
+import { getAll, getAllFromIndex } from "./db"
 import { getDbConnection } from "./idb"
 import STORES from "./stores"
 import INDICES from './indices'
@@ -14,6 +14,10 @@ export async function addShopList(name: string) {
 
 export async function addShopListDb(name: string, db: IDBPDatabase) {
   await db.put(STORES.LISTS.name, { name })
+}
+
+export async function getAllLists(db: IDBPDatabase): Promise<ShopList[]> {
+  return await getAll(db, STORES.LISTS)
 }
 
 export async function addShopListItem(

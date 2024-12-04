@@ -56,9 +56,12 @@ export async function setActiveCart(cart: Cart) {
 export async function getCartPageCart(cartId: number) {
   return await getActiveCart()
 }
+export async function getAllCarts(db: IDBPDatabase): Promise<Cart[]> {
+  return await getAll(db, STORES.CARTS)
+}
 export async function getCartsPageCarts(): Promise<CartsPageCart[]> {
   const db = await getDbConnection()
-  const carts = await getAll(db, STORES.CARTS)
+  const carts = await getAllCarts(db)
   return await Promise.all<CartsPageCart>(carts.map(async cart => {
     const cartItems = await getCartItems(db, cart)
     return {
@@ -136,12 +139,12 @@ export function getCartQuantity(cart: CartWithItems, invItem: InvItem): number {
 export async function setCartQuantity(store: Store, invId: string, price: string, newQuantity: number): Promise<boolean> {
   const activeCart = await getActiveCart()
   const db = await getDbConnection()
-  let foundItem: CartItem = await db.get(STORES.CART_ITEMS.name, [activeCart.id, store.sId, invId])
+  let foundItem: CartItem = await db.get(STORES.CART_ITEMS.name, [activeCart.id, store.id, invId])
   if (!foundItem) {
     foundItem = {
       cartId: activeCart.id,
       invItemId: invId,
-      storeId: store.sId,
+      storeId: store.id,
       quantity: 0,
       price,
       lastUpdated: new Date()
@@ -150,7 +153,7 @@ export async function setCartQuantity(store: Store, invId: string, price: string
   foundItem.quantity = newQuantity
   foundItem.lastUpdated = new Date()
   if (foundItem.quantity === 0) {
-    await db.delete(STORES.CART_ITEMS.name, [activeCart.id, store.sId, invId])
+    await db.delete(STORES.CART_ITEMS.name, [activeCart.id, store.id, invId])
   } else {
     await db.put(STORES.CART_ITEMS.name, foundItem)
   }

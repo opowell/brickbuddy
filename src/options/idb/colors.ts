@@ -1,5 +1,5 @@
 import { IDBPDatabase } from "idb"
-import { get, getAllFromIndex, getFromIndex, put } from "./db"
+import { get, getAll, getAllFromIndex, getFromIndex, put } from "./db"
 import { Color, ColorPageColor, ColorPageInvItem, ColorsPageColor, InvItem, ItemVariant, Store, StoreType, UiColor } from "../types"
 import STORES from './stores'
 import INDICES from './indices'
@@ -47,9 +47,12 @@ export async function getColorPageColor(id: string): Promise<ColorPageColor> {
   }
   return uiColor
 }
+export async function getAllColors(db: IDBPDatabase): Promise<Color[]> {
+  return await db.getAll(STORES.COLORS.name)
+}
 export async function getColorsPageColors(): Promise<ColorsPageColor[]> {
   const db = await getDbConnection()
-  const colors: Color[] = await db.getAll(STORES.COLORS.name)
+  const colors: Color[] = await getAllColors(db)
   const uiColors: ColorsPageColor[] = []
   for (let i = 0; i < colors.length; i++) {
     const color = colors[i]

@@ -111,9 +111,17 @@ export async function getExternalCategoryImage(db: IDBPDatabase, category: Exter
   return variant.image
 }
 
+export async function getAllCategories(db: IDBPDatabase): Promise<Category[]> {
+  return await db.getAll(STORES.CATEGORIES.name)
+}
+
+export async function getAllExternalCategories(db: IDBPDatabase): Promise<ExternalCategory[]> {
+  return await db.getAll(STORES.EXTERNAL_CATEGORIES.name)
+}
+
 export async function getCategoriesPageCategories(): Promise<CategoriesPageCategory[]> {
   const db = await getDbConnection()
-  const categories = await db.getAll(STORES.CATEGORIES.name)
+  const categories = await getAllCategories(db)
   const categoriesPageCategories: CategoriesPageCategory[] = []
   const activeSearch = await getActiveSearch()
   for (let i = 0; i < categories.length; i++) {

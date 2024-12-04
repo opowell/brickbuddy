@@ -11,21 +11,21 @@ export const openStore = ref<UiStore | null>(null)
 
 export async function addNewStore(store: AddNewStore) {
   const db = await getDbConnection()
-  await addStore(store.name, store.sId, [], '', 100, db)
+  await addStore(store.name, store.id, [], '', 100, db)
 }
 
 async function addStore(
   name: string,
-  sId: string,
+  id: string,
   shippingCosts: ShippingCost[],
   slug: string,
   priceAdjustment: number,
   db: IDBPDatabase,
   type: StoreType = StoreType.BrickLink
 ) {
-  const existingStore: Store = await get(db, STORES.STORES, sId)
+  const existingStore: Store = await get(db, STORES.STORES, id)
   const newStore: Store = {
-    sId,
+    id,
     name,
     fetchPageIndex: existingStore?.fetchPageIndex || 1,
     fetchMaxPageIndex: existingStore?.fetchMaxPageIndex || 10,
@@ -48,7 +48,7 @@ export async function updateStore(db: IDBPDatabase, store: Store | UiStore) {
   }
   try {
     const storeObj: Store = {
-      sId: store.sId,
+      id: store.id,
       name: store.name,
       fetchPageIndex: store.fetchPageIndex,
       fetchMaxPageIndex: store.fetchMaxPageIndex,
@@ -274,16 +274,20 @@ export async function getStore(db: IDBPDatabase, storeId: string): Promise<Store
   return await get(db, STORES.STORES, storeId)
 }
 
+export async function getAllStores(db: IDBPDatabase): Promise<Store[]> {
+  return await db.getAll(STORES.STORES.name)
+}
+
 export async function getStoresPageStores(): Promise<StoresPageStore[]> {
   const db = await getDbConnection()
   const search = await getActiveSearch()
-  const stores = await db.getAll(STORES.STORES.name)
+  const stores = await getAllStores(db)
   const uiStores: StoresPageStore[] = []
   for (let i = 0; i < stores.length; i++) {
     const store = stores[i]
     uiStores.push({
       ...store,
-      numInvItems: await countInvItems(db, store.sId, search)
+      numInvItems: await countInvItems(db, store.id, search)
     })
   }
   return uiStores

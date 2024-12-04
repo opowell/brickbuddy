@@ -64,7 +64,7 @@ watch(listId, () => {
           </tr>
         </thead>
         <tbody>
-          <tr v-for="store in search.stores" :key="store.sId">
+          <tr v-for="store in search.stores" :key="store.id">
             <td>
               <button @click="$emit('removeStore', store)">
                 x
@@ -81,8 +81,8 @@ watch(listId, () => {
       <select v-model="addStoreId">
         <option
           v-for="store in stores"
-          :key="store.sId"
-          :value="store.sId"
+          :key="store.id"
+          :value="store.id"
         >
           {{ store.name }}
         </option>
@@ -95,7 +95,7 @@ watch(listId, () => {
       <thead>
         <tr>
           <th />
-          <th v-for="store in search.stores" :key="store.sId">
+          <th v-for="store in search.stores" :key="store.id">
             {{ store.name }}
           </th>
         </tr>

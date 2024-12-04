@@ -46,11 +46,6 @@ export interface ShippingCost {
   maxWeight?: number
   type?: 'eco' | 'priority'
 }
-export interface AddNewStore {
-  sId: string
-  name: string
-}
-
 export interface HomeData {
   stores: number
   categories: number
@@ -65,7 +60,9 @@ export enum StoreType {
   BrickLink,
   Lego
 }
-export interface Store extends AddNewStore {
+export interface Store {
+  id: string
+  name: string
   fetchPageIndex: number
   fetchMaxPageIndex: number
   shippingCosts: ShippingCost[]
@@ -102,6 +99,7 @@ export interface RebrickableItem extends ExternalItem {
 }
 export interface ExternalItem {
   externalCategoryId: string
+  externalCategory?: ExternalCategory
   itemId: number
   externalItemId: string
   name?: string
@@ -257,9 +255,10 @@ export interface ShopListItem {
   maxPrice: number
   colors: string[]
 }
+
 export interface SearchFilter {
   searchId: IDBValidKey
-  type: 'category' | 'color' | 'store' | 'condition'
+  type: 'category' | 'color' | 'store' | 'condition' | 'externalCategory'
   objectId: string | number
   isExcluded: boolean
 }
@@ -402,6 +401,7 @@ export interface ColorsPageColor extends Color {
 }
 
 export interface Category {
+  externalCategories?: ExternalCategory[]
   id: number
 }
 
@@ -427,6 +427,8 @@ export interface ExternalCategory {
   name: string
   categoryId: number
   type: 'BrickLink' | 'Lego' | 'Rebrickable'
+  category?: Category
+  image?: string
 }
 
 export interface CategoryPagePart extends Item {

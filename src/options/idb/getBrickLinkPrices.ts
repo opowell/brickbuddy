@@ -14,7 +14,7 @@ async function getColorByBrickLinkId(db: IDBPDatabase, brickLinkId: string): Pro
 }
 
 export async function getBrickLinkPrices(db: IDBPDatabase, store: Store) {
-    const response = await fetch(`https://store.bricklink.com/ajax/clone/store/searchitems.ajax?sort=6&pgSize=100&pg=${store.fetchPageIndex}&showHomeItems=0&sid=${store.sId}`, {
+    const response = await fetch(`https://store.bricklink.com/ajax/clone/store/searchitems.ajax?sort=6&pgSize=100&pg=${store.fetchPageIndex}&showHomeItems=0&sid=${store.id}`, {
   "headers": {
     "accept": "application/json, text/javascript, */*; q=0.01",
     "accept-language": "en,de;q=0.9,es;q=0.8,en-US;q=0.7",

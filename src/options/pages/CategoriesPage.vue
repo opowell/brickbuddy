@@ -1,12 +1,8 @@
 <script setup lang="ts">
-import { CategoriesPageCategory, CategoriesPageExternalCategory, Category, ExternalCategory } from '../types';
+import { CategoriesPageCategory, ExternalCategory } from '../types';
 import ExcludeCategoryButton from '../components/ExcludeCategoryButton.vue';
 import IncludeCategoryButton from '../components/IncludeCategoryButton.vue';
-
-const categories = ref<CategoriesPageCategory[] | undefined>(undefined)
-onMounted(async () => {
-  categories.value = await getCategoriesPageCategories()
-})
+import { categories, objectCache, activeExternalCategories, externalCategoriesMap } from '../idb/idb';
 interface CategoriesPageUniqueCategory {
   externalCategories: ExternalCategory[]
   isExternal: boolean
@@ -55,20 +51,19 @@ const uniqueExternalCategories = computed<CategoriesPageUniqueCategory[]>(() => 
   return out
 })
 function excludeCategory(index: number) {
-  categories.value?.splice(index, 1)
+  // categories.value?.splice(index, 1)
 }
 function includeCategory(index: number) {
-  categories.value = categories.value?.splice(index, 1)
+  // categories.value = categories.value?.splice(index, 1)
 }
 import CategoryButton from '../components/CategoryButton.vue';
 import HomeButton from '../components/HomeButton.vue';
 import ActiveSearchButton from '../components/ActiveSearchButton.vue';
-import { getCategoriesPageCategories } from '../idb/categories';
 import ExternalCategoryButton from '../components/ExternalCategoryButton.vue';
 </script>
 
 <template>
-  <div v-if="!categories">
+  <div v-if="!categories || !objectCache || !activeExternalCategories || !externalCategoriesMap">
     Loading...
   </div>
   <div v-else>

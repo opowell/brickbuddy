@@ -1,6 +1,6 @@
 import { IDBPDatabase } from "idb"
 import { BrickLinkCategory, BrickLinkItem, CategoryPagePart, ExternalCategory, ExternalItem, InvItem, Item, ItemVariant, LegoItem, ObjectCache, PartPagePart, PartPageVariant, PartPageVariantInvItem, PartsPagePart, RebrickableItem, StorePageInvItemItem, StorePageItemVariant, StorePageVariant, UiItem, UiItemVariant, VariantPagePart } from "../types"
-import { countFromIndex, get, getAllFromIndex, getFromIndex, put } from "./db"
+import { countFromIndex, get, getAll, getAllFromIndex, getFromIndex, put } from "./db"
 import STORES from './stores'
 import { toDataURL } from "../utils"
 import { getItemVariant, getPartPageVariants, getPartsPageVariants, getUiPartVariants } from "./variants"
@@ -106,6 +106,14 @@ export async function getLegoItem(db: IDBPDatabase, legoId: string): Promise<Leg
     await storeRebrickableItem(db, rebrickableItem)
   }
   return await getFromIndex(db, INDICES.EXTERNAL_PARTS_BY_TYPE_AND_EXTERNAL_ID, ['Lego', legoId])
+}
+
+export async function getAllParts(db: IDBPDatabase): Promise<Item[]> {
+  return await getAll(db, STORES.PARTS)
+}
+
+export async function getAllExternalParts(db: IDBPDatabase): Promise<ExternalItem[]> {
+  return await getAll(db, STORES.EXTERNAL_PARTS)
 }
 
 export async function getPart(db: IDBPDatabase, partId: IDBValidKey): Promise<Item> {
