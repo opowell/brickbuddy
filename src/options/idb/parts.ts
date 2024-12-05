@@ -1,5 +1,5 @@
 import { IDBPDatabase } from "idb"
-import { BrickLinkCategory, BrickLinkItem, CategoryPagePart, ExternalCategory, ExternalItem, InvItem, Item, ItemVariant, LegoItem, ObjectCache, PartPagePart, PartPageVariant, PartPageVariantInvItem, PartsPagePart, RebrickableItem, StorePageInvItemItem, StorePageItemVariant, StorePageVariant, UiItem, UiItemVariant, VariantPagePart } from "../types"
+import { BrickLinkCategory, BrickLinkItem, CachedExternalItem, CategoryPagePart, ExternalCategory, ExternalItem, InvItem, Item, ItemVariant, LegoItem, ObjectCache, PartPagePart, PartPageVariant, PartPageVariantInvItem, PartsPagePart, RebrickableItem, StorePageInvItemItem, StorePageItemVariant, StorePageVariant, UiItem, UiItemVariant, VariantPagePart } from "../types"
 import { countFromIndex, get, getAll, getAllFromIndex, getFromIndex, put } from "./db"
 import STORES from './stores'
 import { toDataURL } from "../utils"
@@ -112,7 +112,7 @@ export async function getAllParts(db: IDBPDatabase): Promise<Item[]> {
   return await getAll(db, STORES.PARTS)
 }
 
-export async function getAllExternalParts(db: IDBPDatabase): Promise<ExternalItem[]> {
+export async function getAllExternalParts(db: IDBPDatabase): Promise<CachedExternalItem[]> {
   return await getAll(db, STORES.EXTERNAL_PARTS)
 }
 

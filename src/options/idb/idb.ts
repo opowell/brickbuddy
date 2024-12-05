@@ -1,4 +1,4 @@
-import { BrickLinkCategory, Cart, CategoriesPageCategory, CategoriesPageExternalCategory, Color, ExternalCategory, ExternalItem, RebrickableItem, Search, SearchFilter, ShopList, Store } from './../types';
+import { BrickLinkCategory, CachedCart, CachedCartItem, CachedCategory, CachedColor, CachedExternalCategory, CachedExternalItem, CachedInvItem, CachedItem, CachedItemVariant, CachedList, CachedSearch, CachedStore, Cart, CategoriesPageCategory, CategoriesPageExternalCategory, Color, ExternalCategory, ExternalItem, RebrickableItem, Search, SearchFilter, ShopList, Store } from './../types';
 import { IDBPDatabase, openDB } from "idb";
 import STORES from './stores'
 import INDICES from './indices'
@@ -6,28 +6,34 @@ import { ActiveSearch, Category, HomeData, Item, ItemVariant, RbColor, StorePage
 import { DB_NAME } from "./constants";
 
 interface Cache {
-  carts: Cart[]
-  colors: Color[]
-  categories: Category[]
-  externalCategories: ExternalCategory[]
-  externalParts: ExternalItem[]
-  lists: ShopList[]
-  parts: Item[]
-  searches: Search[]
-  stores: Store[]
+  carts: CachedCart[]
+  cartItems: CachedCartItem[]
+  colors: CachedColor[]
+  categories: CachedCategory[]
+  invItems: CachedInvItem[]
+  externalCategories: CachedExternalCategory[]
+  externalParts: CachedExternalItem[]
+  lists: CachedList[]
+  parts: CachedItem[]
+  searches: CachedSearch[]
+  stores: CachedStore[]
+  variants: CachedItemVariant[]
 }
 
 const activeSearch = ref<Search | undefined>()
 export const objectCache: Ref<Cache> = ref({
   carts: [],
+  cartItems: [],
   colors: [],
   categories: [],
   externalCategories: [],
   externalParts: [],
+  invItems: [],
   lists: [],
   parts: [],
   searches: [],
   stores: [],
+  variants: []
 })
 
 export async function loadActiveSearch() {
@@ -39,22 +45,68 @@ export async function loadObjectCache(db: IDBPDatabase) {
   cache.categories.push(...await getAllCategories(db))
   cache.externalCategories.push(...await getAllExternalCategories(db))
   cache.externalCategories.forEach((ec) => {
-    ec.category = categoriesMap.value.get(ec.categoryId)
-    if (!ec.category) {
+    const category = categoriesMap.value.get(ec.categoryId)
+    if (!category) {
       return
     }
+    ec.category = category
+    ec.image = computed(() => {
+      for (let i = 0; i < ec.externalParts.length; i++) {
+        const part = ec.externalParts[i]
+        if (!part.variants) {
+          continue
+        }
+        for (let j = 0; j < part.variants.length; j++) {
+          const variant = part.variants[j]
+          if (variant.image) {
+            return variant.image
+          }
+        }
+      }
+    })
     if (!ec.category.externalCategories) {
       ec.category.externalCategories = []
     }
     ec.category.externalCategories.push(ec)
   })
   cache.externalParts.push(...await getAllExternalParts(db))
+  cache.externalParts.forEach((ep) => {
+    const externalCategory = externalCategoriesMap.value.get(ep.type + ep.externalCategoryId)
+    if (!externalCategory) {
+      return
+    }
+    ep.externalCategory = externalCategory
+    if (!externalCategory.externalParts) {
+      externalCategory.externalParts = []
+    }
+    externalCategory.externalParts.push(ep)
+  })
   cache.colors.push(...await getAllColors(db))
   cache.lists.push(...await getAllLists(db))
   cache.parts.push(...await getAllParts(db))
   cache.searches.push(...await getAllSearches(db))
   cache.stores.push(...await getAllStores(db))
+  cache.variants.push(...await getAllVariants(db))
+  cache.variants.forEach((v) => {
+    const externalPart = externalPartsMap.value.get(v.type + v.itemId)
+    if (!externalPart) {
+      return
+    }
+    v.externalPart = externalPart
+    if (!v.externalPart.variants) {
+      v.externalPart.variants = []
+    }
+    v.externalPart.variants.push(v)
+  })
 }
+
+const externalPartsMap = computed(() => {
+  const map = new Map<string, CachedExternalItem>()
+  objectCache.value.externalParts.forEach((ep) => {
+    map.set(ep.type + ep.externalItemId, ep)
+  })
+  return map
+})
 
 function filtersByType(filters: SearchFilter[] | undefined, type: string): SearchFilter[] {
   if (!filters) {
@@ -108,8 +160,8 @@ const activeStores = computed<Store[]>(() => filterObjects<Store>(
   excludedFilterIds.value.get('store'),
   includedFilterIds.value.get('store')
 ))
-const activeCategories = computed<Category[]>(() => {
-  const filtered = filterObjects<Category>(
+const activeCategories = computed<CachedCategory[]>(() => {
+  const filtered = filterObjects<CachedCategory>(
     objectCache.value.categories,
     excludedFilterIds.value.get('category'),
     includedFilterIds.value.get('category')
@@ -117,52 +169,49 @@ const activeCategories = computed<Category[]>(() => {
   filtered.forEach(c => c.externalCategories = [])
   return filtered
 })
-const categoriesMap = computed<Map<number, Category>>(() => {
-  const map = new Map<number, Category>()
+const categoriesMap = computed<Map<number, CachedCategory>>(() => {
+  const map = new Map<number, CachedCategory>()
   activeCategories.value.forEach((c) => {
     map.set(c.id, c)
   })
   return map
 })
-export const externalCategoriesMap = computed<Map<string, ExternalCategory>>(() => {
-  const map = new Map<string, ExternalCategory>()
+export const externalCategoriesMap = computed<Map<string, CachedExternalCategory>>(() => {
+  const map = new Map<string, CachedExternalCategory>()
   activeExternalCategories.value.forEach((c) => {
     map.set(c.type + c.id, c)
   })
   return map
 })
-export const activeExternalCategories = computed<ExternalCategory[]>(() => {
-  let filtered: ExternalCategory[] = filterObjects<ExternalCategory>(
+export const activeExternalCategories = computed<CachedExternalCategory[]>(() => {
+  let filtered: CachedExternalCategory[] = filterObjects<CachedExternalCategory>(
     objectCache.value.externalCategories,
     excludedFilterIds.value.get('externalCategory'),
     includedFilterIds.value.get('externalCategory')
   )
-  filtered = filterObjects<ExternalCategory>(
+  filtered = filterObjects<CachedExternalCategory>(
     filtered,
     excludedFilterIds.value.get('category'),
     includedFilterIds.value.get('category'),
-    (ec: ExternalCategory) => ec.categoryId
+    (ec: CachedExternalCategory) => ec.categoryId
   )
-  filtered.forEach((ec: ExternalCategory) => {
-    ec.image = 'todo'
-  })
   return filtered
 })
-const activeExternalItems = computed<ExternalItem[]>(() => {
-  const filtered: ExternalItem[] = filterObjects<ExternalItem>(
+const activeExternalItems = computed<CachedExternalItem[]>(() => {
+  const filtered: CachedExternalItem[] = filterObjects<CachedExternalItem>(
     objectCache.value.externalParts,
     excludedFilterIds.value.get('externalCategory'),
     includedFilterIds.value.get('externalCategory'),
-    (ei: ExternalItem) => ei.externalCategoryId
+    (ei: CachedExternalItem) => ei.externalCategoryId
   )
   filtered.forEach((ei) => {
     ei.externalCategory = externalCategoriesMap.value.get(ei.type + ei.externalCategoryId)
   })
-  return filterObjects<ExternalItem>(
+  return filterObjects<CachedExternalItem>(
     filtered,
     excludedFilterIds.value.get('category'),
     includedFilterIds.value.get('category'),
-    (ei: ExternalItem) => ei.externalCategory?.categoryId
+    (ei: CachedExternalItem) => ei.externalCategory?.categoryId
   )
 })
 
@@ -179,10 +228,10 @@ export const homeData = computed<HomeData>(() => {
   }
 })
 
-const externalCategoriesByCategoryId = computed<Map<number, ExternalCategory[]>>(() => {
+const externalCategoriesByCategoryId = computed<Map<number, CachedExternalCategory[]>>(() => {
   console.log(activeExternalCategories.value.length)
-  const map = new Map<number, ExternalCategory[]>()
-  activeExternalCategories.value.forEach((ec: ExternalCategory) => {
+  const map = new Map<number, CachedExternalCategory[]>()
+  activeExternalCategories.value.forEach((ec: CachedExternalCategory) => {
     const categoryId = ec.categoryId
     let value = map.get(categoryId)
     if (!value) {
@@ -195,7 +244,6 @@ const externalCategoriesByCategoryId = computed<Map<number, ExternalCategory[]>>
 })
 
 const externalPartsInExternalCategory = computed<Map<string, ExternalItem[]>>(() => {
-  console.info('externalPartsInExternalCategory', activeExternalItems.value.length)
   const map = new Map<string, ExternalItem[]>
   activeExternalCategories.value.forEach((ec: ExternalCategory) => {
     const id = ec.type + ec.id
@@ -205,43 +253,22 @@ const externalPartsInExternalCategory = computed<Map<string, ExternalItem[]>>(()
   return map
 })
 
-// const externalCategoryImages = computed<Map<string, string>>(() => {
-//   const map = new Map<string, string>
-//   activeExternalCategories.value.forEach((ec: ExternalCategory) => {
-//     const id = ec.type + ec.id
-//     let value
-//     const externalParts = : ExternalItem = await getFromIndex(db, INDICES.EXTERNAL_PARTS_BY_TYPE_AND_CATEGORY, [category.type, category.id])
-//     const variants: ItemVariant = 
-//       await getFromIndex(db, INDICES.PART_VARIANTS_BY_TYPE_AND_PART, [externalPart.type, externalPart.externalItemId])
-//   if (!variant) {
-//     return
-//   }
-//   value = variant.image
-//     map.set(id, value)
-//   })
-//   return map
-// })
-
-function getCategoriesPageCategory(category: Category): CategoriesPageCategory | undefined {
+function getCategoriesPageCategory(category: CachedCategory): CategoriesPageCategory | undefined {
   const externalCategories = externalCategoriesByCategoryId.value.get(category.id)
-  console.log(externalCategoriesByCategoryId.value, category.id, externalCategories)
   if (!externalCategories) {
     return
   }
   const categoriesPageExternalCategory: CategoriesPageExternalCategory[] = []
   for (let i = 0; i < externalCategories.length; i++) {
     const externalCategory = externalCategories[i]
-    const numParts = externalPartsInExternalCategory.value.get(externalCategory.type + externalCategory.id)?.length || 0
-    console.log(numParts, externalPartsInExternalCategory.value)
-    // const image = externalCategoryImages.value.get(externalCategory.id)
-    const image = 'todo'
-    if (numParts === 0) {
+    const parts = externalPartsInExternalCategory.value.get(externalCategory.type + externalCategory.id)
+    if (!parts || parts.length === 0) {
       continue
     }
     categoriesPageExternalCategory.push({
       ...externalCategory,
-      numParts,
-      image
+      parts,
+      image: externalCategory.image
     })
   }
   return {
@@ -255,7 +282,7 @@ export const categories = computed<CategoriesPageCategory[]>(() => {
   const categories = activeCategories.value
   const categoriesPageCategories: CategoriesPageCategory[] = []
   for (let i = 0; i < categories.length; i++) {
-    const category: Category = categories[i]
+    const category: CachedCategory = categories[i]
     const categoriesPageCategory: CategoriesPageCategory | undefined = getCategoriesPageCategory(category)
     if (!categoriesPageCategory || categoriesPageCategory.externalCategories.length === 0) {
       continue
@@ -338,11 +365,11 @@ async function createInitialColors(db: IDBPDatabase) {
 }
 
 import rbCategories from '../rbCategories.json'
-import { createIndex, createStore, put } from './db';
+import { createIndex, createStore, getFromIndex, put } from './db';
 import { addColor, getAllColors } from './colors';
 import { getAllCategories, getAllExternalCategories } from './categories';
 import { addShopListDb, getAllLists } from './lists';
-import { createInitialStores, getAllStores } from './storeMethods';
+import { createInitialStores, getAllStores, getAllVariants } from './storeMethods';
 import { getAllExternalParts, getAllParts } from './parts';
 async function importRbCategories(db: IDBPDatabase) {
   for (let i = 0; i < rbCategories.length; i++) {

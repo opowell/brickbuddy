@@ -3,6 +3,22 @@ export interface Cart {
   name: string
   active?: number
 }
+export interface CachedCart extends Cart {
+  cartItems: CachedCartItem[]
+}
+
+export interface CachedStore extends Store {
+  carts: CachedCart
+}
+
+export interface CachedInvItem extends InvItem {
+  cartItems: CachedCartItem
+}
+export interface CachedCartItem extends CartItem {
+  cart: CachedCart
+  store: CachedStore
+  invItem: CachedInvItem
+}
 
 export interface CartWithItems extends Cart {
   cartItems: CartItem[]
@@ -99,11 +115,15 @@ export interface RebrickableItem extends ExternalItem {
 }
 export interface ExternalItem {
   externalCategoryId: string
-  externalCategory?: ExternalCategory
   itemId: number
   externalItemId: string
   name?: string
   type: 'Rebrickable' | 'Lego' | 'BrickLink'
+}
+
+export interface CachedExternalItem extends ExternalItem {
+  externalCategory?: CachedExternalCategory
+  variants: CachedItemVariant[]
 }
 export interface StorePageInvItemItem extends ExternalItem {
   variants: ItemVariant[]
@@ -245,6 +265,10 @@ export interface ShopList {
   id?: number
   name: string
 }
+
+export interface CachedList extends ShopList {
+  listItems: CachedListItem[]  
+}
 export interface ShopListItem {
   id?: number
   listId: number
@@ -254,6 +278,23 @@ export interface ShopListItem {
   maxQuantity: number
   maxPrice: number
   colors: string[]
+}
+export interface CachedListItem extends ShopListItem {
+  item: CachedItem
+  list: CachedList
+}
+
+export interface CachedItem extends Item {
+
+}
+
+export interface CachedSearch extends Search {
+
+}
+
+export interface CachedItemVariant extends ItemVariant {
+  externalPart: CachedExternalItem
+  color: CachedColor
 }
 
 export interface SearchFilter {
@@ -369,6 +410,10 @@ export interface Color {
   legoId?: string
 }
 
+export interface CachedColor extends Color {
+
+}
+
 export interface RbColor {
   Img: string
   ID: number
@@ -401,8 +446,11 @@ export interface ColorsPageColor extends Color {
 }
 
 export interface Category {
-  externalCategories?: ExternalCategory[]
   id: number
+}
+
+export interface CachedCategory extends Category {
+  externalCategories: CachedExternalCategory[]
 }
 
 export interface BrickLinkCategory extends ExternalCategory {
@@ -427,8 +475,12 @@ export interface ExternalCategory {
   name: string
   categoryId: number
   type: 'BrickLink' | 'Lego' | 'Rebrickable'
-  category?: Category
-  image?: string
+}
+
+export interface CachedExternalCategory extends ExternalCategory {
+  externalParts: CachedExternalItem[]
+  category: CachedCategory
+  image: ComputedRef<string | undefined>
 }
 
 export interface CategoryPagePart extends Item {
@@ -443,9 +495,8 @@ export interface CategoryPageCategory extends Category {
   externalCategories: ExternalCategory[]
 }
 
-export interface CategoriesPageExternalCategory extends ExternalCategory {
-  numParts: number
-  image: string | undefined
+export interface CategoriesPageExternalCategory extends CachedExternalCategory {
+  parts: ExternalItem[]
 }
 
 export interface CategoriesPageCategory extends Category {

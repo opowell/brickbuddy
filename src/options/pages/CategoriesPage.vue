@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { CategoriesPageCategory, ExternalCategory } from '../types';
+import { CachedExternalCategory, CategoriesPageCategory, ExternalCategory } from '../types';
 import ExcludeCategoryButton from '../components/ExcludeCategoryButton.vue';
 import IncludeCategoryButton from '../components/IncludeCategoryButton.vue';
 import { categories, objectCache, activeExternalCategories, externalCategoriesMap } from '../idb/idb';
 interface CategoriesPageUniqueCategory {
-  externalCategories: ExternalCategory[]
+  externalCategories: CachedExternalCategory[]
   isExternal: boolean
   numParts: number
-  image?: string
+  image?: ComputedRef<string | undefined>
   id: number | string
   category: CategoriesPageCategory
 }
@@ -27,7 +27,7 @@ const uniqueExternalCategories = computed<CategoriesPageUniqueCategory[]>(() => 
         out.push({
           isExternal: true,
           externalCategories: [ec],
-          numParts: ec.numParts,
+          numParts: ec.parts.length,
           image: ec.image,
           id: ec.id,
           category
@@ -35,7 +35,7 @@ const uniqueExternalCategories = computed<CategoriesPageUniqueCategory[]>(() => 
       })
     } else {
       // add all ec together
-      const numParts = category.externalCategories.reduce((sum, currentValue) => sum + currentValue.numParts, 0)
+      const numParts = category.externalCategories.reduce((sum, currentValue) => sum + currentValue.parts.length, 0)
       const imageEc = category.externalCategories.find(ec => ec.image)
       const image = imageEc ? imageEc.image : undefined
       out.push({

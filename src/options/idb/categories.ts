@@ -1,5 +1,5 @@
 import { IDBPDatabase } from "idb"
-import { BrickLinkCategory, CategoriesPageCategory, CategoriesPageExternalCategory, Category, CategoryPageCategory, CategoryPagePart, ExternalCategory, ExternalItem, Item, ItemVariant, ItemWithExternals, LegoCategory, PartPageCategory, RebrickableCategory, SearchFilter, UiCategory } from "../types"
+import { BrickLinkCategory, CachedCategory, CachedExternalCategory, CategoriesPageCategory, CategoriesPageExternalCategory, Category, CategoryPageCategory, CategoryPagePart, ExternalCategory, ExternalItem, Item, ItemVariant, ItemWithExternals, LegoCategory, PartPageCategory, RebrickableCategory, SearchFilter, UiCategory } from "../types"
 import { get, getAllFromIndex, getAllKeys, getFromIndex, put } from "./db"
 import STORES from './stores'
 import INDICES from './indices'
@@ -111,11 +111,11 @@ export async function getExternalCategoryImage(db: IDBPDatabase, category: Exter
   return variant.image
 }
 
-export async function getAllCategories(db: IDBPDatabase): Promise<Category[]> {
+export async function getAllCategories(db: IDBPDatabase): Promise<CachedCategory[]> {
   return await db.getAll(STORES.CATEGORIES.name)
 }
 
-export async function getAllExternalCategories(db: IDBPDatabase): Promise<ExternalCategory[]> {
+export async function getAllExternalCategories(db: IDBPDatabase): Promise<CachedExternalCategory[]> {
   return await db.getAll(STORES.EXTERNAL_CATEGORIES.name)
 }
 

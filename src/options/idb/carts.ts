@@ -1,5 +1,5 @@
 import { IDBPDatabase } from "idb"
-import { ActiveCartButtonCart, Cart, CartsPageCart, CartItem, CartPageCartItem, InvItem, CartWithItems, StorePageInvItem, Store } from "../types"
+import { ActiveCartButtonCart, Cart, CartsPageCart, CartItem, CartPageCartItem, InvItem, CartWithItems, StorePageInvItem, Store, CachedCart } from "../types"
 import { put, getAllFromIndex, getFromIndex, getAll } from "./db"
 import { getDbConnection } from "./idb"
 import { getActiveCart, getActiveSearch } from "./searches"
@@ -56,7 +56,7 @@ export async function setActiveCart(cart: Cart) {
 export async function getCartPageCart(cartId: number) {
   return await getActiveCart()
 }
-export async function getAllCarts(db: IDBPDatabase): Promise<Cart[]> {
+export async function getAllCarts(db: IDBPDatabase): Promise<CachedCart[]> {
   return await getAll(db, STORES.CARTS)
 }
 export async function getCartsPageCarts(): Promise<CartsPageCart[]> {
