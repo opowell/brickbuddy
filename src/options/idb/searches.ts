@@ -1,6 +1,6 @@
 import { IDBPDatabase } from "idb"
 import { Search, UiStore, CartWithItems, ActiveSearch, ActiveSearchButtonActiveSearch, SearchesPageSearch, Item, SearchPageSearch, SearchFilter, ExternalItem } from "../types"
-import { getCategories, getCategory, getCategoriesPageCategory } from "./categories"
+import { getCategories, getCategory } from "./categories"
 import { getCondition } from "./condition"
 import { getAll, getAllFromIndex, getFromIndex } from "./db"
 import { getDbConnection } from "./idb"

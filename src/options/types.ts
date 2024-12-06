@@ -122,8 +122,10 @@ export interface ExternalItem {
 }
 
 export interface CachedExternalItem extends ExternalItem {
+  invItems: CachedInvItem[]
   externalCategory?: CachedExternalCategory
   variants: CachedItemVariant[]
+  image: ComputedRef<string | undefined>
 }
 export interface StorePageInvItemItem extends ExternalItem {
   variants: ItemVariant[]
@@ -450,6 +452,7 @@ export interface Category {
 }
 
 export interface CachedCategory extends Category {
+  parts: ComputedRef<CachedExternalItem[]>
   externalCategories: CachedExternalCategory[]
 }
 
@@ -480,7 +483,7 @@ export interface ExternalCategory {
 export interface CachedExternalCategory extends ExternalCategory {
   externalParts: CachedExternalItem[]
   category: CachedCategory
-  image: ComputedRef<string | undefined>
+  image: ComputedRef<ComputedRef<string | undefined> | undefined>
 }
 
 export interface CategoryPagePart extends Item {

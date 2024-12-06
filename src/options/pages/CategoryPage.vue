@@ -13,16 +13,18 @@ import { useRouter } from 'vue-router'
 import ActiveSearchButton from '../components/ActiveSearchButton.vue';
 import PartButton from '../components/PartButton.vue';
 import NameIdLabel from '../components/NameIdLabel.vue';
+import { activeCategories, categoriesMap, objectCache } from '../idb/idb';
 const router = useRouter()
-const category = categoriesById.value.get(route.params.id - 0)
-ref<CategoryPageCategory | undefined>(undefined)
-onMounted(async () => {
-  category.value = await getCategoryPageCategory(route.params.id - 0)
+const category = computed(() => {
+  return categoriesMap.value.get(route.params.id - 0)
 })
+// onMounted(async () => {
+//   category.value = await getCategoryPageCategory(route.params.id - 0)
+// })
 </script>
 
 <template>
-  <div v-if="category">
+  <div v-if="category && categoriesMap && objectCache && activeCategories">
     <HomeButton />
     <CategoriesButton />
     <ActiveSearchButton />
@@ -31,7 +33,7 @@ onMounted(async () => {
     <ExcludeCategoryButton :category="category" @exclude="router.push(Crumbs.categories.href)"/>
     <h4>External categories</h4>
     <div v-for="externalCategory in category.externalCategories">{{ externalCategory.type }}: <NameIdLabel is-span :id="externalCategory.id" :name="externalCategory.name" /></div>
-    <h4>Parts ({{ category.parts.length }})</h4>
+    <h4>Parts ({{ category.parts?.value?.length }})</h4>
     <table>
       <thead>
         <tr>
@@ -42,15 +44,18 @@ onMounted(async () => {
         </tr>
       </thead>
       <tbody>
-        <tr v-for="part in category.parts" :key="part.itemId">
-          <td><img v-if="part.image" :src="part.image"></td>
+        <tr v-for="part in category.parts.value" :key="part.itemId">
+          <td><img v-if="part.image.value" :src="part.image.value"></td>
           <td>
             <PartButton :part="part" />
           </td>
-          <td>{{ part.numVariants }}</td>
-          <td>{{ part.numInvItems }}</td>
+          <td>{{ part.variants.length }}</td>
+          <td>{{ part.invItems.length }}</td>
         </tr>
       </tbody>
     </table>
+  </div>
+  <div v-else>
+    No category.
   </div>
 </template>

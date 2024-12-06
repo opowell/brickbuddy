@@ -60,27 +60,6 @@ export async function getExternalCategories(db: IDBPDatabase, categoryId: number
   return await getAllFromIndex(db, INDICES.EXTERNAL_CATEGORIES_BY_CATEGORY, categoryId)
 }
 
-export async function getCategoriesPageCategory(db: IDBPDatabase, category: Category): Promise<CategoriesPageCategory> {
-  const externalCategories = await getExternalCategories(db, category.id)
-  const categoriesPageExternalCategory: CategoriesPageExternalCategory[] = []
-  for (let i = 0; i < externalCategories.length; i++) {
-    const externalCategory = externalCategories[i]
-    const numParts = await getNumPartsInCategory(db, category.id)
-    const image = await getExternalCategoryImage(db, externalCategory)
-    if (numParts === 0) {
-      continue
-    }
-    categoriesPageExternalCategory.push({
-      ...externalCategory,
-      numParts,
-      image
-    })
-  }
-  return {
-    ...category,
-    externalCategories: categoriesPageExternalCategory,
-  }
-}
 export async function getCategoryImage(db: IDBPDatabase, id: number): Promise<string | undefined> {
   const externalCategories = await getExternalCategories(db, id)
   for (let i = 0; i < externalCategories.length; i++) {
