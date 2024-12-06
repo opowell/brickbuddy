@@ -13,6 +13,10 @@ export interface CachedStore extends Store {
 }
 
 export interface CachedInvItem extends InvItem {
+  priceScore: ComputedRef<string>
+  variant: CachedItemVariant | undefined
+  color: CachedColor | undefined
+  item: CachedExternalItem | undefined
   cartItems: CachedCartItem
   store: CachedStore
 }

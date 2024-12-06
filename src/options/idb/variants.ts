@@ -104,10 +104,8 @@ export async function getPartsPageVariants(db: IDBPDatabase, item: Item, objectC
         INDICES.PART_VARIANTS_BY_TYPE_AND_PART,
         [externalPart.type, externalPart.externalItemId]
       )
-      console.info(externalPart)
       for (let i = 0; i < variants.length; i++) {
         const variant = variants[i]
-        console.info(variant)
         const invItems = await getPartsPageVariantInvItems(db, variant, objectCache)
         if (invItems.length === 0) {
           continue

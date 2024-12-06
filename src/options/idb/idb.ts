@@ -1,4 +1,4 @@
-import { CachedCart, CachedCartItem, CachedCategory, CachedColor, CachedExternalCategory, CachedExternalItem, CachedInvItem, CachedItem, CachedItemVariant, CachedList, CachedSearch, CachedStore, Cart, CategoriesPageCategory, CategoriesPageExternalCategory, Color, ExternalCategory, ExternalItem, RebrickableItem, Search, SearchFilter, ShopList, Store } from './../types';
+import { CachedCart, CachedCartItem, CachedCategory, CachedColor, CachedExternalCategory, CachedExternalItem, CachedInvItem, CachedItem, CachedItemVariant, CachedList, CachedSearch, CachedStore, Cart, CategoriesPageCategory, CategoriesPageExternalCategory, Color, ExternalCategory, ExternalItem, InvItem, RebrickableItem, Search, SearchFilter, ShopList, Store } from './../types';
 import { IDBPDatabase, openDB } from "idb";
 import STORES from './stores'
 import INDICES from './indices'
@@ -124,12 +124,38 @@ export async function loadObjectCache(db: IDBPDatabase) {
   cache.invItems.push(...await getAllInvItems(db))
   cache.invItems.forEach(invItem => {
     const store = storesMap.value.get(invItem.type.toString() + invItem.storeId)
-    console.log(invItem, invItem.type.toString() + invItem.storeId, store, storesMap.value)
     if (!store) {
       return
     }
     store.invItems.push(invItem)
     invItem.store = store
+    invItem.item = externalPartsMap.value.get(invItem.type + invItem.itemId)
+    invItem.color = colorsMap.value.get(invItem.colorId)
+    invItem.priceScore = computed(() => {
+      const matchingParts = externalPartsByItemId.value.get(invItem.itemId)
+      if (!matchingParts) {
+        return ''
+      }
+      const allMatchingInvItems = new Map<string, InvItem>()
+      const search = activeSearch.value
+      if (!search) {
+        return ''
+      }
+      for (let i = 0; i < matchingParts.length; i++) {
+        const matchingPart = matchingParts[i]
+        let matches: InvItem[] | undefined = []
+        if (search.priceScoreIgnoreColor) {
+          matches = invItemsByItem.value.get(matchingPart.externalItemId)
+        } else {
+          matches = invItemsByItemColor.value.get(matchingPart.externalItemId + invItem.colorId)
+        }
+        if (!matches) {
+          return ''
+        }
+        matches.forEach((match) => allMatchingInvItems.set(match.storeId + '//' + match.invId, match))
+      }
+      return getScore(Array.from(allMatchingInvItems.values()), search.priceScoreQuantity, invItem.price, true)
+    })
   })
   cache.variants.push(...await getAllVariants(db))
   cache.variants.forEach((v) => {
@@ -141,8 +167,18 @@ export async function loadObjectCache(db: IDBPDatabase) {
     v.externalPart = externalPart
     v.externalPart.variants.push(v)
   })
+  cache.invItems.forEach(invItem => {
+    invItem.variant = variantsMap.value.get(invItem.itemId + invItem.colorId)
+  })
 }
 
+export const colorsMap = computed(() => {
+  const map = new Map<string, CachedColor>()
+  objectCache.value.colors.forEach(c => {
+    map.set(c.id, c)
+  })
+  return map
+})
 export const storesMap = computed(() => {
   const map = new Map<string, CachedStore>()
   objectCache.value.stores.forEach((s) => {
@@ -150,10 +186,53 @@ export const storesMap = computed(() => {
   })
   return map
 })
+const externalPartsByItemId = computed(() => {
+  const map = new Map<string, CachedExternalItem[]>()
+  objectCache.value.externalParts.forEach((ep) => {
+    let value = map.get(ep.externalItemId)
+    if (!value) {
+      value = []
+    }
+    value.push(ep)
+    map.set(ep.externalItemId, value)
+  })
+  return map
+})
 const externalPartsMap = computed(() => {
   const map = new Map<string, CachedExternalItem>()
   objectCache.value.externalParts.forEach((ep) => {
     map.set(ep.type + ep.externalItemId, ep)
+  })
+  return map
+})
+const variantsMap = computed(() => {
+  const map = new Map<string, CachedItemVariant>()
+  objectCache.value.variants.forEach(v => {
+    map.set(v.itemId + v.colorId, v)
+  })
+  return map
+})
+const invItemsByItemColor = computed(() => {
+  const map = new Map<string, CachedInvItem[]>()
+  objectCache.value.invItems.forEach(ii => {
+    let value = map.get(ii.itemId + ii.colorId)
+    if (!value) {
+      value = []
+    }
+    value.push(ii)
+    map.set(ii.itemId + ii.colorId, value)
+  })
+  return map
+})
+const invItemsByItem = computed(() => {
+  const map = new Map<string, CachedInvItem[]>()
+  objectCache.value.invItems.forEach(ii => {
+    let value = map.get(ii.itemId)
+    if (!value) {
+      value = []
+    }
+    value.push(ii)
+    map.set(ii.itemId, value)
   })
   return map
 })
@@ -503,6 +582,7 @@ export async function importRbPartsToMemory() {
 import ObjectCacheClass from './ObjectCacheClass'
 import { getActiveSearch, getAllSearches } from './searches';
 import { getAllCarts } from './carts';
+import { getScore } from '../utils';
 let dbConnection: IDBPDatabase | undefined
 
 export async function getObjectCache(): Promise<ObjectCacheClass> {

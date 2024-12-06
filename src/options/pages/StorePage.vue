@@ -9,13 +9,13 @@ import { getActiveSearch } from '../idb/searches';
 import { getDbConnection, objectCache, storesMap } from '../idb/idb';
 import { getStorePageInvItem } from '../idb/invItems';
 import { setCartQuantity } from '../idb/carts';
-import PartButton from '../components/PartButton.vue';
+import ExternalPartButton from '../components/ExternalPartButton.vue';
 import ColorButton from '../components/ColorButton.vue';
 import ActiveSearchButton from '../components/ActiveSearchButton.vue';
 import ActiveCartButton from '../components/ActiveCartButton.vue';
 import { IDBPDatabase } from 'idb';
 import { formatAmount, formatInteger } from '../utils';
-import CategoryButton from '../components/CategoryButton.vue';
+import ExternalCategoryButton from '../components/ExternalCategoryButton.vue';
 import ConditionButton from '../components/ConditionButton.vue';
 import ObjectCache from '../idb/ObjectCacheClass';
 import PartVariantButton from '../components/PartVariantButton.vue';
@@ -24,7 +24,12 @@ const route = useRoute()
 const store = computed(() => storesMap.value.get(route.params.type + route.params.id))
 const search = ref<ActiveSearch | undefined>(undefined)
 const db = ref<IDBPDatabase | undefined>(undefined)
-const invItems = ref<StorePageInvItem[]>([])
+const invItems = computed(() => {
+  if (!store.value) {
+    return []
+  }
+  return store.value.invItems
+})
 onMounted(async () => {
   search.value = await getActiveSearch()
   db.value = await getDbConnection()
@@ -33,13 +38,13 @@ onMounted(async () => {
   if (!store.value) {
     return
   }
-  for (let i = 0; i < store.value.invItems.length; i++) {
-    const storePageInvItem = await getStorePageInvItem(objectCache2, store.value.invItems[i], store.value.type === StoreType.BrickLink ? 'BrickLink' : 'Lego')
-    if (!storePageInvItem) {
-      continue
-    }
-    invItems.value.push(storePageInvItem)
-  }
+  // for (let i = 0; i < store.value.invItems.length; i++) {
+  //   const storePageInvItem = await getStorePageInvItem(objectCache2, store.value.invItems[i], store.value.type === StoreType.BrickLink ? 'BrickLink' : 'Lego')
+  //   if (!storePageInvItem) {
+  //     continue
+  //   }
+  //   invItems.value.push(storePageInvItem)
+  // }
 })
 
 // URL for shipping terms:
@@ -105,15 +110,15 @@ const cartButton = ref<typeof ActiveCartButton | undefined>(undefined)
         <tr v-for="invItem in invItems" :key="invItem.invId">
           <td>
             <PartVariantButton :part="invItem.item" :variant="invItem.variant">
-              <img :src="invItem.variant.image">
+              <img v-if="invItem.variant" :src="invItem.variant.image">
             </PartVariantButton>
           </td>
           <td>
-            <PartButton :part="invItem.item" />
+            <ExternalPartButton :part="invItem.item" />
           </td>
           <td v-if="search && search.conditions.excluded.length < 1"><ConditionButton :condition="invItem.condition" /></td>
-          <td><ColorButton :color="{ id: invItem.colorId, name: invItem.colorName }" /></td>
-          <td><CategoryButton v-if="invItem.category" :category="invItem.category" /></td>
+          <td><ColorButton :color="invItem.color" /></td>
+          <td><ExternalCategoryButton v-if="invItem.item?.externalCategory" :category="invItem.item.externalCategory" /></td>
           <td>{{ formatInteger(invItem.quantity) }}</td>
           <td>{{ formatAmount(invItem.price*store.priceAdjustment/100) }}</td>
           <td>{{ invItem.priceScore }}</td>
