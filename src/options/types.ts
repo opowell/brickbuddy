@@ -8,11 +8,13 @@ export interface CachedCart extends Cart {
 }
 
 export interface CachedStore extends Store {
+  invItems: CachedInvItem[]
   carts: CachedCart
 }
 
 export interface CachedInvItem extends InvItem {
   cartItems: CachedCartItem
+  store: CachedStore
 }
 export interface CachedCartItem extends CartItem {
   cart: CachedCart
@@ -73,8 +75,8 @@ export interface HomeData {
   carts: number
 }
 export enum StoreType {
-  BrickLink,
-  Lego
+  BrickLink = 'BrickLink',
+  Lego = 'Lego'
 }
 export interface Store {
   id: string
@@ -125,7 +127,7 @@ export interface CachedExternalItem extends ExternalItem {
   invItems: CachedInvItem[]
   externalCategory?: CachedExternalCategory
   variants: CachedItemVariant[]
-  image: ComputedRef<string | undefined>
+  image: string | undefined
 }
 export interface StorePageInvItemItem extends ExternalItem {
   variants: ItemVariant[]
@@ -452,7 +454,7 @@ export interface Category {
 }
 
 export interface CachedCategory extends Category {
-  parts: ComputedRef<CachedExternalItem[]>
+  parts: CachedExternalItem[]
   externalCategories: CachedExternalCategory[]
 }
 
@@ -483,7 +485,7 @@ export interface ExternalCategory {
 export interface CachedExternalCategory extends ExternalCategory {
   externalParts: CachedExternalItem[]
   category: CachedCategory
-  image: ComputedRef<ComputedRef<string | undefined> | undefined>
+  image: ComputedRef<string | undefined> | undefined
 }
 
 export interface CategoryPagePart extends Item {

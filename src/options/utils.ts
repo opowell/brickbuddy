@@ -103,7 +103,6 @@ export function cheapestPrice(
     try {
       quantity += toTake
       cost += price * toTake
-      console.log(price, toTake, cost, quantity)
     } catch (e) {
       console.log(e)
     }

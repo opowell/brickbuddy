@@ -12,7 +12,7 @@ const href = computed(() => {
   if (!store) {
     return
   }
-  return Crumbs.store(store.id).href
+  return Crumbs.store(store.type, store.id).href
 })
 </script>
 

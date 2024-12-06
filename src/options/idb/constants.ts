@@ -1,3 +1,5 @@
+import { StoreType } from "../types"
+
 export const DB_NAME = 'brickbuddy'
 
 export const PAGES = {
@@ -67,8 +69,8 @@ export const Routes = {
   partVariant(itemId: string, colorId: string) {
     return '/' + LINKS.PART + '/' + encodeURIComponent(itemId) + '/' + LINKS.PART_VARIANT + '/' + encodeURIComponent(colorId)
   },
-  store(id: string) {
-    return '/' + LINKS.STORE + '/' + encodeURIComponent(id)
+  store(type: StoreType, id: string) {
+    return '/' + LINKS.STORE + '/' + type.toString() + '/' + encodeURIComponent(id)
   },
   search(id: number) {
     return '/' + LINKS.SEARCH + '/' + encodeURIComponent(id)
@@ -115,8 +117,8 @@ export const Hrefs = {
   search(id: number) {
     return Routes.search(id)
   },
-  store(id: string) {
-    return Routes.store(id)
+  store(type: StoreType, id: string) {
+    return Routes.store(type, id)
   }
 }
 
@@ -215,10 +217,10 @@ export const Crumbs = {
       href: Hrefs.partVariant(itemId, colorId)
     }
   },
-  store(id: string) {
+  store(type: StoreType, id: string) {
     return {
       title: 'store',
-      href: Hrefs.store(id)
+      href: Hrefs.store(type, id)
     }
   },
 }

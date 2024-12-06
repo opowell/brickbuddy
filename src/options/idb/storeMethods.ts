@@ -1,5 +1,5 @@
 import { IDBPDatabase } from "idb"
-import { UiStore, AddNewStore, ShippingCost, StoreType, StoresPageStore, StorePageStore, InvItem, Store, ItemVariant, CachedStore, CachedItemVariant } from "../types"
+import { UiStore, AddNewStore, ShippingCost, StoreType, StoresPageStore, StorePageStore, InvItem, Store, ItemVariant, CachedStore, CachedItemVariant, CachedInvItem } from "../types"
 import { getDbConnection } from "./idb"
 import { countInvItems, getStorePageInvItems } from "./invItems"
 import ObjectCacheClass from "./ObjectCacheClass"
@@ -280,6 +280,10 @@ export async function getAllStores(db: IDBPDatabase): Promise<CachedStore[]> {
 
 export async function getAllVariants(db: IDBPDatabase): Promise<CachedItemVariant[]> {
   return await db.getAll(STORES.PART_VARIANTS.name)
+}
+
+export async function getAllInvItems(db: IDBPDatabase): Promise<CachedInvItem[]> {
+  return await db.getAll(STORES.INVENTORY_ITEMS.name)
 }
 
 export async function getStoresPageStores(): Promise<StoresPageStore[]> {

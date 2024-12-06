@@ -66,7 +66,7 @@ export default [
   },
   {
     name: 'store',
-    path: '/' + LINKS.STORE + '/:id',
+    path: '/' + LINKS.STORE + '/:type/:id',
     component: StorePage
   },
   {

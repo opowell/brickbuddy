@@ -14,11 +14,17 @@ const href = computed(() => {
   }
   return Crumbs.externalPart(part.name || '', part.externalItemId, part.type).href
 })
+const name = computed(() => {
+  if (!part) {
+    return
+  }
+  return part.type + ' ' + part.name
+})
 </script>
 
 
 <template>
   <button v-if="part" @click="router.push(href)">
-    <NameIdLabel :name="part.name" :id="part.externalItemId" />
+    <NameIdLabel :name="name" :id="part.externalItemId" />
   </button>
 </template>
