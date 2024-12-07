@@ -92,7 +92,9 @@ export async function loadObjectCache(db: IDBPDatabase) {
   })
   cache.externalCategories.push(...externalCategories)
   cache.externalCategories.forEach((ec) => {
-    console.log(ec)
+    if (ec.type === 'BrickLink' && ec.id === '31') {
+      console.log('adding', ec)
+    }
     const category = categoriesMap.value.get(ec.categoryId)
     if (!category) {
       return
@@ -143,7 +145,6 @@ export async function loadObjectCache(db: IDBPDatabase) {
     ep.part = part
     part.externalParts.push(ep)
   })
-  cache.externalCategories.push(...externalCategories)
   cache.externalCategories.forEach((ec) => {
     ec.externalPartsFiltered = computed(() => {
       return ec.externalParts.filter(ep => {
@@ -498,6 +499,9 @@ export function getCategoriesPageCategory(category: CachedCategory): CategoriesP
     if (!parts || parts.length === 0) {
       continue
     }
+    if (externalCategory.type === 'BrickLink' && externalCategory.id === '31') {
+      console.log(i, externalCategory, externalCategoriesByCategoryId.value, 'adding')
+    }
     categoriesPageExternalCategory.push({
       ...externalCategory,
       parts,
@@ -521,6 +525,9 @@ export const categories = computed<CategoriesPageCategory[]>(() => {
       continue
     }
     if (categoriesPageCategory.externalCategories.every(ec => {
+      if (!ec.externalPartsFiltered) {
+        return true
+      }
       return ec.externalPartsFiltered.length === 0
     })) {
       continue

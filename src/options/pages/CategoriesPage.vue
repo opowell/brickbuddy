@@ -19,15 +19,19 @@ const uniqueExternalCategories = computed<CategoriesPageUniqueCategory[]>(() => 
     return []
   }
   const out: CategoriesPageUniqueCategory[] = []
+  // console.log(categories.value.map(c => c.id).join(','))
   categories.value.forEach(category => {
     const types = category.externalCategories.map(ec => ec.type)
     if (countUnique(types) < types.length) {
       // add each ec individually
       category.externalCategories.forEach(ec => {
+        if (ec.externalPartsFiltered.length === 0) {
+          return
+        }
         out.push({
           isExternal: true,
           externalCategories: [ec],
-          numParts: ec.parts.length,
+          numParts: ec.externalPartsFiltered.length,
           image: ec.image,
           id: ec.id,
           category
@@ -35,7 +39,7 @@ const uniqueExternalCategories = computed<CategoriesPageUniqueCategory[]>(() => 
       })
     } else {
       // add all ec together
-      const numParts = category.externalCategories.reduce((sum, currentValue) => sum + currentValue.parts.length, 0)
+      const numParts = category.externalCategories.reduce((sum, currentValue) => sum + currentValue.externalPartsFiltered.length, 0)
       const imageEc = category.externalCategories.find(ec => ec.image)
       const image = imageEc ? imageEc.image : undefined
       out.push({
