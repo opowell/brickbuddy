@@ -6,7 +6,7 @@ const search = ref('')
 const items = ref<PartsPagePart[] | undefined>(undefined)
 const loadedItems = ref<PartsPagePart[]>([])
 onMounted(async () => {
-  items.value = await getPartsPageParts()
+  items.value = getPartsPageParts
   for (let i = 0; i < items.value?.length; i++) {
     loadedItems.value.push(await getPartsPagePart(items.value[i]))
   }

@@ -288,7 +288,7 @@ export async function getAllInvItems(db: IDBPDatabase): Promise<CachedInvItem[]>
 
 export async function getStoresPageStores(): Promise<StoresPageStore[]> {
   const db = await getDbConnection()
-  const search = await getActiveSearch()
+  const search = getActiveSearch()
   const stores = await getAllStores(db)
   const uiStores: StoresPageStore[] = []
   for (let i = 0; i < stores.length; i++) {

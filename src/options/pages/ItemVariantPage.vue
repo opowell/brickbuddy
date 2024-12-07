@@ -23,7 +23,7 @@ const lists = ref<UiShopList[] | undefined>(undefined)
 const search = ref<ActiveSearch | undefined>(undefined)
 onMounted(async () => {
   variant.value = await getVariantPageVariant(route.params.partId, route.params.colorId)
-  search.value = await getActiveSearch()
+  search.value = getActiveSearch()
 })
 
 const addToListItem = computed(() => {

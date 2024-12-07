@@ -128,6 +128,7 @@ export interface ExternalItem {
 }
 
 export interface CachedExternalItem extends ExternalItem {
+  part?: CachedItem
   invItems: CachedInvItem[]
   externalCategory?: CachedExternalCategory
   variants: CachedItemVariant[]
@@ -293,11 +294,34 @@ export interface CachedListItem extends ShopListItem {
 }
 
 export interface CachedItem extends Item {
+  externalParts: CachedExternalItem[];
+}
+
+export interface CachedSearchFilter extends SearchFilter {
 
 }
 
 export interface CachedSearch extends Search {
-
+  categories: {
+    included: number[]
+    excluded: number[]
+  }
+  colors: {
+    included: number[]
+    excluded: number[]
+  }
+  conditions: {
+    included: string[]
+    excluded: string[]
+  }
+  stores: {
+    included: string[]
+    excluded: string[]
+  }
+  parts: {
+    included: number[]
+    excluded: number[]
+  }
 }
 
 export interface CachedItemVariant extends ItemVariant {

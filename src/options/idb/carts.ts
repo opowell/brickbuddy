@@ -79,7 +79,7 @@ export async function getCartItems(db: IDBPDatabase, cart: Cart): Promise<CartIt
 }
 
 export async function getCartPageCartItem(objectCache: ObjectCacheClass, cartItem: CartItem): Promise<CartPageCartItem | undefined> {
-  const search = await getActiveSearch()
+  const search = getActiveSearch()
   const invItem: InvItem | undefined = await objectCache.getInvItem(cartItem.storeId, cartItem.invItemId)
   if (!invItem) {
     return

@@ -31,7 +31,7 @@ const invItems = computed(() => {
   return store.value.invItems
 })
 onMounted(async () => {
-  search.value = await getActiveSearch()
+  search.value = getActiveSearch()
   db.value = await getDbConnection()
   const objectCache2 = new ObjectCache(db.value)
   // store.value = await getStorePageStore(route.params.id)

@@ -1,9 +1,9 @@
 import { IDBPDatabase } from "idb"
-import { UiItemVariant, ItemVariant, InvItem, UiInvItem, UiItem, Color, VariantPageVariant, VariantPageInvItem, VariantPagePart, ObjectCache, PartPageVariant, Item, PartsPageVariant, ExternalItem } from "../types"
+import { UiItemVariant, ItemVariant, InvItem, UiInvItem, UiItem, Color, VariantPageVariant, VariantPageInvItem, VariantPagePart, ObjectCache, PartPageVariant, Item, PartsPageVariant, ExternalItem, CachedExternalItem, CachedItemVariant } from "../types"
 import { getCartQuantity } from "./carts"
 import { getColor, colors } from "./colors"
 import { get, getAllFromIndex } from "./db"
-import { getDbConnection } from "./idb"
+import { colorsMap, getDbConnection, objectCache } from "./idb"
 import INDICES from "./indices"
 import { getPartPageVariantInvItems, getPartsPageVariantInvItems } from "./invItems"
 import ObjectCacheClass from "./ObjectCacheClass"
@@ -87,30 +87,40 @@ export async function getPartPageVariants(db: IDBPDatabase, id: number, objectCa
   return partPageVariants
 }
 
-async function getExternalPartsByPart(db: IDBPDatabase, item: Item): Promise<ExternalItem[]> {
-  return await getAllFromIndex(db, INDICES.EXTERNAL_PARTS_BY_PART, item.itemId)
-}
-export async function getPartsPageVariants(db: IDBPDatabase, item: Item, objectCache?: ObjectCacheClass): Promise<PartsPageVariant[]> {
-  if (!objectCache) {
-    objectCache = new ObjectCacheClass(db)
-  }
-  try {
-    const externalParts = await getExternalPartsByPart(db, item)
+export const getExternalPartsByPart = computed<Map<number, CachedExternalItem[]>>(() => {
+  const map = new Map<number, CachedExternalItem[]>()
+  objectCache.value.externalParts.forEach(ep => {
+    let value = map.get(ep.itemId)
+    if (!value) {
+      value = []
+    }
+    value.push(ep)
+    map.set(ep.itemId, value)
+  })
+  return map
+})
+export const getPartsPageVariants = computed<Map<number, PartsPageVariant[]>>(() => {
+  const parts = objectCache.value.parts
+  const map = new Map<number, PartsPageVariant[]>()
+  parts.forEach(item => {
+    const externalParts = getExternalPartsByPart.value.get(item.itemId)
+    if (!externalParts) {
+      return
+    }
     const partsPageVariants: PartsPageVariant[] = []
     for (let i = 0; i < externalParts.length; i++) {
       const externalPart = externalParts[i]
-      const variants: ItemVariant[] = await getAllFromIndex(
-        db,
-        INDICES.PART_VARIANTS_BY_TYPE_AND_PART,
-        [externalPart.type, externalPart.externalItemId]
-      )
+      const variants = variantsByTypePart.value.get(externalPart.type + externalPart.externalItemId)
+      if (!variants) {
+        return
+      }
       for (let i = 0; i < variants.length; i++) {
         const variant = variants[i]
-        const invItems = await getPartsPageVariantInvItems(db, variant, objectCache)
-        if (invItems.length === 0) {
+        const invItems = getPartsPageVariantInvItems.value.get(variant.itemId + variant.colorId)
+        if (!invItems || invItems.length === 0) {
           continue
         }
-        const color = await objectCache.getColor(variant.colorId)
+        const color = colorsMap.value.get(variant.colorId)
         if (!color) {
           continue
         }
@@ -122,12 +132,23 @@ export async function getPartsPageVariants(db: IDBPDatabase, item: Item, objectC
         })
       }
     }
-    return partsPageVariants
-  } catch (e) {
-    console.log('error getting store items', e, item.itemId)
-  }
-  return []
-}
+    map.set(item.itemId, partsPageVariants)
+  })
+  return map
+})
+
+const variantsByTypePart = computed<Map<string, CachedItemVariant[]>>(() => {
+  const map = new Map<string, CachedItemVariant[]>()
+  objectCache.value.variants.forEach(v => {
+    let value = map.get(v.type + v.itemId)
+    if (!value) {
+      value = []
+    }
+    value.push(v)
+    map.set(v.type + v.itemId, value)
+  })
+  return map
+})
 
 export async function itemVariantPageAddToList(item: object) {
   console.log('itemVariantPageAddToList', item)

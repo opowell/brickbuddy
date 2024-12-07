@@ -1,16 +1,18 @@
 import { IDBPDatabase } from "idb"
-import { BrickLinkCategory, CachedCategory, CachedExternalCategory, CategoriesPageCategory, CategoriesPageExternalCategory, Category, CategoryPageCategory, CategoryPagePart, ExternalCategory, ExternalItem, Item, ItemVariant, ItemWithExternals, LegoCategory, PartPageCategory, RebrickableCategory, SearchFilter, UiCategory } from "../types"
+import { BrickLinkCategory, CachedCategory, CachedExternalCategory, CategoriesPageCategory, Category, CategoryPageCategory, CategoryPagePart, ExternalCategory, ExternalItem, Item, ItemVariant, LegoCategory, PartPageCategory, RebrickableCategory, SearchFilter, UiCategory } from "../types"
 import { get, getAllFromIndex, getAllKeys, getFromIndex, put } from "./db"
 import STORES from './stores'
 import INDICES from './indices'
-import { getDbConnection } from "./idb"
-import { getNumPartsInCategory, getCategoryPageParts } from "./parts"
-import { getActiveSearch } from "./searches"
+import { activeSearch, getCategoriesPageCategory, getDbConnection } from "./idb"
+import { getCategoryPageParts } from "./parts"
 export const categories = ref<Map<string, UiCategory>>(new Map<string, UiCategory>())
 
-export async function getCategoriesCount(db: IDBPDatabase): Promise<number> {
+export async function getCategoriesCount(db: IDBPDatabase): Promise<number | undefined> {
   const all = await getAllKeys(db, STORES.CATEGORIES)
-  const search = await getActiveSearch()
+  const search = activeSearch.value
+  if (!search) {
+    return
+  }
   return all.filter(key => {
     if (typeof key !== 'number') {
       return true
@@ -41,10 +43,13 @@ export async function includeCategory(category: Category) {
   return await filterCategory(category, false)
 }
 export async function filterCategory(category: Category, isExcluded: boolean) {
-  const activeSearch = await getActiveSearch()
+  const search = activeSearch.value
+  if (!search) {
+    return
+  }
   const db = await getDbConnection()
   const filter: SearchFilter = {
-    searchId: activeSearch.id,
+    searchId: search.id,
     type: 'category',
     objectId: category.id,
     isExcluded
@@ -98,26 +103,29 @@ export async function getAllExternalCategories(db: IDBPDatabase): Promise<Cached
   return await db.getAll(STORES.EXTERNAL_CATEGORIES.name)
 }
 
-export async function getCategoriesPageCategories(): Promise<CategoriesPageCategory[]> {
+export async function getCategoriesPageCategories(): Promise<CategoriesPageCategory[] | undefined> {
   const db = await getDbConnection()
   const categories = await getAllCategories(db)
   const categoriesPageCategories: CategoriesPageCategory[] = []
-  const activeSearch = await getActiveSearch()
+  const search = activeSearch.value
+  if (!search) {
+    return
+  }
   for (let i = 0; i < categories.length; i++) {
-    const category: Category = categories[i]
+    const category: CachedCategory = categories[i]
     if (
-      activeSearch.categories.excluded.includes(category.id)
+      search.categories.excluded.includes(category.id)
     ) {
       continue
     }
     if (
-      activeSearch.categories.included.length > 0 &&
-      !activeSearch.categories.included.includes(category.id)
+      search.categories.included.length > 0 &&
+      !search.categories.included.includes(category.id)
     ) {
       continue
     }
-    const categoriesPageCategory: CategoriesPageCategory = await getCategoriesPageCategory(db, category)
-    if (categoriesPageCategory.externalCategories.length === 0) {
+    const categoriesPageCategory = getCategoriesPageCategory(category)
+    if (!categoriesPageCategory || categoriesPageCategory.externalCategories.length === 0) {
       continue
     }
     categoriesPageCategories.push(categoriesPageCategory)

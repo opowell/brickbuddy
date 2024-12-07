@@ -27,7 +27,7 @@ interface StoreItemsTableInvItem extends UiInvItem {
 }
 const search = ref<ActiveSearch | undefined>(undefined)
 onMounted(async () => {
-  search.value = await getActiveSearch()
+  search.value = getActiveSearch()
 })
 
 const costOfCheapest = computed<number | undefined>(() => {

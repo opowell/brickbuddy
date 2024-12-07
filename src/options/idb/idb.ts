@@ -1,4 +1,4 @@
-import { CachedCart, CachedCartItem, CachedCategory, CachedColor, CachedExternalCategory, CachedExternalItem, CachedInvItem, CachedItem, CachedItemVariant, CachedList, CachedSearch, CachedStore, Cart, CategoriesPageCategory, CategoriesPageExternalCategory, Color, ExternalCategory, ExternalItem, InvItem, RebrickableItem, Search, SearchFilter, ShopList, Store } from './../types';
+import { CachedCart, CachedCartItem, CachedCategory, CachedColor, CachedExternalCategory, CachedExternalItem, CachedInvItem, CachedItem, CachedItemVariant, CachedList, CachedSearch, CachedSearchFilter, CachedStore, Cart, CategoriesPageCategory, CategoriesPageExternalCategory, Color, ExternalCategory, ExternalItem, InvItem, RebrickableItem, Search, SearchFilter, ShopList, Store } from './../types';
 import { IDBPDatabase, openDB } from "idb";
 import STORES from './stores'
 import INDICES from './indices'
@@ -6,6 +6,7 @@ import { ActiveSearch, HomeData, RbColor } from "../types";
 import { DB_NAME } from "./constants";
 
 interface Cache {
+  searchFilters: CachedSearchFilter[];
   carts: CachedCart[]
   cartItems: CachedCartItem[]
   colors: CachedColor[]
@@ -20,7 +21,6 @@ interface Cache {
   variants: CachedItemVariant[]
 }
 
-const activeSearch = ref<Search | undefined>()
 export const objectCache: Ref<Cache> = ref({
   carts: [],
   cartItems: [],
@@ -32,12 +32,29 @@ export const objectCache: Ref<Cache> = ref({
   lists: [],
   parts: [],
   searches: [],
+  searchFilters: [],
   stores: [],
   variants: []
 })
 
-export async function loadActiveSearch() {
-  activeSearch.value = await getActiveSearch()
+export async function createActiveSearchIfNecessary(db: IDBPDatabase) {
+  if (activeSearch.value) {
+    return
+  }
+  const newSearch: Search = {
+    id: 0,
+    active: 1,
+    name: new Date().toISOString(),
+    filters: [],
+    priceScoreQuantity: 100,
+    priceScoreIgnoreColor: true
+  }
+  const id = await put(db, STORES.SEARCHES, newSearch)
+  if (!id) {
+    return
+  }
+  newSearch.id = id
+  objectCache.value.searches.push(newSearch)
 }
 
 export const activeCache = computed<Cache>(() => {
@@ -59,7 +76,6 @@ export async function loadObjectCache(db: IDBPDatabase) {
       // console.log('parts', c, c.externalCategories)
       const parts: CachedExternalItem[] = []
       c.externalCategories.forEach((ec) => {
-        console.log(ec, ec.externalParts.length, ec.externalParts)
         parts.push(...ec.externalParts)
       })
       return parts
@@ -116,7 +132,42 @@ export async function loadObjectCache(db: IDBPDatabase) {
   cache.colors.push(...await getAllColors(db))
   cache.lists.push(...await getAllLists(db))
   cache.parts.push(...await getAllParts(db))
+  cache.parts.forEach(p => p.externalParts = [])
+  cache.externalParts.forEach(ep => {
+    const part = partsMap.value.get(ep.itemId)
+    if (!part) {
+      return
+    }
+    ep.part = part
+    part.externalParts.push(ep)
+  })
   cache.searches.push(...await getAllSearches(db))
+  cache.searchFilters.push(...await getAllSearchFilters(db))
+  cache.searches.forEach(search => {
+    search.categories = {
+      included: [],
+      excluded: []
+    }
+    search.colors = {
+      included: [],
+      excluded: []
+    }
+    search.conditions = {
+      included: [],
+      excluded: []
+    }
+    search.stores = {
+      included: [],
+      excluded: []
+    }
+    search.parts = {
+      included: [],
+      excluded: []
+    }
+  })
+  cache.searchFilters.forEach(sf => {
+    
+  })
   cache.stores.push(...await getAllStores(db))
   cache.stores.forEach(store => {
     store.invItems = []
@@ -172,10 +223,21 @@ export async function loadObjectCache(db: IDBPDatabase) {
   })
 }
 
+export const activeSearch = computed(() => {
+  return objectCache.value.searches.find(s => s.active === 1)
+})
+
 export const colorsMap = computed(() => {
   const map = new Map<string, CachedColor>()
   objectCache.value.colors.forEach(c => {
     map.set(c.id, c)
+  })
+  return map
+})
+export const partsMap = computed(() => {
+  const map = new Map<number, CachedItem>()
+  objectCache.value.parts.forEach(p => {
+    map.set(p.itemId, p)
   })
   return map
 })
@@ -357,7 +419,6 @@ export const homeData = computed<HomeData>(() => {
 })
 
 const externalCategoriesByCategoryId = computed<Map<number, CachedExternalCategory[]>>(() => {
-  console.log(activeExternalCategories.value.length)
   const map = new Map<number, CachedExternalCategory[]>()
   activeExternalCategories.value.forEach((ec: CachedExternalCategory) => {
     const categoryId = ec.categoryId
@@ -381,7 +442,7 @@ const externalPartsInExternalCategory = computed<Map<string, ExternalItem[]>>(()
   return map
 })
 
-function getCategoriesPageCategory(category: CachedCategory): CategoriesPageCategory | undefined {
+export function getCategoriesPageCategory(category: CachedCategory): CategoriesPageCategory | undefined {
   const externalCategories = externalCategoriesByCategoryId.value.get(category.id)
   if (!externalCategories) {
     return
@@ -580,7 +641,7 @@ export async function importRbPartsToMemory() {
 }
 
 import ObjectCacheClass from './ObjectCacheClass'
-import { getActiveSearch, getAllSearches } from './searches';
+import { getActiveSearch, getAllSearches, getAllSearchFilters } from './searches';
 import { getAllCarts } from './carts';
 import { getScore } from '../utils';
 let dbConnection: IDBPDatabase | undefined

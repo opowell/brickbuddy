@@ -1,5 +1,5 @@
 import { IDBPDatabase } from "idb"
-import { InvItem, ColorPageInvItem, ItemVariant, Item, PartPageVariantInvItem, StorePageInvItem, UiInvItem, PartsPageVariantInvItem, Store, ExternalItem, Search, ActiveSearch, StoreType, StorePageExternalPart, StorePageInvItemItem } from "../types"
+import { InvItem, ColorPageInvItem, ItemVariant, Item, PartPageVariantInvItem, StorePageInvItem, UiInvItem, PartsPageVariantInvItem, Store, ExternalItem, Search, ActiveSearch, StoreType, StorePageExternalPart, StorePageInvItemItem, CachedInvItem } from "../types"
 import { getColor } from "./colors"
 import { countFromIndex, get, getAllFromIndex, getFromIndex } from "./db"
 import { IndexDefinition } from "./indices"
@@ -12,6 +12,7 @@ import STORES from './stores'
 import INDICES from './indices'
 import { getCartQuantity } from "./carts"
 import { getScore } from "../utils"
+import { colorsMap, objectCache } from "./idb"
 
 export async function addInvItem(
   db: IDBPDatabase,
@@ -135,7 +136,7 @@ export async function getPartPageInvItems(db: IDBPDatabase, itemId: number): Pro
 }
 
 export async function getStorePageInvItem(objectCache: ObjectCacheClass, invItem: InvItem, type: "Lego" | "BrickLink"): Promise<StorePageInvItem | undefined> {
-  const search = await getActiveSearch()
+  const search = getActiveSearch()
   const part: StorePageInvItemItem | undefined = await objectCache.getStorePageExternalPart(invItem, type)
   if (!part) {
     return
@@ -189,24 +190,24 @@ export async function getStorePageInvItem(objectCache: ObjectCacheClass, invItem
 
 export async function getStorePageInvItems(db: IDBPDatabase, id: string): Promise<InvItem[]> {
   console.log('getStorePageInvItems')
-  const search = await getActiveSearch()
+  const search = getActiveSearch()
   const invItems: InvItem[] = await getAllFromIndex(db, INDICES.INV_ITEMS_BY_STORE, id)
   return invItems
 }
 
-export async function getPartsPageVariantInvItems(db: IDBPDatabase, variant: ItemVariant, objectCache?: ObjectCacheClass): Promise<PartsPageVariantInvItem[]> {
-  const search = await getActiveSearch()
-  if (!objectCache) {
-    objectCache = new ObjectCacheClass(db)
-  }
-  const conditions = search.conditions
-  const uiInvItems: PartsPageVariantInvItem[] = []
-  try {
-    const storeItems: InvItem[] = await getAllFromIndex(
-      db,
-      INDICES.INV_ITEMS_BY_ITEM_AND_COLOR,
-      [variant.itemId, variant.colorId]
-    )
+export const getPartsPageVariantInvItems = computed<Map<string, PartsPageVariantInvItem[]>>(() => {
+  const map = new Map<string, PartsPageVariantInvItem[]>()
+  const search = getActiveSearch()
+  objectCache.value.variants.forEach(v => {
+    let value: PartsPageVariantInvItem[] | undefined = map.get(v.itemId + v.colorId)
+    if (!value) {
+      value = []
+    }
+    const conditions = search.conditions
+    const storeItems: CachedInvItem[] | undefined = invItemsByItemColor.value.get(v.itemId + v.colorId)
+    if (!storeItems) {
+      return
+    }
     for (let i = 0; i < storeItems.length; i++) {
       const storeItem = storeItems[i]
       if (conditions.excluded.length) {
@@ -217,20 +218,29 @@ export async function getPartsPageVariantInvItems(db: IDBPDatabase, variant: Ite
       if (conditions.included.length > 0 && !conditions.included.includes(storeItem.condition)) {
         continue
       }
-      const color = await objectCache.getColor(variant.colorId)
+      const color = colorsMap.value.get(v.colorId)
       if (!color) {
         continue
       }
-      uiInvItems.push({
-        ...storeItem,
-      })
+      value.push(storeItem)
     }
-    return uiInvItems
-  } catch (e) {
-    console.log('error getting variant inventory items', e, variant)
-  }
-  return []
-}
+    map.set(v.itemId + v.colorId, value)
+  })
+  return map
+})
+
+const invItemsByItemColor = computed(() => {
+  const map = new Map<string, CachedInvItem[]>()
+  objectCache.value.invItems.forEach(ii => {
+    let value = map.get(ii.itemId + ii.colorId)
+    if (!value) {
+      value = []
+    }
+    value.push(ii)
+    map.set(ii.itemId + ii.colorId, value)
+  })
+  return map
+})
 
 export async function getPartPageVariantInvItems(db: IDBPDatabase, variant: ItemVariant): Promise<PartPageVariantInvItem[]> {
   const activeCart = await getActiveCart()

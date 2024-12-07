@@ -1,10 +1,10 @@
 import { IDBPDatabase } from "idb"
-import { BrickLinkCategory, BrickLinkItem, CachedExternalItem, CategoryPagePart, ExternalCategory, ExternalItem, InvItem, Item, ItemVariant, LegoItem, ObjectCache, PartPagePart, PartPageVariant, PartPageVariantInvItem, PartsPagePart, RebrickableItem, StorePageInvItemItem, StorePageItemVariant, StorePageVariant, UiItem, UiItemVariant, VariantPagePart } from "../types"
+import { BrickLinkCategory, BrickLinkItem, CachedExternalCategory, CachedExternalItem, CachedItem, CategoryPagePart, ExternalCategory, ExternalItem, InvItem, Item, ItemVariant, LegoItem, ObjectCache, PartPagePart, PartPageVariant, PartPageVariantInvItem, PartsPagePart, RebrickableItem, StorePageInvItemItem, StorePageItemVariant, StorePageVariant, UiItem, UiItemVariant, VariantPagePart } from "../types"
 import { countFromIndex, get, getAll, getAllFromIndex, getFromIndex, put } from "./db"
 import STORES from './stores'
 import { toDataURL } from "../utils"
-import { getItemVariant, getPartPageVariants, getPartsPageVariants, getUiPartVariants } from "./variants"
-import { getDbConnection, getObjectCache, rbPartsBrickLinkId, rbPartsLegoId } from "./idb"
+import { getExternalPartsByPart, getItemVariant, getPartPageVariants, getPartsPageVariants, getUiPartVariants } from "./variants"
+import { getDbConnection, getObjectCache, objectCache, rbPartsBrickLinkId, rbPartsLegoId } from "./idb"
 import INDICES from "./indices"
 import { getNumInvItemsByPart, getNumVariantsByPart, getPartPageInvItems, getVariantsByPart } from "./invItems"
 import ObjectCacheClass from "./ObjectCacheClass"
@@ -108,7 +108,7 @@ export async function getLegoItem(db: IDBPDatabase, legoId: string): Promise<Leg
   return await getFromIndex(db, INDICES.EXTERNAL_PARTS_BY_TYPE_AND_EXTERNAL_ID, ['Lego', legoId])
 }
 
-export async function getAllParts(db: IDBPDatabase): Promise<Item[]> {
+export async function getAllParts(db: IDBPDatabase): Promise<CachedItem[]> {
   return await getAll(db, STORES.PARTS)
 }
 
@@ -120,27 +120,20 @@ export async function getPart(db: IDBPDatabase, partId: IDBValidKey): Promise<It
   return await get(db, STORES.PARTS, partId)
 }
 
-export async function getNumParts(objectCache: ObjectCacheClass): Promise<number> {
-  console.log('getParts')
-  const parts = await getParts(objectCache)
-  return parts.length
-}
-
-async function getExternalPartsByPart(db: IDBPDatabase, id: number) {
-  return await getAllFromIndex(db, INDICES.EXTERNAL_PARTS_BY_PART, id)
-}
-
-async function getParts(objectCache: ObjectCacheClass): Promise<Item[]> {
-  const search = await getActiveSearch()
-  const parts: Item[] = await objectCache.db.getAll(STORES.PARTS.name)
-  const filteredParts: Item[] = []
-  for (let i = 0; i < parts.length; i++) {
-    const part = parts[i]
-    const externalParts: ExternalItem[] = await getExternalPartsByPart(objectCache.db, part.itemId)
+function getParts(): CachedItem[] {
+  const search = getActiveSearch()
+  const parts = computed(() => objectCache.value.parts)
+  const filteredParts: CachedItem[] = []
+  for (let i = 0; i < parts.value.length; i++) {
+    const part = parts.value[i]
+    const externalParts = getExternalPartsByPart.value.get(part.itemId)
+    if (!externalParts) {
+      continue
+    }
     let partAllowed = true
     for (let j = 0; j < externalParts.length; j++) {
       const externalPart = externalParts[j]
-      const externalCategory = await getExternalCategory(objectCache, externalPart.externalCategoryId, externalPart.type)
+      const externalCategory = getExternalCategory.value.get(externalPart.type + externalPart.externalCategoryId)
       if (!externalCategory) {
         continue
       }
@@ -196,35 +189,44 @@ async function getUiPartFromPart(db: IDBPDatabase, part: CategoryPagePart, objec
   }
 }
 
-export async function getPartsPageParts(): Promise<PartsPagePart[]> {
-  const db = await getDbConnection()
-  const objectCache = new ObjectCacheClass(db)
-  const items: Item[] = await getParts(objectCache)
-  const promises: Promise<PartsPagePart>[] = []
+export const getPartsPageParts = computed((): PartsPagePart[] => {
+  const items: Item[] = getParts()
+  const partsPageParts: PartsPagePart[] = []
   items.forEach((item) => {
-    promises.push(getPartsPagePart(item))
+    const partsPagePart = getPartsPagePart.value.get(item.itemId)
+    if (!partsPagePart) {
+      return
+    }
+    partsPageParts.push(partsPagePart)
   })
-  const partsPageParts = await Promise.all(promises)
   return partsPageParts.filter(p => p.variants.length > 0)
-}
+})
 
-export async function getPartsPagePart(part: Item): Promise<PartsPagePart> {
-  const db = await getDbConnection()
-  const objectCache = await getObjectCache()
-  const variants = await getPartsPageVariants(db, part, objectCache)
-  const externalParts = await getPartsPageExternalItems(objectCache, part)
-  const firstVariant = variants.find(v => v.image)
-  let image = undefined
-  if (firstVariant) {
-    image = firstVariant.image
-  }
-  return {
-    ...part,
-    variants,
-    externalParts,
-    image
-  }
-}
+export const getPartsPagePart = computed(() => {
+  const map = new Map<number, PartsPagePart>()
+  objectCache.value.parts.forEach(part => {
+    const variants = getPartsPageVariants.value.get(part.itemId)
+    if (!variants) {
+      return
+    }
+    const firstVariant = variants.find(v => v.image)
+    const externalParts = getExternalPartsByPart.value.get(part.itemId)
+    if (!externalParts) {
+      return
+    }
+    let image = undefined
+    if (firstVariant) {
+      image = firstVariant.image
+    }
+    map.set(part.itemId, {
+      ...part,
+      variants,
+      externalParts,
+      image
+    })
+  })
+  return map
+})
 
 interface PartsPageExternalItem extends ExternalItem {
   category: ExternalCategory
@@ -309,9 +311,13 @@ export async function getStorePageExternalPart(invItem: InvItem, type: 'BrickLin
   }
 }
 
-async function getExternalCategory(objectCache: ObjectCacheClass, id: IDBValidKey, type: string): Promise<ExternalCategory> {
-  return await get(objectCache.db, STORES.EXTERNAL_CATEGORIES, [type, id])
-}
+export const getExternalCategory = computed<Map<string, CachedExternalCategory>>(() => {
+  const map = new Map<string, CachedExternalCategory>()
+  objectCache.value.externalCategories.forEach(ec => {
+    map.set(ec.type + ec.id, ec)
+  })
+  return map
+})
 
 export async function updatePart(
   db: IDBPDatabase,
@@ -329,7 +335,7 @@ async function getExternalPartsByTypeAndCategory(db: IDBPDatabase, externalCateg
 }
 
 export async function getCategoryPageParts(db: IDBPDatabase, id: number): Promise<CategoryPagePart[]> {
-  const search = await getActiveSearch()
+  const search = getActiveSearch()
   const externalCategories = await getExternalCategoriesByCategory(db, id)
   const externalParts: ExternalItem[] = []
   for (let i = 0; i < externalCategories.length; i++) {

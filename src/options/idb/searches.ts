@@ -1,9 +1,9 @@
 import { IDBPDatabase } from "idb"
-import { Search, UiStore, CartWithItems, ActiveSearch, ActiveSearchButtonActiveSearch, SearchesPageSearch, Item, SearchPageSearch, SearchFilter, ExternalItem } from "../types"
+import { Search, UiStore, CartWithItems, ActiveSearch, ActiveSearchButtonActiveSearch, SearchesPageSearch, Item, SearchPageSearch, SearchFilter, ExternalItem, CachedSearch } from "../types"
 import { getCategories, getCategory } from "./categories"
 import { getCondition } from "./condition"
 import { getAll, getAllFromIndex, getFromIndex } from "./db"
-import { getDbConnection } from "./idb"
+import { activeSearch, categoriesMap, getCategoriesPageCategory, getDbConnection, objectCache } from "./idb"
 import STORES from "./stores"
 import INDICES from './indices'
 import ObjectCacheClass from "./ObjectCacheClass"
@@ -26,14 +26,12 @@ export async function getActiveCart(): Promise<CartWithItems> {
   const objectCache = new ObjectCacheClass(db)
   return await objectCache.getActiveCart()
 }
-export async function getActiveSearch(): Promise<ActiveSearch> {
-  const db = await getDbConnection()
-  const objectCache = new ObjectCacheClass(db)
-  return await objectCache.getActiveSearch()
-}
-export async function getActiveSearchButtonActiveSearch(): Promise<ActiveSearchButtonActiveSearch> {
-  const search = await getActiveSearch()
-  const activeSearch: ActiveSearchButtonActiveSearch = {
+export async function getActiveSearchButtonActiveSearch(): Promise<ActiveSearchButtonActiveSearch | undefined> {
+  const search = activeSearch.value
+  if (!search) {
+    return
+  }
+  const activeSearchButtonActiveSearch: ActiveSearchButtonActiveSearch = {
     ...search,
     categories: {
       excluded: search.categories.excluded,
@@ -66,15 +64,19 @@ export async function getActiveSearchButtonActiveSearch(): Promise<ActiveSearchB
       includedNames: []
     }
   }
-  return activeSearch
+  return activeSearchButtonActiveSearch
 }
 
 export async function getFirstActiveSearch(db: IDBPDatabase): Promise<Search | undefined> {
   return await getFromIndex(db, INDICES.SEARCHES_BY_ACTIVE, 1)
 }
 
-export async function getAllSearches(db: IDBPDatabase): Promise<Search[]> {
+export async function getAllSearches(db: IDBPDatabase): Promise<CachedSearch[]> {
   return await getAll(db, STORES.SEARCHES)
+}
+
+export async function getAllSearchFilters(db: IDBPDatabase): Promise<SearchFilter[]> {
+  return await getAll(db, STORES.SEARCH_FILTERS)
 }
 
 export async function getSearchesPagesSearches(): Promise<SearchesPageSearch[]> {
@@ -94,8 +96,15 @@ export async function searchAllowsPart(db: IDBPDatabase, search: Search, part: E
   return true // TODO
 }
 
+export function getActiveSearch() {
+  return activeSearch.value
+}
+
 export async function setPriceScoreQuantity(quantity: number) {
-  const search = await getActiveSearch()
+  const search = getActiveSearch()
+  if (!search) {
+    return
+  }
   search.priceScoreQuantity = quantity
   const db = await getDbConnection()
   db.put(STORES.SEARCHES.name, search)
@@ -105,8 +114,11 @@ export async function getSearchFilters(db: IDBPDatabase, search: Search): Promis
   return await getAllFromIndex(db, INDICES.SEARCH_FILTERS_BY_SEARCH, search.id)
 }
 
-export async function getSearchPageSearch(id: number): Promise<SearchPageSearch> {
-  const search: ActiveSearch = await getActiveSearch()
+export async function getSearchPageSearch(id: number): Promise<SearchPageSearch | undefined> {
+  const search = activeSearch.value
+  if (!search) {
+    return
+  }
   const activeSearchPageSearch: SearchPageSearch = {
     ...search,
     includedConditionObjects: [],
@@ -120,13 +132,27 @@ export async function getSearchPageSearch(id: number): Promise<SearchPageSearch>
   const db = await getDbConnection()
   for (let i = 0; i < search.categories.included.length; i++) {
     const id = search.categories.included[i]
-    const category = await getCategory(db, id)
-    activeSearchPageSearch.includedCategoryObjects.push(await getCategoriesPageCategory(db, category))
+    const category = categoriesMap.value.get(id)
+    if (!category) {
+      continue
+    }
+    const cpc = getCategoriesPageCategory(category)
+    if (!cpc) {
+      continue
+    }
+    activeSearchPageSearch.includedCategoryObjects.push(cpc)
   }
   for (let i = 0; i < search.categories.excluded.length; i++) {
     const id = search.categories.excluded[i]
-    const category = await getCategory(db, id)
-    activeSearchPageSearch.excludedCategoryObjects.push(await getCategoriesPageCategory(db, category))
+    const category = categoriesMap.value.get(id)
+    if (!category) {
+      continue
+    }
+    const cpc = getCategoriesPageCategory(category)
+    if (!cpc) {
+      continue
+    }    
+    activeSearchPageSearch.excludedCategoryObjects.push(cpc)
   }
   for (let i = 0; i < search.conditions.included.length; i++) {
     const id = search.conditions.included[i]
