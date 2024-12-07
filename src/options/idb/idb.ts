@@ -65,6 +65,8 @@ export const activeCache = computed<Cache>(() => {
   }
 })
 
+export const cacheLoaded = ref(false)
+
 export async function loadObjectCache(db: IDBPDatabase) {
   const cache = objectCache.value
   cache.carts.push(...await getAllCarts(db))
@@ -166,7 +168,7 @@ export async function loadObjectCache(db: IDBPDatabase) {
     }
   })
   cache.searchFilters.forEach(sf => {
-    
+
   })
   cache.stores.push(...await getAllStores(db))
   cache.stores.forEach(store => {
@@ -221,7 +223,12 @@ export async function loadObjectCache(db: IDBPDatabase) {
   cache.invItems.forEach(invItem => {
     invItem.variant = variantsMap.value.get(invItem.itemId + invItem.colorId)
   })
+  cacheLoaded.value = true
 }
+
+export const filteredParts = computed(() => {
+  return objectCache.value.parts.filter(p => p.externalParts.length > 0)
+})
 
 export const activeSearch = computed(() => {
   return objectCache.value.searches.find(s => s.active === 1)

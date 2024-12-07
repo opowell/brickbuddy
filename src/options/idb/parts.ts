@@ -4,9 +4,9 @@ import { countFromIndex, get, getAll, getAllFromIndex, getFromIndex, put } from 
 import STORES from './stores'
 import { toDataURL } from "../utils"
 import { getExternalPartsByPart, getItemVariant, getPartPageVariants, getPartsPageVariants, getUiPartVariants } from "./variants"
-import { getDbConnection, getObjectCache, objectCache, rbPartsBrickLinkId, rbPartsLegoId } from "./idb"
+import { filteredParts, getDbConnection, getObjectCache, objectCache, rbPartsBrickLinkId, rbPartsLegoId } from "./idb"
 import INDICES from "./indices"
-import { getNumInvItemsByPart, getNumVariantsByPart, getPartPageInvItems, getVariantsByPart } from "./invItems"
+import { getNumInvItemsByPart, getPartPageInvItems, getVariantsByPart } from "./invItems"
 import ObjectCacheClass from "./ObjectCacheClass"
 import { getActiveSearch, searchAllowsPart } from "./searches"
 
@@ -122,38 +122,39 @@ export async function getPart(db: IDBPDatabase, partId: IDBValidKey): Promise<It
 
 function getParts(): CachedItem[] {
   const search = getActiveSearch()
-  const parts = computed(() => objectCache.value.parts)
-  const filteredParts: CachedItem[] = []
+  const parts = computed(() => filteredParts.value)
+  const fps: CachedItem[] = []
   for (let i = 0; i < parts.value.length; i++) {
     const part = parts.value[i]
-    const externalParts = getExternalPartsByPart.value.get(part.itemId)
-    if (!externalParts) {
-      continue
-    }
     let partAllowed = true
-    for (let j = 0; j < externalParts.length; j++) {
-      const externalPart = externalParts[j]
-      const externalCategory = getExternalCategory.value.get(externalPart.type + externalPart.externalCategoryId)
+    for (let j = 0; j < part.externalParts.length; j++) {
+      const externalPart = part.externalParts[j]
+      const externalCategory = externalPart.externalCategory
       if (!externalCategory) {
         continue
       }
-      const categoryId = externalCategory.categoryId
-      if (search.categories.excluded.includes(categoryId)) {
-        partAllowed = false
-        break
-      }
-      if (search.categories.included.length > 0) {
-        if (!search.categories.included.includes(categoryId)) {
-          partAllowed = false
-          break
+      if (search) {
+        if (search.categories) {
+          const categoryId = externalCategory.categoryId
+          if (search.categories.excluded.includes(categoryId)) {
+            partAllowed = false
+            break
+          }
+          if (search.categories.included.length > 0) {
+            if (!search.categories.included.includes(categoryId)) {
+              partAllowed = false
+              break
+            }
+          }
         }
       }
     }
     if (partAllowed) {
-      filteredParts.push(part)
+      fps.push(part)
     }
   }
-  return filteredParts
+  // console.log('parts', fps)
+  return fps
 }
 
 export async function getPartPagePart(id: number): Promise<PartPagePart | undefined> {
@@ -194,6 +195,7 @@ export const getPartsPageParts = computed((): PartsPagePart[] => {
   const partsPageParts: PartsPagePart[] = []
   items.forEach((item) => {
     const partsPagePart = getPartsPagePart.value.get(item.itemId)
+    // console.log(item.itemId, partsPagePart, getPartsPagePart.value)
     if (!partsPagePart) {
       return
     }
@@ -203,15 +205,18 @@ export const getPartsPageParts = computed((): PartsPagePart[] => {
 })
 
 export const getPartsPagePart = computed(() => {
+  console.log('getPartsPagePart', getPartsPageVariants.value)
   const map = new Map<number, PartsPagePart>()
   objectCache.value.parts.forEach(part => {
     const variants = getPartsPageVariants.value.get(part.itemId)
     if (!variants) {
+      // console.log('no variants')
       return
     }
     const firstVariant = variants.find(v => v.image)
     const externalParts = getExternalPartsByPart.value.get(part.itemId)
     if (!externalParts) {
+      // console.log('no external parts')
       return
     }
     let image = undefined

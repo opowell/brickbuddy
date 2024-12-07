@@ -1,15 +1,13 @@
 <script setup lang="ts">
-import { getPartsPagePart, getPartsPageParts } from '../idb/parts';
+import { getPartsPageParts } from '../idb/parts';
 import type { PartsPagePart } from '../types';
 import PartButton from '../components/PartButton.vue';
 const search = ref('')
-const items = ref<PartsPagePart[] | undefined>(undefined)
-const loadedItems = ref<PartsPagePart[]>([])
-onMounted(async () => {
-  items.value = getPartsPageParts
-  for (let i = 0; i < items.value?.length; i++) {
-    loadedItems.value.push(await getPartsPagePart(items.value[i]))
+const items = computed<PartsPagePart[] | undefined>(() => {
+  if (!cacheLoaded) {
+    return []
   }
+  return getPartsPageParts.value
 })
 const filteredParts = computed(() => {
   if (!items.value) {
@@ -26,10 +24,11 @@ import ActiveSearchButton from '../components/ActiveSearchButton.vue';
 import NameIdLabel from '../components/NameIdLabel.vue';
 import QuantityInput from '../components/QuantityInput.vue';
 import ActiveCartButton from '../components/ActiveCartButton.vue';
+import { cacheLoaded } from '../idb/idb';
 </script>
 
 <template>
-  <div v-if="!items">
+  <div v-if="!items || !cacheLoaded">
     Loading...
   </div>
   <div v-else>

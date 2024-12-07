@@ -1,22 +1,20 @@
 <script setup lang="ts">
 import { Crumbs } from '../idb/constants';
 import CategoriesButton from '../components/CategoriesButton.vue';
+import CategoryButton from '../components/CategoryButton.vue';
 import HomeButton from '../components/HomeButton.vue';
 
 import { useRoute } from 'vue-router'
-import { getCategoryPageCategory, getExternalCategories, getExternalCategory } from '../idb/categories';
-import { Category, CategoryPageCategory, ExternalCategory, ExternalItem, Item, ItemVariant } from '../types';
+import { CachedExternalCategory, ExternalCategory, ExternalItem, Item } from '../types';
 import IncludeCategoryButton from '../components/IncludeCategoryButton.vue';
 import ExcludeCategoryButton from '../components/ExcludeCategoryButton.vue';
 const route = useRoute()
 import { useRouter } from 'vue-router'
 import ActiveSearchButton from '../components/ActiveSearchButton.vue';
 import ExternalPartButton from '../components/ExternalPartButton.vue';
-import NameIdLabel from '../components/NameIdLabel.vue';
-import { getDbConnection } from '../idb/idb';
+import { externalCategoriesMap } from '../idb/idb';
 const router = useRouter()
-import STORES from '../idb/stores'
-import { countFromIndex, get, getAllFromIndex } from '../idb/db';
+import { countFromIndex, getAllFromIndex } from '../idb/db';
 import { IDBPDatabase } from 'idb';
 import indices from '../idb/indices';
 interface Item extends ExternalItem {
@@ -47,21 +45,8 @@ async function getParts(db: IDBPDatabase, id: string, type: string): Promise<Ite
   }
   return parts
 }
-const category = ref<Category | undefined>(undefined)
-async function getExternalCategoryPageExternalCategory(id: string, type: "BrickLink" | "Lego" | "Rebrickable"): Promise<ExternalCategoryPageExternalCategory | undefined> {
-  const db = await getDbConnection()
-  const category: ExternalCategory = await getExternalCategory(db, id, type)
-  if (!category) {
-    return
-  }
-  const parts: ExternalItem[] = await getParts(db, id, type)
-  return {
-    ...category,
-    parts,
-  }
-}
-onMounted(async () => {
-  category.value = await getExternalCategoryPageExternalCategory(route.params.id, route.params.type)
+const category = computed<CachedExternalCategory | undefined>(() => {
+  return externalCategoriesMap.value.get(route.params.type + route.params.id)
 })
 </script>
 
@@ -70,11 +55,11 @@ onMounted(async () => {
     <HomeButton />
     <CategoriesButton />
     <ActiveSearchButton />
-    <h4>{{ category.type }} {{ category.name }} ({{ category.id }})</h4>
+    <h4>External category: {{ category.type }} {{ category.name }} ({{ category.id }})</h4>
     <IncludeCategoryButton :category="category" @include="router.push(Crumbs.categories.href)"/>
     <ExcludeCategoryButton :category="category" @exclude="router.push(Crumbs.categories.href)"/>
-    <div>Category: {{ category.categoryId }}</div>
-    <h4>Parts ({{ category.parts.length }})</h4>
+    <div>Category: <CategoryButton :category="category.category" /></div>
+    <h4>Parts ({{ category.externalParts.length }})</h4>
     <table>
       <thead>
         <tr>
@@ -85,13 +70,13 @@ onMounted(async () => {
         </tr>
       </thead>
       <tbody>
-        <tr v-for="part in category.parts" :key="part.itemId">
+        <tr v-for="part in category.externalParts" :key="part.itemId">
           <td><img v-if="part.image" :src="part.image"></td>
           <td>
             <ExternalPartButton :part="part" />
           </td>
-          <td>{{ part.numVariants }}</td>
-          <td>{{ part.numInvItems }}</td>
+          <td>{{ part.variants?.length }}</td>
+          <td>{{ part.invItems?.length }}</td>
         </tr>
       </tbody>
     </table>

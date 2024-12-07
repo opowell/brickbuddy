@@ -3,7 +3,7 @@ import { UiItemVariant, ItemVariant, InvItem, UiInvItem, UiItem, Color, VariantP
 import { getCartQuantity } from "./carts"
 import { getColor, colors } from "./colors"
 import { get, getAllFromIndex } from "./db"
-import { colorsMap, getDbConnection, objectCache } from "./idb"
+import { cacheLoaded, colorsMap, getDbConnection, objectCache } from "./idb"
 import INDICES from "./indices"
 import { getPartPageVariantInvItems, getPartsPageVariantInvItems } from "./invItems"
 import ObjectCacheClass from "./ObjectCacheClass"
@@ -103,7 +103,7 @@ export const getPartsPageVariants = computed<Map<number, PartsPageVariant[]>>(()
   const parts = objectCache.value.parts
   const map = new Map<number, PartsPageVariant[]>()
   parts.forEach(item => {
-    const externalParts = getExternalPartsByPart.value.get(item.itemId)
+    const externalParts = item.externalParts
     if (!externalParts) {
       return
     }
@@ -112,7 +112,7 @@ export const getPartsPageVariants = computed<Map<number, PartsPageVariant[]>>(()
       const externalPart = externalParts[i]
       const variants = variantsByTypePart.value.get(externalPart.type + externalPart.externalItemId)
       if (!variants) {
-        return
+        continue
       }
       for (let i = 0; i < variants.length; i++) {
         const variant = variants[i]
@@ -139,14 +139,17 @@ export const getPartsPageVariants = computed<Map<number, PartsPageVariant[]>>(()
 
 const variantsByTypePart = computed<Map<string, CachedItemVariant[]>>(() => {
   const map = new Map<string, CachedItemVariant[]>()
+  // console.log(objectCache.value.variants, cacheLoaded.value)
   objectCache.value.variants.forEach(v => {
     let value = map.get(v.type + v.itemId)
+    console.log(v.type + v.itemId)
     if (!value) {
       value = []
     }
     value.push(v)
     map.set(v.type + v.itemId, value)
   })
+  // console.log(map)
   return map
 })
 
