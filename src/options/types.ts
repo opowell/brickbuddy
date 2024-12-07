@@ -515,7 +515,8 @@ export interface ExternalCategory {
 }
 
 export interface CachedExternalCategory extends ExternalCategory {
-  externalParts: CachedExternalItem[]
+  externalPartsFiltered: ComputedRef<CachedExternalItem[]>
+  externalParts: Ref<CachedExternalItem[]>
   category: CachedCategory
   image: ComputedRef<string | undefined> | undefined
 }

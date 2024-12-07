@@ -92,6 +92,7 @@ export async function loadObjectCache(db: IDBPDatabase) {
   })
   cache.externalCategories.push(...externalCategories)
   cache.externalCategories.forEach((ec) => {
+    console.log(ec)
     const category = categoriesMap.value.get(ec.categoryId)
     if (!category) {
       return
@@ -141,6 +142,14 @@ export async function loadObjectCache(db: IDBPDatabase) {
     }
     ep.part = part
     part.externalParts.push(ep)
+  })
+  cache.externalCategories.push(...externalCategories)
+  cache.externalCategories.forEach((ec) => {
+    ec.externalPartsFiltered = computed(() => {
+      return ec.externalParts.filter(ep => {
+        return ep.variants.length > 0
+      })
+    })
   })
   cache.searches.push(...await getAllSearches(db))
   cache.searchFilters.push(...await getAllSearchFilters(db))
@@ -231,6 +240,18 @@ export async function loadObjectCache(db: IDBPDatabase) {
   cacheLoaded.value = true
 }
 
+export const externalCategoriesPartsFilteredMap = computed<Map<string, CachedExternalItem[]>>(() => {
+  const map = new Map<string, CachedExternalItem[]>()
+  if (!cacheLoaded) {
+    return map
+  }
+  objectCache.value.externalCategories.forEach(ec => {
+    map.set(ec.type + ec.id, ec.externalParts.filter(ep => {
+      return ep.variants.length > 0
+    }))
+  })
+  return map
+})
 export const filteredParts = computed(() => {
   return objectCache.value.parts.filter(p => p.externalParts.length > 0)
 })
@@ -371,6 +392,17 @@ export const activeCategories = computed<CachedCategory[]>(() => {
   )
   return filtered
 })
+export const activeCategories2 = computed<CachedCategory[]>(() => {
+  return activeCategories.value.filter(c => {
+    return c.externalCategories.some(ec => {
+      const filtered = externalCategoriesPartsFilteredMap.value.get(ec.type + ec.id)
+      if (!filtered) {
+        return false
+      }
+      return filtered.length > 0
+    })
+  })
+})
 export const categoriesMap = computed<Map<number, CachedCategory>>(() => {
   const map = new Map<number, CachedCategory>()
   activeCategories.value.forEach((c) => {
@@ -421,7 +453,7 @@ export const homeData = computed<HomeData>(() => {
   return {
     stores: activeStores.value.length,
     colors: activeColors.value.length,
-    categories: activeCategories.value.length,
+    categories: activeCategories2.value.length,
     parts: objectCache.value.parts?.length || 0,
     conditions: 2,
     lists: objectCache.value.lists?.length || 0,
@@ -486,6 +518,11 @@ export const categories = computed<CategoriesPageCategory[]>(() => {
     const category: CachedCategory = categories[i]
     const categoriesPageCategory: CategoriesPageCategory | undefined = getCategoriesPageCategory(category)
     if (!categoriesPageCategory || categoriesPageCategory.externalCategories.length === 0) {
+      continue
+    }
+    if (categoriesPageCategory.externalCategories.every(ec => {
+      return ec.externalPartsFiltered.length === 0
+    })) {
       continue
     }
     categoriesPageCategories.push(categoriesPageCategory)

@@ -2,7 +2,7 @@
 import { Crumbs } from '../idb/constants';
 import ActiveSearchButton from '../components/ActiveSearchButton.vue';
 import ActiveCartButton from '../components/ActiveCartButton.vue';
-import { homeData } from '../idb/idb';
+import { homeData, activeCategories, activeCategories2, externalCategoriesPartsFilteredMap } from '../idb/idb';
 import { objectCache } from '../idb/idb';
 import CardComponent from '../components/CardComponent.vue';
 </script>
@@ -14,7 +14,7 @@ import CardComponent from '../components/CardComponent.vue';
       <ActiveSearchButton />
       <ActiveCartButton />
     </p>
-    <div v-if="!homeData && !objectCache">Loading...</div>
+    <div v-if="!homeData || !objectCache || !activeCategories || !externalCategoriesPartsFilteredMap || !activeCategories2">Loading...</div>
     <div v-else class="cards">
       <CardComponent name="Stores" :count="homeData.stores" :href="Crumbs.stores.href" />
       <CardComponent name="Colors" :count="homeData.colors" :href="Crumbs.colors.href" />
