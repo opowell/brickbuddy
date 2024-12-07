@@ -5,10 +5,10 @@ import { objectCache } from './idb/idb';
 
 onMounted(async () => {
   await importRbPartsToMemory()
-  // startFetching()
   const db = await getDbConnection()
   await loadObjectCache(db)
   await createActiveSearchIfNecessary(db)
+  // startFetching()
   return {
     objectCache
   }
