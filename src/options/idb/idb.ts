@@ -94,7 +94,6 @@ export async function loadObjectCache(db: IDBPDatabase) {
   cache.externalCategories.forEach((ec) => {
     const category = categoriesMap.value.get(ec.categoryId)
     if (!category) {
-      console.log('no category, skipping', ec)
       return
     }
     ec.category = category
@@ -107,12 +106,12 @@ export async function loadObjectCache(db: IDBPDatabase) {
         return part.image
       }
     })
-    // console.log(ec, ec.category, ec.category.externalCategories, ec.category.externalCategories.value)
     ec.category.externalCategories.push(ec)
   })
   const externalParts = await getAllExternalParts(db)
   externalParts.forEach((ep) => {
     ep.variants = []
+    ep.invItems = []
   })
   cache.externalParts.push(...externalParts)
   cache.externalParts.forEach((ep) => {
@@ -209,6 +208,12 @@ export async function loadObjectCache(db: IDBPDatabase) {
       }
       return getScore(Array.from(allMatchingInvItems.values()), search.priceScoreQuantity, invItem.price, true)
     })
+    const externalPart = externalPartsMap.value.get(invItem.type + invItem.itemId)
+    if (!externalPart) {
+      return
+    }
+    externalPart.invItems.push(invItem)
+    invItem.externalPart = externalPart
   })
   cache.variants.push(...await getAllVariants(db))
   cache.variants.forEach((v) => {

@@ -13,6 +13,7 @@ export interface CachedStore extends Store {
 }
 
 export interface CachedInvItem extends InvItem {
+  externalPart: CachedExternalItem
   priceScore: ComputedRef<string>
   variant: CachedItemVariant | undefined
   color: CachedColor | undefined
@@ -209,6 +210,8 @@ export interface PartsPagePart extends Item {
 export interface StorePagePart extends Item {
   variants: UiItemVariant[]
   category: Category
+}
+export interface ExternalPartPageExternalPart extends CachedExternalItem {
 }
 export interface PartPagePart extends Item {
   variants: PartPageVariant[]

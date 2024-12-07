@@ -1,5 +1,5 @@
 import { IDBPDatabase } from "idb"
-import { BrickLinkCategory, BrickLinkItem, CachedExternalCategory, CachedExternalItem, CachedItem, CategoryPagePart, ExternalCategory, ExternalItem, InvItem, Item, ItemVariant, LegoItem, ObjectCache, PartPagePart, PartPageVariant, PartPageVariantInvItem, PartsPagePart, RebrickableItem, StorePageInvItemItem, StorePageItemVariant, StorePageVariant, UiItem, UiItemVariant, VariantPagePart } from "../types"
+import { BrickLinkCategory, BrickLinkItem, CachedExternalCategory, CachedExternalItem, CachedItem, CategoryPagePart, ExternalCategory, ExternalItem, ExternalPartPageExternalPart, InvItem, Item, ItemVariant, LegoItem, ObjectCache, PartPagePart, PartPageVariant, PartPageVariantInvItem, PartsPagePart, RebrickableItem, StorePageInvItemItem, StorePageItemVariant, StorePageVariant, UiItem, UiItemVariant, VariantPagePart } from "../types"
 import { countFromIndex, get, getAll, getAllFromIndex, getFromIndex, put } from "./db"
 import STORES from './stores'
 import { toDataURL } from "../utils"
@@ -157,6 +157,14 @@ function getParts(): CachedItem[] {
   return fps
 }
 
+export const externalPartPageExternalPartMap = computed<Map<string, ExternalPartPageExternalPart>>(() => {
+  const map = new Map<string, ExternalPartPageExternalPart>()
+  objectCache.value.externalParts.forEach(ep => {
+    map.set(ep.type + ep.externalItemId, ep)
+  })
+  return map
+})
+
 export async function getPartPagePart(id: number): Promise<PartPagePart | undefined> {
   const db = await getDbConnection()
   const part: Item = await getPart(db, id)
@@ -195,7 +203,6 @@ export const getPartsPageParts = computed((): PartsPagePart[] => {
   const partsPageParts: PartsPagePart[] = []
   items.forEach((item) => {
     const partsPagePart = getPartsPagePart.value.get(item.itemId)
-    // console.log(item.itemId, partsPagePart, getPartsPagePart.value)
     if (!partsPagePart) {
       return
     }

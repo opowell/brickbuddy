@@ -44,7 +44,7 @@ import { cacheLoaded } from '../idb/idb';
           <th>Name</th>
           <th>Category</th>
           <th>Colors</th>
-          <th>Price</th>
+          <th title="Price, in Euro cents">Price</th>
           <th>List</th>
         </tr>
       </thead>

@@ -139,17 +139,14 @@ export const getPartsPageVariants = computed<Map<number, PartsPageVariant[]>>(()
 
 const variantsByTypePart = computed<Map<string, CachedItemVariant[]>>(() => {
   const map = new Map<string, CachedItemVariant[]>()
-  // console.log(objectCache.value.variants, cacheLoaded.value)
   objectCache.value.variants.forEach(v => {
     let value = map.get(v.type + v.itemId)
-    console.log(v.type + v.itemId)
     if (!value) {
       value = []
     }
     value.push(v)
     map.set(v.type + v.itemId, value)
   })
-  // console.log(map)
   return map
 })
 
