@@ -57,7 +57,7 @@ import { cacheLoaded } from '../idb/idb';
           <!-- <td><CategoryButton :category="item.category" /></td> -->
           <td>CategoryButton :category="item.category"</td>
           <td>{{ item.variants.length }}</td>
-          <td>1-5</td>
+          <td>{{ item.priceRange }}</td>
           <td><QuantityInput :current="0" :max="1000" /></td>
         </tr>
       </tbody>

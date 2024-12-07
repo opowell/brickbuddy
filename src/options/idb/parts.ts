@@ -205,29 +205,46 @@ export const getPartsPageParts = computed((): PartsPagePart[] => {
 })
 
 export const getPartsPagePart = computed(() => {
-  console.log('getPartsPagePart', getPartsPageVariants.value)
   const map = new Map<number, PartsPagePart>()
   objectCache.value.parts.forEach(part => {
     const variants = getPartsPageVariants.value.get(part.itemId)
     if (!variants) {
-      // console.log('no variants')
       return
     }
     const firstVariant = variants.find(v => v.image)
     const externalParts = getExternalPartsByPart.value.get(part.itemId)
     if (!externalParts) {
-      // console.log('no external parts')
       return
     }
     let image = undefined
     if (firstVariant) {
       image = firstVariant.image
     }
+    let minPrice: number | undefined = undefined
+    let maxPrice: number | undefined = undefined
+    variants.forEach(v => {
+      v.invItems.forEach(ii => {
+        const priceNumber = Number.parseFloat(ii.price)
+        if (minPrice === undefined || priceNumber < minPrice) {
+          minPrice = priceNumber
+        }
+        if (maxPrice === undefined || priceNumber > maxPrice) {
+          maxPrice = priceNumber
+        }
+      })
+    })
+    let priceRange: string
+    if (minPrice === maxPrice) {
+      priceRange = minPrice + ''
+    } else {
+      priceRange = minPrice + '-' + maxPrice
+    }
     map.set(part.itemId, {
       ...part,
       variants,
       externalParts,
-      image
+      image,
+      priceRange
     })
   })
   return map

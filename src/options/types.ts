@@ -204,6 +204,7 @@ export interface PartsPagePart extends Item {
   variants: PartsPageVariant[]
   externalParts: ExternalItem[]
   image?: string
+  priceRange: string
 }
 export interface StorePagePart extends Item {
   variants: UiItemVariant[]
