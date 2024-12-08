@@ -41,10 +41,11 @@ const sortedItems = computed<StoreItemsTableInvItem[]>(() => {
     return []
   }
   return items.sort((a: StoreItemsTableInvItem, b: StoreItemsTableInvItem) => {
-    return (
-      (typeof a.price === 'number' ? a.price : Number.parseInt(a.price)) -
-      (typeof b.price === 'number' ? b.price : Number.parseInt(b.price))
-    )
+    return Number.parseFloat(a.price) - Number.parseFloat(b.price)
+    // return (
+    //   (typeof a.price === 'number' ? a.price : Number.parseInt(a.price)) -
+    //   (typeof b.price === 'number' ? b.price : Number.parseInt(b.price))
+    // )
   })
 })
 

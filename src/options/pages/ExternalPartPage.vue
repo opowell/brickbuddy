@@ -32,7 +32,8 @@ const variants = computed<VariantWithPriceQuantity[]>(() => {
     let price = Number.POSITIVE_INFINITY
     let varMaxPrice = 0
     let quantity = 0
-    variant.externalPart.invItems.forEach((invItem: CachedInvItem) => {
+    const matchingInvItems = variant.externalPart.invItems.filter(iv => iv.colorId === variant.colorId)
+    matchingInvItems.forEach((invItem: CachedInvItem) => {
       if (condition.value !== 'Any' && invItem.condition !== condition.value) {
         return
       }
@@ -52,12 +53,13 @@ const variants = computed<VariantWithPriceQuantity[]>(() => {
         quantity += invItem.quantity
       }
     })
+    console.log('add', quantity, variant.colorId)
     return {
       ...variant,
       price,
       maxPrice: varMaxPrice,
       quantity,
-      invItems: variant.externalPart.invItems,
+      invItems: matchingInvItems,
     }
   })
   return variantsWithPQ.filter((variant: VariantWithPriceQuantity) => {
@@ -67,8 +69,11 @@ const variants = computed<VariantWithPriceQuantity[]>(() => {
 })
 const condition = ref<string>('New')
 const invItems = computed<PartPageVariantInvItem[] | undefined>(() => {
-  return item.value?.variants.flatMap(variant => {
-    return variant.externalPart.invItems.map(invItem => {
+  if (!item.value) {
+    return []
+  }
+  return item.value.variants.flatMap(variant => {
+    return variant.externalPart.invItems.filter(ii => ii.colorId === variant.colorId).map(invItem => {
       return {
         ...invItem,
         variant

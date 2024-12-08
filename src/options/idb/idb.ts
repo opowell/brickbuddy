@@ -231,6 +231,11 @@ export async function loadObjectCache(db: IDBPDatabase) {
     }
     v.externalPart = externalPart
     v.externalPart.variants.push(v)
+    const color = colorsMap.value.get(v.colorId)
+    if (!color) {
+      return
+    }
+    v.color = color
   })
   cache.invItems.forEach(invItem => {
     invItem.variant = variantsMap.value.get(invItem.itemId + invItem.colorId)

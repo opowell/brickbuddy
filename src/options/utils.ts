@@ -125,7 +125,7 @@ export function getScore(
   targetQ: number,
   actualPrice: number | string,
   sort: boolean = false,
-  cheapP: number
+  cheapP?: number
 ) {
   if (cheapP === undefined) {
     cheapP = cheapestPrice(items, targetQ, sort)
