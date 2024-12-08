@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { PropType } from 'vue';
 import { ActiveSearch, type UiInvItem } from '../types'
-import { formatAmount, formatInteger, formatFloat, cheapestPrice } from '@/options/utils';
+import { formatAmount, formatInteger, formatFloat, cheapestPrice, getScore } from '@/options/utils';
 import PartVariantButton from '@/options/components/PartVariantButton.vue';
 import StoreButton from '@/options/components/StoreButton.vue';
 import { getActiveSearch } from '@/options/idb/searches';
@@ -25,9 +25,8 @@ interface StoreItemsTableInvItem extends UiInvItem {
   cartQuantity: number | undefined;
   priceScore: string
 }
-const search = ref<ActiveSearch | undefined>(undefined)
-onMounted(async () => {
-  search.value = getActiveSearch()
+const search = computed(() => {
+  return getActiveSearch()
 })
 
 const costOfCheapest = computed<number | undefined>(() => {
@@ -50,6 +49,9 @@ const sortedItems = computed<StoreItemsTableInvItem[]>(() => {
 })
 
 const viewedItems = computed<StoreItemsTableInvItem[]>(() => {
+  if (!search.value) {
+    return
+  }
   const out = sortedItems.value.map(i => {
     return {
       ...i
@@ -58,17 +60,7 @@ const viewedItems = computed<StoreItemsTableInvItem[]>(() => {
   const out2: StoreItemsTableInvItem[] = []
   for (let i = 0; i < out.length; i++) {
     const item = out[i]
-    let priceScore: math.MathType
-    let priceScoreString = ''
-    if (search.value && costOfCheapest.value) {
-      priceScore = math.divide(math.bignumber(item.price), math.bignumber(costOfCheapest.value))
-      const percent = math.multiply(100, math.subtract(priceScore, 1))
-      let sign = ''
-      if (math.larger(percent, 0)) {
-        sign = '+'
-      }
-      priceScoreString = sign + percent.toString() + '%'
-    }
+    let priceScoreString = getScore(sortedItems.value, search.value.priceScoreQuantity, item.price, false, costOfCheapest.value)
     out2.push({
       ...out[i],
       priceScore: priceScoreString,
@@ -91,14 +83,14 @@ async function updateCartQuantity(item: StoreItemsTableInvItem, newQuantity: num
 </script>
 
 <template>
-  <h4>Store items</h4>
+  <h4 v-if="items && search">Store items ({{ items.length }})</h4>
   <table>
     <thead>
       <tr>
         <th v-if="!hideVariant">Variant</th>
         <th>Store</th>
         <th v-if="showColor">Color</th>
-        <th v-if="search && search.conditions.excluded.length < 1">Condition</th>
+        <th v-if="search && search.conditions?.excluded.length < 1">Condition</th>
         <th>Price</th>
         <th>Price Score</th>
         <th>Quantity</th>

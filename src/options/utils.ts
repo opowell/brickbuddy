@@ -53,6 +53,13 @@ export function formatFloat(x: number) {
   return (x/1000000).toFixed(1) + 'm'
 }
 export function formatAmount(x: number) {
+  if (typeof x !== 'number') {
+    x = Number.parseFloat(x)
+    if (Number.isNaN(x)) {
+      console.warn('not number, returning', x)
+      return x
+    }
+  }
   if (x === 0) {
     return 0
   }
@@ -117,9 +124,12 @@ export function getScore(
   items: { price: number | string, quantity: number }[],
   targetQ: number,
   actualPrice: number | string,
-  sort: boolean = false
+  sort: boolean = false,
+  cheapP: number
 ) {
-  const cheapP = cheapestPrice(items, targetQ, sort)
+  if (cheapP === undefined) {
+    cheapP = cheapestPrice(items, targetQ, sort)
+  }
   const priceScore = math.divide(math.bignumber(actualPrice), math.bignumber(cheapP))
   const percent = math.multiply(100, math.subtract(priceScore, 1))
   let sign = ''

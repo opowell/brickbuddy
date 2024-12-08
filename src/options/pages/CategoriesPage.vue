@@ -79,7 +79,6 @@ import ExternalCategoryButton from '../components/ExternalCategoryButton.vue';
         <tr>
           <th>Image</th>
           <th>Names</th>
-          <th>External</th>
           <th>Parts</th>
           <th>Actions</th>
         </tr>
@@ -90,9 +89,6 @@ import ExternalCategoryButton from '../components/ExternalCategoryButton.vue';
           <td>
             <ExternalCategoryButton v-if="externalCategory.isExternal" :category="externalCategory.externalCategories[0]" />
             <CategoryButton v-else :category="externalCategory.category" />
-          </td>
-          <td>
-            {{ externalCategory.externalCategories.length }}
           </td>
           <td>
             {{ externalCategory.numParts }}

@@ -92,9 +92,6 @@ export async function loadObjectCache(db: IDBPDatabase) {
   })
   cache.externalCategories.push(...externalCategories)
   cache.externalCategories.forEach((ec) => {
-    if (ec.type === 'BrickLink' && ec.id === '31') {
-      console.log('adding', ec)
-    }
     const category = categoriesMap.value.get(ec.categoryId)
     if (!category) {
       return
@@ -257,7 +254,7 @@ export const filteredParts = computed(() => {
   return objectCache.value.parts.filter(p => p.externalParts.length > 0)
 })
 
-export const activeSearch = computed(() => {
+export const activeSearch = computed<CachedSearch | undefined>(() => {
   return objectCache.value.searches.find(s => s.active === 1)
 })
 
@@ -498,9 +495,6 @@ export function getCategoriesPageCategory(category: CachedCategory): CategoriesP
     const parts = externalPartsInExternalCategory.value.get(externalCategory.type + externalCategory.id)
     if (!parts || parts.length === 0) {
       continue
-    }
-    if (externalCategory.type === 'BrickLink' && externalCategory.id === '31') {
-      console.log(i, externalCategory, externalCategoriesByCategoryId.value, 'adding')
     }
     categoriesPageExternalCategory.push({
       ...externalCategory,
