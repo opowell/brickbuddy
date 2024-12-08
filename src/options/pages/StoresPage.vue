@@ -25,12 +25,14 @@ function add() {
 const search = ref('')
 import HomeButton from '../components/HomeButton.vue';
 import ActiveSearchButton from '../components/ActiveSearchButton.vue';
+import ActiveCartButton from '../components/ActiveCartButton.vue';
 import { objectCache } from '../idb/idb';
 </script>
 
 <template>
   <div>
     <HomeButton />
+    <ActiveCartButton />
     <ActiveSearchButton />
     <h4>Stores</h4>
     <h4>Scraping: {{ scrapingOn ? 'On' : 'Off' }}</h4>

@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { CachedExternalCategory, CategoriesPageCategory, ExternalCategory } from '../types';
+import { CachedExternalCategory, CategoriesPageCategory, ExternalCategory, SearchFilter } from '../types';
 import ExcludeCategoryButton from '../components/ExcludeCategoryButton.vue';
 import IncludeCategoryButton from '../components/IncludeCategoryButton.vue';
-import { categories, objectCache, activeExternalCategories, externalCategoriesMap } from '../idb/idb';
+import { categories, objectCache, activeExternalCategories, externalCategoriesMap, getDbConnection } from '../idb/idb';
 interface CategoriesPageUniqueCategory {
   externalCategories: CachedExternalCategory[]
   isExternal: boolean
@@ -54,16 +54,31 @@ const uniqueExternalCategories = computed<CategoriesPageUniqueCategory[]>(() => 
   })
   return out
 })
-function excludeCategory(index: number) {
-  // categories.value?.splice(index, 1)
+async function excludeCategory(externalCategory: ExternalCategory, index: number) {
+  const search = getActiveSearch()
+  if (!search) {
+    return
+  }
+  const db = await getDbConnection()
+  const filter: SearchFilter = {
+    searchId: search.id,
+    type: 'externalCategory',
+    isExcluded: true,
+    objectId: externalCategory.type + externalCategory.id
+  }
+  put(db, stores.SEARCH_FILTERS, filter)
+  search.externalCategories.excluded.push(externalCategory.type + externalCategory.id)
 }
-function includeCategory(index: number) {
+function includeCategory(externalCategory: ExternalCategory, index: number) {
   // categories.value = categories.value?.splice(index, 1)
 }
 import CategoryButton from '../components/CategoryButton.vue';
 import HomeButton from '../components/HomeButton.vue';
 import ActiveSearchButton from '../components/ActiveSearchButton.vue';
 import ExternalCategoryButton from '../components/ExternalCategoryButton.vue';
+import { getActiveSearch } from '../idb/searches';
+import { put } from '../idb/db';
+import stores from '../idb/stores';
 </script>
 
 <template>
@@ -94,8 +109,8 @@ import ExternalCategoryButton from '../components/ExternalCategoryButton.vue';
             {{ externalCategory.numParts }}
           </td>
           <td>
-            <ExcludeCategoryButton :category="externalCategory.category" @exclude="excludeCategory(index)"/>
-            <IncludeCategoryButton :category="externalCategory.category" @include="includeCategory(index)"/>
+            <ExcludeCategoryButton :category="externalCategory.category" @exclude="excludeCategory(externalCategory, index)"/>
+            <IncludeCategoryButton :category="externalCategory.category" @include="includeCategory(externalCategory, index)"/>
           </td>
         </tr>
       </tbody>

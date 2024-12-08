@@ -19,10 +19,10 @@ async function getPrices() {
   if (blStore) {
     getBrickLinkPrices(db, blStore)
   }
-  const legoStore: Store = await getLegoFetchStore(db)
-  if (legoStore) {
-    getLegoPrices(db, legoStore)
-  }
+  // const legoStore: Store = await getLegoFetchStore(db)
+  // if (legoStore) {
+  //   getLegoPrices(db, legoStore)
+  // }
 }
 
 export async function startFetching() {
@@ -44,12 +44,14 @@ export async function startFetching() {
 
 async function getBrickLinkFetchStore(db: IDBPDatabase): Promise<Store> {
   const oneYearAgo = new Date()
-  oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+  const oneYearAhead = new Date()
+  oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1)
+  oneYearAhead.setFullYear(oneYearAhead.getFullYear() + 1)
 
   const stores = await getAllFromIndex(
     db,
     INDICES.STORES_BY_TYPE_AND_LAST_SCRAPED,
-    IDBKeyRange.bound([StoreType.BrickLink, oneYearAgo], [StoreType.BrickLink, new Date()]),
+    IDBKeyRange.bound([StoreType.BrickLink, oneYearAgo], [StoreType.BrickLink, oneYearAhead]),
     1
   )
   return stores[0]

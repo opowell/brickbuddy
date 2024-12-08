@@ -120,6 +120,24 @@ export function cheapestPrice(
   return cost / quantity
 }
 
+export function addHours(date: Date, hours: number) {
+  date.setTime(date.getTime() + (hours*60*60*1000))
+}
+
+let timeStart = new Map<string, number>()
+export function startTimer(x: string) {
+  timeStart.set(x, new Date().getTime())
+}
+
+export function reportTime(x: string) {
+  const start = timeStart.get(x)
+  if (!start) {
+    console.log('no timer started for', x)
+    return
+  }
+  console.log(x, new Date().getTime() - start)
+}
+
 export function getScore(
   items: { price: number | string, quantity: number }[],
   targetQ: number,

@@ -23,7 +23,8 @@ export async function addInvItem(
   quantity: number,
   price: string,
   itemId: string,
-) {
+): Promise<number> {
+  let newScore = 1
   let invItem: InvItem | undefined = await getInvItem(db, store.id, invId)
   if (!invItem) {
     invItem = {
@@ -32,15 +33,23 @@ export async function addInvItem(
       itemId,
       condition,
       quantity: 0,
-      price,
+      price: '0',
       colorId,
       condition_New: condition === 'New' ? 1 : 0,
       condition_Used: condition === 'Used' ? 1 : 0,
       type: store.type === StoreType.BrickLink ? 'BrickLink' : 'Lego'
     }
   }
-  invItem.quantity += quantity
+  if (invItem.price !== price) {
+    newScore--
+  }
+  if (invItem.quantity !== quantity) {
+    newScore--
+  }
+  invItem.price = price
+  invItem.quantity = quantity
   await db.put(STORES.INVENTORY_ITEMS.name, invItem)
+  return newScore
 }
 
 export async function countInvItems(db: IDBPDatabase, storeId: string, search: ActiveSearch): Promise<number> {

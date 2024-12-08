@@ -219,6 +219,7 @@ export interface PartPagePart extends Item {
   externalParts: ExternalItem[]
 }
 export interface InvItem {
+  stale?: boolean
   invId: string
   storeId: string
   itemId: string
@@ -306,6 +307,10 @@ export interface CachedSearchFilter extends SearchFilter {
 }
 
 export interface CachedSearch extends Search {
+  externalCategories: {
+    included: string[]
+    excluded: string[]
+  }
   categories: {
     included: number[]
     excluded: number[]

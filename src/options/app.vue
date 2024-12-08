@@ -1,14 +1,16 @@
 <script setup lang="ts">
-import { createActiveSearchIfNecessary, getDbConnection, importRbPartsToMemory, loadObjectCache } from './idb/idb';
+import { createActiveSearchIfNecessary, getDbConnection, importRbPartsToMemory, loadObjectCache, setScores } from './idb/idb';
 import { startFetching } from './idb/scraping';
 import { objectCache } from './idb/idb';
 
 onMounted(async () => {
+  startTimer('app.vue')
   await importRbPartsToMemory()
   const db = await getDbConnection()
   await loadObjectCache(db)
   await createActiveSearchIfNecessary(db)
   // startFetching()
+  reportTime('app.vue')
   return {
     objectCache
   }
@@ -16,6 +18,7 @@ onMounted(async () => {
 
 import { watch } from "vue";
 import { useRoute } from "vue-router";
+import { reportTime, startTimer } from './utils';
 
 const route = useRoute();
 

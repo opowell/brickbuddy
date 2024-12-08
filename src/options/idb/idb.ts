@@ -68,6 +68,8 @@ export const activeCache = computed<Cache>(() => {
 export const cacheLoaded = ref(false)
 
 export async function loadObjectCache(db: IDBPDatabase) {
+  startTimer('loadObjectCache')
+  startTimer('loadObjectCache1')
   const cache = objectCache.value
   cache.carts.push(...await getAllCarts(db))
   const categories = await getAllCategories(db)
@@ -108,6 +110,7 @@ export async function loadObjectCache(db: IDBPDatabase) {
     })
     ec.category.externalCategories.push(ec)
   })
+
   const externalParts = await getAllExternalParts(db)
   externalParts.forEach((ep) => {
     ep.variants = []
@@ -142,6 +145,8 @@ export async function loadObjectCache(db: IDBPDatabase) {
     ep.part = part
     part.externalParts.push(ep)
   })
+  reportTime('loadObjectCache1')
+  startTimer('loadObjectCache2')
   cache.externalCategories.forEach((ec) => {
     ec.externalPartsFiltered = computed(() => {
       return ec.externalParts.filter(ep => {
@@ -180,8 +185,20 @@ export async function loadObjectCache(db: IDBPDatabase) {
   cache.stores.forEach(store => {
     store.invItems = []
   })
-  cache.invItems.push(...await getAllInvItems(db))
+  cache.invItems = await getAllInvItems(db)
+  reportTime('loadObjectCache2')
+  console.log(cache.invItems.length)
+  startTimer('loadObjectCache3')
+  let i = 0
   cache.invItems.forEach(invItem => {
+    if (i === 0) {
+      startTimer('loadObjectCache3-2000')
+    }
+    i++
+    if (i === 2000) {
+      reportTime('loadObjectCache3-2000')
+      i = 0
+    }
     const store = storesMap.value.get(invItem.type.toString() + invItem.storeId)
     if (!store) {
       return
@@ -222,7 +239,9 @@ export async function loadObjectCache(db: IDBPDatabase) {
     externalPart.invItems.push(invItem)
     invItem.externalPart = externalPart
   })
-  cache.variants.push(...await getAllVariants(db))
+  reportTime('loadObjectCache3')
+  startTimer('loadObjectCache4')
+  cache.variants = await getAllVariants(db)
   cache.variants.forEach((v) => {
     const externalPart = externalPartsMap.value.get(v.type + v.itemId)
     // console.log(v, externalPart)
@@ -241,9 +260,11 @@ export async function loadObjectCache(db: IDBPDatabase) {
     invItem.variant = variantsMap.value.get(invItem.itemId + invItem.colorId)
   })
   cacheLoaded.value = true
+  reportTime('loadObjectCache4')
 }
 
 export const externalCategoriesPartsFilteredMap = computed<Map<string, CachedExternalItem[]>>(() => {
+  startTimer('externalCategoriesPartsFilteredMap')
   const map = new Map<string, CachedExternalItem[]>()
   if (!cacheLoaded) {
     return map
@@ -253,6 +274,7 @@ export const externalCategoriesPartsFilteredMap = computed<Map<string, CachedExt
       return ep.variants.length > 0
     }))
   })
+  reportTime('externalCategoriesPartsFilteredMap')
   return map
 })
 export const filteredParts = computed(() => {
@@ -264,10 +286,12 @@ export const activeSearch = computed<CachedSearch | undefined>(() => {
 })
 
 export const colorsMap = computed(() => {
+  startTimer('colorsMap')
   const map = new Map<string, CachedColor>()
   objectCache.value.colors.forEach(c => {
     map.set(c.id, c)
   })
+  reportTime('colorsMap')
   return map
 })
 export const partsMap = computed(() => {
@@ -278,13 +302,16 @@ export const partsMap = computed(() => {
   return map
 })
 export const storesMap = computed(() => {
+  startTimer('storesMap')
   const map = new Map<string, CachedStore>()
   objectCache.value.stores.forEach((s) => {
     map.set(s.type.toString() + s.id, s)
   })
+  reportTime('storesMap')
   return map
 })
 const externalPartsByItemId = computed(() => {
+  startTimer('externalPartsByItemId')
   const map = new Map<string, CachedExternalItem[]>()
   objectCache.value.externalParts.forEach((ep) => {
     let value = map.get(ep.externalItemId)
@@ -294,23 +321,29 @@ const externalPartsByItemId = computed(() => {
     value.push(ep)
     map.set(ep.externalItemId, value)
   })
+  reportTime('externalPartsByItemId')
   return map
 })
 const externalPartsMap = computed(() => {
+  startTimer('externalPartsMap')
   const map = new Map<string, CachedExternalItem>()
   objectCache.value.externalParts.forEach((ep) => {
     map.set(ep.type + ep.externalItemId, ep)
   })
+  reportTime('externalPartsMap')
   return map
 })
 const variantsMap = computed(() => {
+  startTimer('variantsMap')
   const map = new Map<string, CachedItemVariant>()
   objectCache.value.variants.forEach(v => {
     map.set(v.itemId + v.colorId, v)
   })
+  reportTime('variantsMap')
   return map
 })
 const invItemsByItemColor = computed(() => {
+  startTimer('invItemsByItemColor')
   const map = new Map<string, CachedInvItem[]>()
   objectCache.value.invItems.forEach(ii => {
     let value = map.get(ii.itemId + ii.colorId)
@@ -320,9 +353,11 @@ const invItemsByItemColor = computed(() => {
     value.push(ii)
     map.set(ii.itemId + ii.colorId, value)
   })
+  reportTime('invItemsByItemColor')
   return map
 })
 const invItemsByItem = computed(() => {
+  startTimer('invItemsByItem')
   const map = new Map<string, CachedInvItem[]>()
   objectCache.value.invItems.forEach(ii => {
     let value = map.get(ii.itemId)
@@ -332,6 +367,7 @@ const invItemsByItem = computed(() => {
     value.push(ii)
     map.set(ii.itemId, value)
   })
+  reportTime('invItemsByItem')
   return map
 })
 
@@ -388,15 +424,19 @@ const activeStores = computed<Store[]>(() => filterObjects<Store>(
   includedFilterIds.value.get('store')
 ))
 export const activeCategories = computed<CachedCategory[]>(() => {
+  startTimer('activeCategories')
   const filtered = filterObjects<CachedCategory>(
     objectCache.value.categories,
     excludedFilterIds.value.get('category'),
     includedFilterIds.value.get('category')
   )
+  reportTime('activeCategories')
   return filtered
 })
+
 export const activeCategories2 = computed<CachedCategory[]>(() => {
-  return activeCategories.value.filter(c => {
+  startTimer('activeCategories2')
+  const x = activeCategories.value.filter(c => {
     return c.externalCategories.some(ec => {
       const filtered = externalCategoriesPartsFilteredMap.value.get(ec.type + ec.id)
       if (!filtered) {
@@ -405,12 +445,16 @@ export const activeCategories2 = computed<CachedCategory[]>(() => {
       return filtered.length > 0
     })
   })
+  reportTime('activeCategories2')
+  return x
 })
 export const categoriesMap = computed<Map<number, CachedCategory>>(() => {
+  startTimer('categoriesMap')
   const map = new Map<number, CachedCategory>()
   activeCategories.value.forEach((c) => {
     map.set(c.id, c)
   })
+  reportTime('categoriesMap')
   return map
 })
 export const externalCategoriesMap = computed<Map<string, CachedExternalCategory>>(() => {
@@ -421,6 +465,7 @@ export const externalCategoriesMap = computed<Map<string, CachedExternalCategory
   return map
 })
 export const activeExternalCategories = computed<CachedExternalCategory[]>(() => {
+  startTimer('activeExternalCategories')
   let filtered: CachedExternalCategory[] = filterObjects<CachedExternalCategory>(
     objectCache.value.externalCategories,
     excludedFilterIds.value.get('externalCategory'),
@@ -432,9 +477,11 @@ export const activeExternalCategories = computed<CachedExternalCategory[]>(() =>
     includedFilterIds.value.get('category'),
     (ec: CachedExternalCategory) => ec.categoryId
   )
+  reportTime('activeExternalCategories')
   return filtered
 })
 const activeExternalItems = computed<CachedExternalItem[]>(() => {
+  startTimer('activeExternalItems')
   const filtered: CachedExternalItem[] = filterObjects<CachedExternalItem>(
     objectCache.value.externalParts,
     excludedFilterIds.value.get('externalCategory'),
@@ -444,12 +491,14 @@ const activeExternalItems = computed<CachedExternalItem[]>(() => {
   filtered.forEach((ei) => {
     ei.externalCategory = externalCategoriesMap.value.get(ei.type + ei.externalCategoryId)
   })
-  return filterObjects<CachedExternalItem>(
+  const x = filterObjects<CachedExternalItem>(
     filtered,
     excludedFilterIds.value.get('category'),
     includedFilterIds.value.get('category'),
     (ei: CachedExternalItem) => ei.externalCategory?.categoryId
   )
+  reportTime('activeExternalItems')
+  return x
 })
 
 export const homeData = computed<HomeData>(() => {
@@ -661,6 +710,7 @@ interface RbPart {
 export const rbPartsLegoId: Map<string, RebrickableItem> = new Map<string, RebrickableItem>()
 export const rbPartsBrickLinkId: Map<string, RebrickableItem> = new Map<string, RebrickableItem>()
 export async function importRbPartsToMemory() {
+  startTimer('importRbPartsToMemory')
   // @ts-ignore
   const rbArray: RbPart[] = rbParts
   for (let i = 0; i < rbArray.length; i++) {
@@ -693,12 +743,13 @@ export async function importRbPartsToMemory() {
       })
     }
   }
+  reportTime('importRbPartsToMemory')
 }
 
 import ObjectCacheClass from './ObjectCacheClass'
 import { getActiveSearch, getAllSearches, getAllSearchFilters } from './searches';
 import { getAllCarts } from './carts';
-import { getScore } from '../utils';
+import { getScore, reportTime, startTimer } from '../utils';
 let dbConnection: IDBPDatabase | undefined
 
 export async function getObjectCache(): Promise<ObjectCacheClass> {

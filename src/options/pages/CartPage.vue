@@ -3,8 +3,11 @@ import HomeButton from '../components/HomeButton.vue';
 import { formatAmount } from '../utils';
 
 import { CartPageCart, CartPageCartItem } from '../types';
-const cart = ref<CartPageCart | undefined>(undefined)
-const items = ref<CartPageCartItem[]>([])
+const cart = computed(() => {
+  return getCartPageCart(route.params.id - 0)
+})
+// ref<CartPageCart | undefined>(undefined)
+// const items = ref<CartPageCartItem[]>([])
 onMounted(async () => {
   cart.value = await getCartPageCart(-1)
   if (!cart.value) {

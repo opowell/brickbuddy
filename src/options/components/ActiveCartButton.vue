@@ -32,6 +32,6 @@ defineExpose({
 </script>
 
 <template>
-  <button v-if="activeCart && showButton" @click="router.push(Crumbs.activeCart.href)" v-html="text">
+  <button v-if="activeCart && showButton" @click="router.push(Crumbs.cart(activeCart.id).href)" v-html="text">
   </button>
 </template>
