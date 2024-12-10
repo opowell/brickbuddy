@@ -1,13 +1,16 @@
 import { IDBPDatabase } from "idb"
-import { ActiveCartButtonCart, Cart, CartsPageCart, CartItem, CartPageCartItem, InvItem, CartWithItems, StorePageInvItem, Store, CachedCart } from "../types"
-import { put, getAllFromIndex, getFromIndex, getAll } from "./db"
+import { ActiveCartButtonCart, Cart, CartsPageCart, CartItem, CartPageCartItem, InvItem, CartWithItems, StorePageInvItem, Store, CachedCart, CartPageCart } from "../types"
+import { put, getAllFromIndex, getFromIndex, getAll, get } from "./db"
 import { getDbConnection } from "./idb"
-import { getActiveCart, getActiveSearch } from "./searches"
+import { getActiveCart } from "./searches"
 import { getItemVariant } from "./variants"
 import STORES from './stores'
 import INDICES from './indices'
 import ObjectCacheClass from './ObjectCacheClass'
 import { getScore } from "../utils"
+import { onlyUnique, sum } from "./utils"
+import stores from "./stores"
+import { getStorePageExternalPart } from "./parts"
 
 export async function addCart() {
   const db = await getDbConnection()
@@ -53,8 +56,8 @@ export async function setActiveCart(cart: Cart) {
   await put(db, STORES.CARTS, cart)
 }
 
-export async function getCartPageCart(cartId: number) {
-  return await getActiveCart()
+export async function getCartPageCart(db: IDBPDatabase, cartId: number): Promise<CartPageCart> {
+  return await get(db, stores.CARTS, cartId)
 }
 export async function getAllCarts(db: IDBPDatabase): Promise<CachedCart[]> {
   return await getAll(db, STORES.CARTS)
@@ -75,50 +78,59 @@ export async function getCartsPageCarts(): Promise<CartsPageCart[]> {
 }
 
 export async function getCartItems(db: IDBPDatabase, cart: Cart): Promise<CartItem[]> {
+  console.log('getCartItems', cart.id)
   return getAllFromIndex(db, INDICES.CART_ITEMS_BY_CART, cart.id)
 }
 
 export async function getCartPageCartItem(objectCache: ObjectCacheClass, cartItem: CartItem): Promise<CartPageCartItem | undefined> {
-  const search = getActiveSearch()
+  console.log(cartItem)
   const invItem: InvItem | undefined = await objectCache.getInvItem(cartItem.storeId, cartItem.invItemId)
   if (!invItem) {
+    console.log('stop')
     return
   }
   const store = await objectCache.getStore(invItem.storeId)
   if (!store) {
+    console.log('stop')
     return
   }
-  const part = await objectCache.getStorePagePart(invItem.itemId)
-  if (!part) {
+  const externalPart = await getStorePageExternalPart(invItem, store.type, objectCache)
+  if (!externalPart) {
+    console.log('stop')
     return
   }
   const color = await objectCache.getColor(invItem.colorId)
   if (!color) {
+    console.log('stop')
     return
   }
-  const category = await objectCache.getCategory(part.categoryId)
+  const category = await objectCache.getExternalCategory(externalPart.externalCategoryId, externalPart.type)
   if (!category) {
+    console.log('stop')
     return
   }
-  const variant = await getFromIndex(objectCache.db, INDICES.PART_VARIANTS_BY_PART_AND_COLOR, [part.itemId, color.id])
-  const variant2 = await getItemVariant(objectCache.db, invItem.itemId, invItem.colorId)
+  const variant = await getFromIndex(objectCache.db, INDICES.PART_VARIANTS_BY_PART_AND_COLOR, [invItem.itemId, color.id])
+  const variant2 = await getItemVariant(objectCache.db, invItem.type, invItem.itemId, invItem.colorId)
   if (!variant2) {
+    console.log('stop')
     return
   }
   let allMatchingInvItems
-  if (search.priceScoreIgnoreColor) {
-    allMatchingInvItems= await getAllFromIndex(objectCache.db, INDICES.INV_ITEMS_BY_ITEM, part.itemId)
-  } else {
-    allMatchingInvItems= await getAllFromIndex(objectCache.db, INDICES.INV_ITEMS_BY_ITEM_AND_COLOR, [part.itemId, color.id])
-  } 
+  const search = await objectCache.getActiveSearch()
   if (!search) {
+    console.log('stop')
     return
   }
+  if (search.priceScoreIgnoreColor) {
+    allMatchingInvItems= await getAllFromIndex(objectCache.db, INDICES.INV_ITEMS_BY_ITEM, invItem.itemId)
+  } else {
+    allMatchingInvItems= await getAllFromIndex(objectCache.db, INDICES.INV_ITEMS_BY_ITEM_AND_COLOR, [invItem.itemId, color.id])
+  } 
   const priceScoreString = getScore(allMatchingInvItems, search.priceScoreQuantity, invItem.price, true)
   return {
     ...cartItem,
     invItem,
-    item: part,
+    part: externalPart,
     store,
     color,
     category,

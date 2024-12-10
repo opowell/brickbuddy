@@ -2,7 +2,7 @@
 import { CachedExternalCategory, CategoriesPageCategory, ExternalCategory, SearchFilter } from '../types';
 import ExcludeCategoryButton from '../components/ExcludeCategoryButton.vue';
 import IncludeCategoryButton from '../components/IncludeCategoryButton.vue';
-import { categories, objectCache, activeExternalCategories, externalCategoriesMap, getDbConnection } from '../idb/idb';
+import { activeExternalCategories, externalCategoriesMap, getDbConnection, liveObjectCache } from '../idb/idb';
 interface CategoriesPageUniqueCategory {
   externalCategories: CachedExternalCategory[]
   isExternal: boolean
@@ -14,6 +14,10 @@ interface CategoriesPageUniqueCategory {
 function countUnique(iterable: Iterable) {
   return new Set(iterable).size;
 }
+const categories = ref<CategoriesPageCategory[] | undefined>(undefined)
+onMounted(async () => {
+  categories.value = await liveObjectCache.getCategoriesPageCategories()
+})
 const uniqueExternalCategories = computed<CategoriesPageUniqueCategory[]>(() => {
   if (!categories.value) {
     return []
@@ -82,7 +86,7 @@ import stores from '../idb/stores';
 </script>
 
 <template>
-  <div v-if="!categories || !objectCache || !activeExternalCategories || !externalCategoriesMap">
+  <div v-if="!categories || !liveObjectCache">
     Loading...
   </div>
   <div v-else>

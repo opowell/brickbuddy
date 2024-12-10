@@ -1,5 +1,5 @@
 export interface Cart {
-  id: number | IDBValidKey
+  id: number
   name: string
   active?: number
 }
@@ -50,13 +50,13 @@ export interface CartItem {
 export interface CartPageCartItem extends CartItem {
   id: string
   store: Store
-  priceScore: number
+  priceScore: string
   image: string
-  part: Item
+  part: ExternalItem
   condition: string
   color: Color
   maxQuantity: number
-  category: Category
+  category: ExternalCategory
   invItem: InvItem
   variant: ItemVariant
 }
@@ -229,7 +229,7 @@ export interface InvItem {
   colorId: string
   condition_New: number
   condition_Used: number
-  type: string
+  type: 'Lego' | 'BrickLink' | 'Rebrickable'
 }
 
 export interface UiInvItem extends InvItem {

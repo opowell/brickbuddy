@@ -5,6 +5,7 @@ import STORES from './stores'
 import INDICES from './indices'
 import { activeSearch, getCategoriesPageCategory, getDbConnection } from "./idb"
 import { getCategoryPageParts } from "./parts"
+import ObjectCache from "./ObjectCacheClass"
 export const categories = ref<Map<string, UiCategory>>(new Map<string, UiCategory>())
 
 export async function getCategoriesCount(db: IDBPDatabase): Promise<number | undefined> {
@@ -103,11 +104,15 @@ export async function getAllExternalCategories(db: IDBPDatabase): Promise<Cached
   return await db.getAll(STORES.EXTERNAL_CATEGORIES.name)
 }
 
-export async function getCategoriesPageCategories(): Promise<CategoriesPageCategory[] | undefined> {
-  const db = await getDbConnection()
+export async function getExternalCategoriesByCategoryId(id: number, objectCache: ObjectCache) {
+  return await getAllFromIndex(objectCache.db, INDICES.EXTERNAL_CATEGORIES_BY_CATEGORY, id)
+}
+
+export async function getCategoriesPageCategories(objectCache: ObjectCache): Promise<CategoriesPageCategory[] | undefined> {
+  const db = objectCache.db
   const categories = await getAllCategories(db)
   const categoriesPageCategories: CategoriesPageCategory[] = []
-  const search = activeSearch.value
+  const search = await objectCache.getActiveSearch()
   if (!search) {
     return
   }
@@ -124,8 +129,9 @@ export async function getCategoriesPageCategories(): Promise<CategoriesPageCateg
     ) {
       continue
     }
-    const categoriesPageCategory = getCategoriesPageCategory(category)
+    const categoriesPageCategory = await getCategoriesPageCategory(category, objectCache)
     if (!categoriesPageCategory || categoriesPageCategory.externalCategories.length === 0) {
+      console.log(categoriesPageCategory, category)
       continue
     }
     categoriesPageCategories.push(categoriesPageCategory)

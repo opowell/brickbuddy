@@ -1,3 +1,4 @@
+import { objectCache } from './idb';
 import { CachedCart, CachedCartItem, CachedCategory, CachedColor, CachedExternalCategory, CachedExternalItem, CachedInvItem, CachedItem, CachedItemVariant, CachedList, CachedSearch, CachedSearchFilter, CachedStore, Cart, CategoriesPageCategory, CategoriesPageExternalCategory, Color, ExternalCategory, ExternalItem, InvItem, RebrickableItem, Search, SearchFilter, ShopList, Store } from './../types';
 import { IDBPDatabase, openDB } from "idb";
 import STORES from './stores'
@@ -20,6 +21,8 @@ interface Cache {
   stores: CachedStore[]
   variants: CachedItemVariant[]
 }
+
+export let liveObjectCache: ObjectCacheClass
 
 export const objectCache: Ref<Cache> = ref({
   carts: [],
@@ -67,6 +70,10 @@ export const activeCache = computed<Cache>(() => {
 
 export const cacheLoaded = ref(false)
 
+export async function loadLiveObjectCache(db: IDBPDatabase) {
+  liveObjectCache = new ObjectCacheClass(db)
+  cacheLoaded.value = true
+}
 export async function loadObjectCache(db: IDBPDatabase) {
   startTimer('loadObjectCache')
   startTimer('loadObjectCache1')
@@ -538,21 +545,22 @@ const externalPartsInExternalCategory = computed<Map<string, ExternalItem[]>>(()
   return map
 })
 
-export function getCategoriesPageCategory(category: CachedCategory): CategoriesPageCategory | undefined {
-  const externalCategories = externalCategoriesByCategoryId.value.get(category.id)
+export async function getCategoriesPageCategory(category: CachedCategory, objectCache: ObjectCacheClass): Promise<CategoriesPageCategory | undefined> {
+  const externalCategories = await objectCache.getExternalCategoriesByCategoryId(category.id)
   if (!externalCategories) {
     return
   }
   const categoriesPageExternalCategory: CategoriesPageExternalCategory[] = []
   for (let i = 0; i < externalCategories.length; i++) {
     const externalCategory = externalCategories[i]
-    const parts = externalPartsInExternalCategory.value.get(externalCategory.type + externalCategory.id)
+    const parts = await objectCache.getExternalPartsInExternalCategory(externalCategory.type, externalCategory.id)
     if (!parts || parts.length === 0) {
       continue
     }
     categoriesPageExternalCategory.push({
       ...externalCategory,
       parts,
+      externalPartsFiltered: parts,
       image: externalCategory.image
     })
   }
@@ -633,6 +641,80 @@ export async function getDbCreateInitialStores() {
   return await createInitialStores(db)
 }
 import rbColors from '../rebrickable-colors.json'
+
+async function importBrickLinkStores(db: IDBPDatabase) {
+  const pages = [
+    '0-9', 'A', 'B', 'C', 'D', 'E',
+    'F', 'G', 'H', 'I', 'J', 'K',
+    'L', 'M', 'N', 'O', 'P', 'Q',
+    'R', 'S', 'T', 'U', 'V', 'W',
+    'X', 'Y', 'Z'
+  ]
+  for (let i = 0; i < pages.length; i++) {
+    const page = pages[i]
+    const response = await fetch("https://www.bricklink.com/browseStores.asp?wordLetter=" + page, {
+      "headers": {
+        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+        "accept-language": "en,de;q=0.9,es;q=0.8,en-US;q=0.7",
+        "cache-control": "no-cache",
+        "pragma": "no-cache",
+        "priority": "u=0, i",
+        "sec-ch-ua": "\"Google Chrome\";v=\"131\", \"Chromium\";v=\"131\", \"Not_A Brand\";v=\"24\"",
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-platform": "\"macOS\"",
+        "sec-fetch-dest": "document",
+        "sec-fetch-mode": "navigate",
+        "sec-fetch-site": "none",
+        "sec-fetch-user": "?1",
+        "upgrade-insecure-requests": "1"
+      },
+      "referrerPolicy": "strict-origin-when-cross-origin",
+      "body": null,
+      "method": "GET",
+      "mode": "cors",
+      "credentials": "include"
+    })
+    const html = await response.text()
+    let index = 0
+    const stores = []
+    while (index !== -1) {
+      const nextIndex = html.indexOf('<a href="store.asp?p=')
+      const startOfSlug = nextIndex + '<a href="store.asp?p='.length
+      const endOfSlug = html.indexOf('"', startOfSlug)
+      const startOfName = endOfSlug + '">'.length
+      const endOfName = html.indexOf(' </a>', startOfName)
+      const slug = html.substring(startOfSlug, endOfSlug)
+      const name = html.substring(startOfName, endOfName)
+      const storePage = await fetch("https://store.bricklink.com/" + slug, {
+        "headers": {
+          "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+          "accept-language": "en,de;q=0.9,es;q=0.8,en-US;q=0.7",
+          "cache-control": "no-cache",
+          "pragma": "no-cache",
+          "priority": "u=0, i",
+          "sec-ch-ua": "\"Google Chrome\";v=\"131\", \"Chromium\";v=\"131\", \"Not_A Brand\";v=\"24\"",
+          "sec-ch-ua-mobile": "?0",
+          "sec-ch-ua-platform": "\"macOS\"",
+          "sec-fetch-dest": "document",
+          "sec-fetch-mode": "navigate",
+          "sec-fetch-site": "same-origin",
+          "sec-fetch-user": "?1",
+          "upgrade-insecure-requests": "1"
+        },
+        "referrerPolicy": "no-referrer-when-downgrade",
+        "body": null,
+        "method": "GET",
+        "mode": "cors",
+        "credentials": "include"
+      })
+      const storeHtml = await storePage.text()
+      const startProps = storeHtml.indexOf('StoreFront.store = ') + 'StoreFront.store = '.length
+      const endProps = storeHtml.indexOf(';', startProps)
+      const props = JSON.parse(storeHtml.substring(startProps, endProps))
+      // await addStore(name, id, [], slug, 100, db)
+    }
+  }
+}
 async function createInitialColors(db: IDBPDatabase) {
   for (let i = 0; i < rbColors.length; i++) {
     const rbColor: RbColor = rbColors[i]
@@ -662,7 +744,7 @@ import { createIndex, createStore, getFromIndex, put } from './db';
 import { addColor, getAllColors } from './colors';
 import { getAllCategories, getAllExternalCategories } from './categories';
 import { addShopListDb, getAllLists } from './lists';
-import { createInitialStores, getAllInvItems, getAllStores, getAllVariants } from './storeMethods';
+import { addStore, createInitialStores, getAllInvItems, getAllStores, getAllVariants } from './storeMethods';
 import { getAllExternalParts, getAllParts } from './parts';
 async function importRbCategories(db: IDBPDatabase) {
   for (let i = 0; i < rbCategories.length; i++) {
@@ -693,7 +775,8 @@ async function createInitialData(db: IDBPDatabase) {
   await importRbCategories(db)
   // await importParts(db)
   await createInitialColors(db)  
-  await createInitialStores(db)  
+  await createInitialStores(db)
+  // await importBrickLinkStores(db)
   await addShopListDb("Board games 2024", db)
 }
 

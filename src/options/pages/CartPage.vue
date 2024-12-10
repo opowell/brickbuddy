@@ -1,23 +1,24 @@
 <script setup lang="ts">
 import HomeButton from '../components/HomeButton.vue';
-import { formatAmount } from '../utils';
+import { formatAmount, formatInteger } from '../utils';
 
-import { CartPageCart, CartPageCartItem } from '../types';
-const cart = computed(() => {
-  return getCartPageCart(route.params.id - 0)
-})
-// ref<CartPageCart | undefined>(undefined)
-// const items = ref<CartPageCartItem[]>([])
+import { CartItem, CartPageCart, CartPageCartItem, Store } from '../types';
+import { useRoute } from 'vue-router'
+const route = useRoute()
+const cart = ref<CartPageCart | undefined>(undefined)
+const cartItems = ref<CartItem[] | undefined>(undefined)
+const items = ref<CartPageCartItem[]>([])
 onMounted(async () => {
-  cart.value = await getCartPageCart(-1)
+  const db = await getDbConnection()
+  const objectCache = new ObjectCache(db)
+  cart.value = await getCartPageCart(db, route.params.id - 0)
   if (!cart.value) {
     return
   }
-  const db = await getDbConnection()
-  const objectCache = new ObjectCache(db)
 
-  for (let i = 0; i < cart.value.cartItems.length; i++) {
-    const cartPageCartItem = await getCartPageCartItem(objectCache, cart.value.cartItems[i])
+  cartItems.value = await getCartItems(db, cart.value)
+  for (let i = 0; i < cartItems.value.length; i++) {
+    const cartPageCartItem = await getCartPageCartItem(objectCache, cartItems.value[i])
     if (!cartPageCartItem) {
       continue
     }
@@ -25,15 +26,22 @@ onMounted(async () => {
   }
 
 })
-import CategoryButton from '../components/CategoryButton.vue';
+import ExternalCategoryButton from '../components/ExternalCategoryButton.vue';
 import ConditionButton from '../components/ConditionButton.vue';
 import StoreButton from '../components/StoreButton.vue';
 import PartButton from '../components/PartButton.vue';
 import ColorButton from '../components/ColorButton.vue';
 import ObjectCache from '../idb/ObjectCacheClass';
 import QuantityInput from '../components/QuantityInput.vue';
-import { getCartPageCart, getCartPageCartItem, setCartQuantity } from '../idb/carts';
+import { getCartItems, getCartPageCart, getCartPageCartItem, setCartQuantity } from '../idb/carts';
 import { getDbConnection } from '../idb/idb';
+
+interface CartPageStore {
+  store: Store
+  pieces: number
+  items: number
+  cost: number  
+}
 
 async function updateCartQuantity(item: CartPageCartItem, newQuantity: number, index: number) {
   console.log(item, newQuantity)
@@ -49,6 +57,36 @@ async function updateCartQuantity(item: CartPageCartItem, newQuantity: number, i
     }
   }
 }
+const stores = computed(() => {
+  const map = new Map<string, CartPageCartItem[]>()
+  items.value.forEach(item => {
+    let value = map.get(item.storeId)
+    if (!value) {
+      value = []
+    }
+    value.push(item)
+    map.set(item.storeId, value)
+  })
+  const stores: CartPageStore[] = []
+  map.forEach((value) => {
+    let pieces = 0
+    let items = value.length
+    let cost = 0
+    const store = value[0].store
+    value.forEach(cartItem => {
+      pieces += cartItem.quantity
+      cost += cartItem.quantity * Number.parseFloat(cartItem.price)
+    })
+    cost = cost / 100
+    stores.push({
+      store,
+      pieces,
+      items,
+      cost
+    })
+  })
+  return stores
+})
 
 </script>
 
@@ -56,7 +94,28 @@ async function updateCartQuantity(item: CartPageCartItem, newQuantity: number, i
   <div v-if="cart">
     <HomeButton />
     <h4>Cart</h4>
-    <h4>Items ({{ items.length }} / {{ cart.cartItems.length }})</h4>
+    <h4>Stores ({{ stores.length }})</h4>
+    <table>
+      <thead>
+        <tr>
+          <th>Store</th>
+          <th>Pieces</th>
+          <th>Items</th>
+          <th>Cost</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="(store, index) in stores" :key="store.store.id">
+          <td>
+            <StoreButton :store="store.store" />
+          </td>
+          <td>{{ formatInteger(store.pieces) }}</td>
+          <td>{{ formatInteger(store.items) }}</td>
+          <td>EUR {{ formatAmount(store.cost) }}</td>
+        </tr>
+      </tbody>
+    </table>
+    <h4 v-if="cartItems">Items (<span v-if="items.length < cartItems.length">{{ items.length }} / </span>{{ cart.cartItems.length }})</h4>
     <table>
       <thead>
         <tr>
@@ -82,15 +141,15 @@ async function updateCartQuantity(item: CartPageCartItem, newQuantity: number, i
             <StoreButton :store="item.store" />
           </td>
           <td>
-            <PartButton :part="item.item" />
+            <PartButton :part="item.part" />
           </td>
-          <td><ConditionButton :condition="item.condition" /></td>
+          <td><ConditionButton :condition="item.invItem.condition" /></td>
           <td><ColorButton :color="item.color" /></td>
-          <td><CategoryButton :category="item.category" /></td>
+          <td><ExternalCategoryButton :category="item.category" /></td>
           <td>{{ formatAmount(item.price) }}</td>
           <td>{{ item.priceScore }}</td>
           <td><QuantityInput :current="item.quantity" :max="item.invItem.quantity" @update-quantity="updateCartQuantity(item, $event, index)" /></td>
-          <td>{{ formatAmount(item.price * item.quantity / 100) }}</td>
+          <td>{{ formatAmount(Number.parseFloat(item.price) * item.quantity / 100) }}</td>
         </tr>
       </tbody>
     </table>

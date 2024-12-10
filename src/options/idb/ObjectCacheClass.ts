@@ -1,13 +1,16 @@
 import { IDBPDatabase } from 'idb';
-import { ActiveSearch, CartWithItems, Category, Color, ExternalCategory, ExternalItem, InvItem, Item, PartPageCategory, Search, SearchFilter, Store, StorePageInvItemItem, UiColor } from '../types';
+import { ActiveSearch, CartWithItems, CategoriesPageCategory, Category, Color, ExternalCategory, ExternalItem, HomeData, InvItem, Item, PartPageCategory, Search, SearchFilter, Store, StorePageInvItemItem, UiColor } from '../types';
 import STORES from './stores'
 import { getFirstActiveCart, getCartItems } from './carts';
-import { getCategory, getExternalCategory, getPartPageCategory } from './categories';
+import { getExternalCategoriesByCategoryId, getCategoriesPageCategories, getCategory, getExternalCategory, getPartPageCategory } from './categories';
 import { getColor } from './colors';
 import { getInvItemFromId } from './invItems';
 import { getStorePageExternalPart, getStorePagePart } from './parts';
 import { getFirstActiveSearch, getSearchFilters } from './searches';
 import { getStore } from './storeMethods';
+import { getNumStores } from './idb2';
+import { getAllFromIndex } from './db';
+import indices from './indices';
 
 interface Filter<T> {
   included: T[]
@@ -28,7 +31,9 @@ function getTypeFilters<T extends string | number>(filters: SearchFilter[], type
 export default class ObjectCache {
   colors: Map<string, UiColor>
   categories: Map<string, Category>
+  categoriesPageCategories: Map<string, CategoriesPageCategory>
   externalCategories: Map<string, ExternalCategory>
+  externalCategoriesByCategoryId: Map<string, ExternalCategory[]>
   partPageCategories: Map<string, Category>
   parts: Map<string, Item>
   externalParts: Map<string, StorePageInvItemItem>
@@ -41,6 +46,8 @@ export default class ObjectCache {
     this.db = db
     this.colors = new Map<string, UiColor>()
     this.categories = new Map<string, Category>()
+    this.categoriesPageCategories = new Map<string, CategoriesPageCategory>()
+    this.externalCategoriesByCategoryId = new Map<string, ExternalCategory[]>()
     this.externalCategories = new Map<string, ExternalCategory>()
     this.partPageCategories = new Map<string, Category>()
     this.parts = new Map<string, Item>()
@@ -48,6 +55,16 @@ export default class ObjectCache {
     this.invItems = new Map<string, InvItem>()
     this.stores = new Map<string, Store>()
     this.activeCart = undefined
+  }
+  async getAllObjects<T>(map: Map<string | number, T>, getter: Function, idMapper: Function = (value: T) => value.id): Promise<T[]> {
+    console.log(map.size, map)
+    if (map.size === 0) {
+      const values = await getter()
+      values.forEach((value: T) => {
+        map.set(idMapper(value), value)
+      })
+    }
+    return Array.from(map.values())
   }
   async getObject<T>(map: Map<string | number, T>, id: string | number, getter: Function): Promise<T | undefined> {
     let object: T | undefined = map.get(id)
@@ -59,7 +76,6 @@ export default class ObjectCache {
       map.set(id, object)
     }
     return object
-
   }
   async getActiveCart(): Promise<CartWithItems> {
     if (!this.activeCart) {
@@ -140,4 +156,34 @@ export default class ObjectCache {
   async getStorePageExternalPart(invItem: InvItem, type: "BrickLink" | "Lego"): Promise<StorePageInvItemItem | undefined> {
     return this.getObject<StorePageInvItemItem | undefined>(this.externalParts, invItem.itemId, async () => await getStorePageExternalPart(invItem, type, this))
   }
+  async getCategoriesPageCategories(): Promise<CategoriesPageCategory[]> {
+    return this.getAllObjects<CategoriesPageCategory>(this.categoriesPageCategories, async () => await getCategoriesPageCategories(this))
+  }
+  async getExternalCategoriesByCategoryId(id: number): Promise<ExternalCategory[] | undefined> {
+    return this.getObject<ExternalCategory[]>(this.externalCategoriesByCategoryId, id, async () => await getExternalCategoriesByCategoryId(id, this))
+  }
+  async getExternalPartsInExternalCategory(type: string, externalCategoryId: string) {
+    return getAllFromIndex(this.db, indices.EXTERNAL_PARTS_BY_TYPE_AND_CATEGORY, [type, externalCategoryId])
+  }
+  async getHomeData(): Promise<HomeData | undefined> {
+    const stores = (await this.db.getAllKeys(STORES.CATEGORIES.name)).length
+    const categories = (await this.db.getAllKeys(STORES.CATEGORIES.name)).length
+    const colors = (await this.db.getAllKeys(STORES.COLORS.name)).length
+    const parts = (await this.db.getAllKeys(STORES.PARTS.name)).length
+    const conditions = 2
+    const lists = (await this.db.getAllKeys(STORES.LISTS.name)).length
+    const searches = (await this.db.getAllKeys(STORES.SEARCHES.name)).length
+    const carts = (await this.db.getAllKeys(STORES.CARTS.name)).length
+    return {
+      stores,
+      categories,
+      colors,
+      parts,
+      conditions,
+      lists,
+      searches,
+      carts
+    }
+  }
+
 }

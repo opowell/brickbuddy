@@ -12,7 +12,7 @@ const href = computed(() => {
   if (!cart) {
     return
   }
-  return Crumbs.cart(cart.name, cart.id).href
+  return Crumbs.cart(cart.id).href
 })
 </script>
 

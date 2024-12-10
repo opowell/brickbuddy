@@ -265,6 +265,7 @@ async function getPartsPageExternalItems(objectCache: ObjectCacheClass, item: It
 }
 
 export async function getStorePagePart(id: string, objectCache?: ObjectCacheClass): Promise<StorePageInvItemItem | undefined> {
+  console.log(id)
   const db = await getDbConnection()
   const part: Item = await get(db, STORES.PARTS, id)
   if (!part) {

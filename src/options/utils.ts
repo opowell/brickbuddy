@@ -52,7 +52,7 @@ export function formatFloat(x: number) {
   }
   return (x/1000000).toFixed(1) + 'm'
 }
-export function formatAmount(x: number) {
+export function formatAmount(x: number | string) {
   if (typeof x !== 'number') {
     x = Number.parseFloat(x)
     if (Number.isNaN(x)) {

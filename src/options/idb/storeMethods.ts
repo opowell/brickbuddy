@@ -14,7 +14,7 @@ export async function addNewStore(store: AddNewStore) {
   await addStore(store.name, store.id, [], '', 100, db)
 }
 
-async function addStore(
+export async function addStore(
   name: string,
   id: string,
   shippingCosts: ShippingCost[],
