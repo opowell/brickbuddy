@@ -1,9 +1,9 @@
 import { IDBPDatabase } from "idb"
 import { UiStore, AddNewStore, ShippingCost, StoreType, StoresPageStore, StorePageStore, InvItem, Store, ItemVariant, CachedStore, CachedItemVariant, CachedInvItem } from "../types"
-import { getDbConnection } from "./idb"
+import { getDbConnection, liveObjectCache } from "./idb"
 import { countInvItems, getStorePageInvItems } from "./invItems"
 import ObjectCacheClass from "./ObjectCacheClass"
-import { getActiveSearch } from "./searches"
+import { getActiveSearch, getFirstActiveSearch } from "./searches"
 import { get } from "./db"
 import STORES from './stores'
 
@@ -286,32 +286,31 @@ export async function getAllInvItems(db: IDBPDatabase): Promise<CachedInvItem[]>
   return await db.getAll(STORES.INVENTORY_ITEMS.name)
 }
 
-export async function getStoresPageStores(): Promise<StoresPageStore[]> {
-  const db = await getDbConnection()
-  const search = getActiveSearch()
-  const stores = await getAllStores(db)
+export async function getStoresPageStores(): Promise<StoresPageStore[] | undefined> {
+  const search = await getFirstActiveSearch(liveObjectCache.db)
+  if (!search) {
+    return
+  }
+  const stores = await getAllStores(liveObjectCache.db)
   const uiStores: StoresPageStore[] = []
   for (let i = 0; i < stores.length; i++) {
     const store = stores[i]
     uiStores.push({
       ...store,
-      numInvItems: await countInvItems(db, store.id, search)
+      numInvItems: await countInvItems(liveObjectCache.db, store.id, search)
     })
   }
   return uiStores
 }
 
-export async function getStorePageStore(id: string): Promise<StorePageStore | undefined> {
-  const db = await getDbConnection()
-  const store: Store = await get(db, STORES.STORES, id)
+export async function getStorePageStore(id: string, type: 'BrickLink' | 'Lego' | 'Rebrickable'): Promise<StorePageStore | undefined> {
+  const store: Store = await get(liveObjectCache.db, STORES.STORES, id)
   if (!store) {
     return
   }
-  const objectCache = new ObjectCacheClass(db)
-  const invItems: InvItem[] = await getStorePageInvItems(db, id)
+  const invItems: InvItem[] = await getStorePageInvItems(liveObjectCache.db, id)
   return {
     ...store,
     items: invItems,
-    objectCache
   }
 }

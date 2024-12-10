@@ -92,7 +92,7 @@ import stores from '../idb/stores';
   <div v-else>
     <HomeButton />
     <ActiveSearchButton />
-    <h4>Categories {{ categories ? '(' + categories.length + ')' : '' }}</h4>
+    <h4>Categories {{ uniqueExternalCategories ? '(' + uniqueExternalCategories.length + ')' : '' }}</h4>
     <table>
       <thead>
         <tr>

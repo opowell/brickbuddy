@@ -13,13 +13,15 @@ import { useRouter } from 'vue-router'
 import ActiveSearchButton from '../components/ActiveSearchButton.vue';
 import ExternalPartButton from '../components/ExternalPartButton.vue';
 import { externalCategoriesMap } from '../idb/idb';
+import { getExternalCategoryPageExternalCategory } from '../idb/categories';
 const router = useRouter()
 interface Item extends ExternalItem {
   numVariants: number
   numInvItems: number
 }
-const category = computed<CachedExternalCategory | undefined>(() => {
-  return externalCategoriesMap.value.get(route.params.type + route.params.id)
+const category = ref()
+onMounted(async () => {
+  category.value = await getExternalCategoryPageExternalCategory(route.params.type, route.params.id)
 })
 </script>
 

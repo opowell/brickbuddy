@@ -6,7 +6,7 @@ import { useRoute } from 'vue-router'
 import { getStorePrices } from '../idb/scraping';
 import { getStorePageStore } from '../idb/storeMethods';
 import { getActiveSearch } from '../idb/searches';
-import { getDbConnection, objectCache, storesMap } from '../idb/idb';
+import { getDbConnection, liveObjectCache, objectCache, storesMap } from '../idb/idb';
 import { getStorePageInvItem } from '../idb/invItems';
 import { setCartQuantity } from '../idb/carts';
 import ExternalPartButton from '../components/ExternalPartButton.vue';
@@ -21,30 +21,24 @@ import ObjectCache from '../idb/ObjectCacheClass';
 import PartVariantButton from '../components/PartVariantButton.vue';
 import QuantityInput from '../components/QuantityInput.vue';
 const route = useRoute()
-const store = computed(() => storesMap.value.get(route.params.type + route.params.id))
-const search = ref<ActiveSearch | undefined>(undefined)
-const db = ref<IDBPDatabase | undefined>(undefined)
-const invItems = computed(() => {
-  if (!store.value) {
-    return []
-  }
-  return store.value.invItems
-})
+const store = ref<StorePageStore | undefined>()
+const search = ref<ActiveSearch | undefined>()
+const invItems = ref<StorePageInvItem[]>([])
+const mounted = ref(false)
 onMounted(async () => {
-  search.value = getActiveSearch()
-  db.value = await getDbConnection()
-  const objectCache2 = new ObjectCache(db.value)
-  // store.value = await getStorePageStore(route.params.id)
+  search.value = await liveObjectCache.getActiveSearch()
+  store.value = await getStorePageStore(route.params.id, route.params.type)
   if (!store.value) {
     return
   }
-  // for (let i = 0; i < store.value.invItems.length; i++) {
-  //   const storePageInvItem = await getStorePageInvItem(objectCache2, store.value.invItems[i], store.value.type === StoreType.BrickLink ? 'BrickLink' : 'Lego')
-  //   if (!storePageInvItem) {
-  //     continue
-  //   }
-  //   invItems.value.push(storePageInvItem)
-  // }
+  for (let i = 0; i < store.value.items.length; i++) {
+    const storePageInvItem = await getStorePageInvItem(store.value.items[i], store.value.type === StoreType.BrickLink ? 'BrickLink' : 'Lego')
+    if (!storePageInvItem) {
+      continue
+    }
+    invItems.value.push(storePageInvItem)
+  }
+  mounted.value = true
 })
 
 // URL for shipping terms:
@@ -86,12 +80,12 @@ const cartButton = ref<typeof ActiveCartButton | undefined>(undefined)
   <ActiveCartButton ref="cartButton" />
   <div v-if="store">
     <h4>{{ store.name }}</h4>
-    <div v-if="db"><button @click="getStorePrices(db, store)">Scrape</button></div>
+    <div><button @click="getStorePrices(store)">Scrape</button></div>
     <div>Fetch index: {{ store.fetchPageIndex }} / {{ store.fetchMaxPageIndex }}</div>
     <div>Last scraped: {{ store.lastScraped.toISOString() }}</div>
     <div>Price adjustment: {{ store.priceAdjustment }}%</div>
     <div>Link: <a target="_blank" :href="url">{{ url }}</a></div>
-    <h4>Inventory ({{ invItems.length }} / {{ store.invItems.length }})</h4>
+    <h4>Inventory ({{ invItems.length }} / {{ store.items.length }})</h4>
     <table>
       <thead>
         <tr>
@@ -133,6 +127,7 @@ const cartButton = ref<typeof ActiveCartButton | undefined>(undefined)
       </tbody>
     </table>
   </div>
+  <div v-else-if="mounted">Error loading page.</div>
   <div v-else>
     Loading...
   </div>

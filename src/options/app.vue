@@ -10,7 +10,7 @@ onMounted(async () => {
   // await loadObjectCache(db)
   await loadLiveObjectCache(db)
   await createActiveSearchIfNecessary(db)
-  // startFetching()
+  startFetching()
   reportTime('app.vue')
   return {
     cacheLoaded,

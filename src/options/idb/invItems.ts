@@ -12,7 +12,7 @@ import STORES from './stores'
 import INDICES from './indices'
 import { getCartQuantity } from "./carts"
 import { getScore } from "../utils"
-import { colorsMap, objectCache } from "./idb"
+import { colorsMap, liveObjectCache, objectCache } from "./idb"
 
 export async function addInvItem(
   db: IDBPDatabase,
@@ -144,8 +144,12 @@ export async function getPartPageInvItems(db: IDBPDatabase, itemId: number): Pro
   return partPageInvItems
 }
 
-export async function getStorePageInvItem(objectCache: ObjectCacheClass, invItem: InvItem, type: "Lego" | "BrickLink"): Promise<StorePageInvItem | undefined> {
+export async function getStorePageInvItem(invItem: InvItem, type: "Lego" | "BrickLink"): Promise<StorePageInvItem | undefined> {
+  const objectCache = liveObjectCache
   const search = getActiveSearch()
+  if (!search) {
+    return
+  }
   const part: StorePageInvItemItem | undefined = await objectCache.getStorePageExternalPart(invItem, type)
   if (!part) {
     return
@@ -162,23 +166,12 @@ export async function getStorePageInvItem(objectCache: ObjectCacheClass, invItem
   if (!category) {
     return
   }
-  const variant = await getFromIndex(objectCache.db, INDICES.PART_VARIANTS_BY_PART_AND_COLOR, [invItem.itemId, color.id])
-  const allMatchingInvItems = new Map<string, InvItem>()
-  const matchingParts = await getAllFromIndex(objectCache.db, INDICES.EXTERNAL_PARTS_BY_PART, part.itemId)
-  for (let i = 0; i < matchingParts.length; i++) {
-    const matchingPart = matchingParts[i]
-    let matches: InvItem[] = []
-    if (search.priceScoreIgnoreColor) {
-      matches = await getAllFromIndex(objectCache.db, INDICES.INV_ITEMS_BY_ITEM, matchingPart.externalItemId)
-    } else {
-      matches = await getAllFromIndex(objectCache.db, INDICES.INV_ITEMS_BY_ITEM_AND_COLOR, [matchingPart.externalItemId, color.id])
-    }
-    matches.forEach((match) => allMatchingInvItems.set(match.storeId + '//' + match.invId, match))
-  }
-  if (!search) {
+  const variant = await objectCache.getPartVariantByPartColor(invItem.itemId, color.id)
+  if (!variant) {
     return
   }
-  const priceScoreString = getScore(Array.from(allMatchingInvItems.values()), search.priceScoreQuantity, invItem.price, true)
+  const cheapestPrice = await objectCache.getCheapestPrice(part.itemId, search.priceScoreQuantity, search.priceScoreIgnoreColor, color.id)
+  const priceScoreString = getScore([], search.priceScoreQuantity, invItem.price, true, cheapestPrice)
   const cart = await objectCache.getActiveCart()
   const cartQuantity = getCartQuantity(cart, invItem)
   return {
@@ -198,7 +191,6 @@ export async function getStorePageInvItem(objectCache: ObjectCacheClass, invItem
 }
 
 export async function getStorePageInvItems(db: IDBPDatabase, id: string): Promise<InvItem[]> {
-  console.log('getStorePageInvItems')
   const search = getActiveSearch()
   const invItems: InvItem[] = await getAllFromIndex(db, INDICES.INV_ITEMS_BY_STORE, id)
   return invItems

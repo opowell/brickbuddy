@@ -9,7 +9,7 @@ import { getBrickLinkItem, addBrickLinkItem } from "./parts";
 import { updateStore } from "./storeMethods";
 import { rbPartsBrickLinkId } from "./idb";
 import stores from "./stores";
-import { addHours } from "../utils";
+import { addMinutes } from "../utils";
 
 async function getColorByBrickLinkId(db: IDBPDatabase, brickLinkId: string): Promise<Color> {
   return getFromIndex(db, INDICES.COLOR_BY_BRICKLINK_ID, brickLinkId + '')
@@ -39,7 +39,10 @@ export async function getBrickLinkPrices(db: IDBPDatabase, store: Store) {
     "credentials": "include"
   })
   store.fetchPageIndex++
-  store.lastScraped = new Date()
+  const now = new Date()
+  if (store.lastScraped < now) {
+    store.lastScraped = now
+  }
   if (store.fetchPageIndex >= store.fetchMaxPageIndex) {
     store.fetchPageIndex = 1
     const invItems: InvItem[] = await getFromIndex(db, INDICES.INV_ITEMS_BY_STORE, store.id)
@@ -119,8 +122,6 @@ export async function getBrickLinkPrices(db: IDBPDatabase, store: Store) {
       }
     }
   }
-  console.log('add hours', cumScore, store.lastScraped)
-  addHours(store.lastScraped, cumScore)
-  console.log('add hours', cumScore, store.lastScraped)
+  addMinutes(store.lastScraped, cumScore)
   await updateStore(db, store)
 }

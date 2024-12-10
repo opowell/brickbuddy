@@ -1,9 +1,9 @@
 import { IDBPDatabase } from "idb"
-import { BrickLinkCategory, CachedCategory, CachedExternalCategory, CategoriesPageCategory, Category, CategoryPageCategory, CategoryPagePart, ExternalCategory, ExternalItem, Item, ItemVariant, LegoCategory, PartPageCategory, RebrickableCategory, SearchFilter, UiCategory } from "../types"
+import { BrickLinkCategory, CachedCategory, CachedExternalCategory, CategoriesPageCategory, Category, CategoryPageCategory, CategoryPagePart, ExternalCategory, ExternalCategoryPageExternalCategory, ExternalItem, Item, ItemVariant, LegoCategory, PartPageCategory, RebrickableCategory, SearchFilter, UiCategory } from "../types"
 import { get, getAllFromIndex, getAllKeys, getFromIndex, put } from "./db"
 import STORES from './stores'
 import INDICES from './indices'
-import { activeSearch, getCategoriesPageCategory, getDbConnection } from "./idb"
+import { activeSearch, getCategoriesPageCategory, getDbConnection, liveObjectCache } from "./idb"
 import { getCategoryPageParts } from "./parts"
 import ObjectCache from "./ObjectCacheClass"
 export const categories = ref<Map<string, UiCategory>>(new Map<string, UiCategory>())
@@ -106,6 +106,30 @@ export async function getAllExternalCategories(db: IDBPDatabase): Promise<Cached
 
 export async function getExternalCategoriesByCategoryId(id: number, objectCache: ObjectCache) {
   return await getAllFromIndex(objectCache.db, INDICES.EXTERNAL_CATEGORIES_BY_CATEGORY, id)
+}
+
+export async function getExternalCategoryPageExternalCategory(type: 'BrickLink' | 'Lego' | 'Rebrickable', id: string): Promise<ExternalCategoryPageExternalCategory | undefined> {
+  const externalCategory = await liveObjectCache.getExternalCategory(id, type)
+  if (!externalCategory) { 
+    return
+  }
+  const category = await liveObjectCache.getCategory(externalCategory.categoryId)
+  if (!category) {
+    return
+  }
+  const externalCategories = await liveObjectCache.getExternalCategoriesByCategoryId(category.id)
+  if (!externalCategories) {
+    return
+  }
+  const externalParts = await liveObjectCache.getExternalPartsInExternalCategory(type, id)
+  return {
+    ...externalCategory,
+    category: {
+      ...category,
+      externalCategories
+    },
+    externalParts
+  }
 }
 
 export async function getCategoriesPageCategories(objectCache: ObjectCache): Promise<CategoriesPageCategory[] | undefined> {

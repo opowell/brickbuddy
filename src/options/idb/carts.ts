@@ -78,7 +78,6 @@ export async function getCartsPageCarts(): Promise<CartsPageCart[]> {
 }
 
 export async function getCartItems(db: IDBPDatabase, cart: Cart): Promise<CartItem[]> {
-  console.log('getCartItems', cart.id)
   return getAllFromIndex(db, INDICES.CART_ITEMS_BY_CART, cart.id)
 }
 

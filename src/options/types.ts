@@ -273,7 +273,6 @@ export interface UiStore extends Store {
 }
 export interface StorePageStore extends Store {
   items: InvItem[]
-  objectCache: ObjectCache
 }
 export interface ShopList {
   id?: number
@@ -524,6 +523,11 @@ export interface CachedExternalCategory extends ExternalCategory {
   externalParts: Ref<CachedExternalItem[]>
   category: CachedCategory
   image: ComputedRef<string | undefined> | undefined
+}
+
+export interface ExternalCategoryPageExternalCategory extends ExternalCategory {
+  externalParts: ExternalItem[]
+  category: CategoryWithExternals
 }
 
 export interface CategoryPagePart extends Item {

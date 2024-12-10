@@ -6,7 +6,10 @@ const search = ref<SearchPageSearch | undefined>(undefined)
 const priceScoreQuantity = ref<number>(100)
 const route = useRoute()
 onMounted(async () => {
-  search.value = await getSearchPageSearch(route.params.id)
+  search.value = await getSearchPageSearch(route.params.id - 0)
+  if (!search.value) {
+    return
+  }
   priceScoreQuantity.value = search.value.priceScoreQuantity
 })
 import NameIdLabel from '../components/NameIdLabel.vue';
@@ -20,25 +23,24 @@ import ConditionsTable from '../components/ConditionsTable.vue';
     <h4>Search <NameIdLabel :id="search.id" :name="search.name" /></h4>
     <div>Price score quantity: <input v-model="priceScoreQuantity" type="number">
     <button @click="setPriceScoreQuantity(priceScoreQuantity)">Set</button></div>
-    <template v-if="search.categories.included.length">
-      <div>Included Categories {{ '(' + search.categories.included.length + ')' }}</div>
-      <CategoriesTable
-        :categories="search.includedCategoryObjects"
-      />
-    </template>
-    <template v-if="search.categories.excluded.length">
-      <div>Excluded Categories {{ '(' + search.categories.excluded.length + ')' }}</div>
-      <CategoriesTable
-        :categories="search.excludedCategoryObjects"
-      />
-    </template>
-    <template v-if="search.conditions.included.length">
-      <div>Conditions {{ '(' + search.conditions.included.length + ')' }}</div>
-      <ConditionsTable :conditions="search.conditions.included" />
-    </template>
-    <template v-if="search.conditions.excluded.length">
-      <div>Conditions {{ '(' + search.conditions.excluded.length + ')' }}</div>
-      <ConditionsTable :conditions="search.conditions.excluded" />
-    </template>
+    <h4 v-if="search.filters">Filters ({{ search.filters.length }})</h4>
+    <table v-if="search.filters">
+      <thead>
+        <tr>
+          <th>Excluded</th>
+          <th>Type</th>
+          <th>Object</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="filter in search.filters" :key="filter.type + filter.objectId">
+          <td>{{ filter.isExcluded ? 'Yes' : 'No' }}</td>
+          <td>{{ filter.type }}</td>
+          <td>{{ filter.objectId }}</td>
+          <td><button>Remove</button></td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 </template>

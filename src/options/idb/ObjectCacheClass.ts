@@ -1,5 +1,5 @@
 import { IDBPDatabase } from 'idb';
-import { ActiveSearch, CartWithItems, CategoriesPageCategory, Category, Color, ExternalCategory, ExternalItem, HomeData, InvItem, Item, PartPageCategory, Search, SearchFilter, Store, StorePageInvItemItem, UiColor } from '../types';
+import { ActiveSearch, CartWithItems, CategoriesPageCategory, Category, Color, ExternalCategory, ExternalItem, HomeData, InvItem, Item, ItemVariant, PartPageCategory, Search, SearchFilter, Store, StorePageInvItemItem, UiColor } from '../types';
 import STORES from './stores'
 import { getFirstActiveCart, getCartItems } from './carts';
 import { getExternalCategoriesByCategoryId, getCategoriesPageCategories, getCategory, getExternalCategory, getPartPageCategory } from './categories';
@@ -9,8 +9,9 @@ import { getStorePageExternalPart, getStorePagePart } from './parts';
 import { getFirstActiveSearch, getSearchFilters } from './searches';
 import { getStore } from './storeMethods';
 import { getNumStores } from './idb2';
-import { getAllFromIndex } from './db';
+import { getAllFromIndex, getFromIndex } from './db';
 import indices from './indices';
+import { cheapestPrice } from '../utils';
 
 interface Filter<T> {
   included: T[]
@@ -32,6 +33,7 @@ export default class ObjectCache {
   colors: Map<string, UiColor>
   categories: Map<string, Category>
   categoriesPageCategories: Map<string, CategoriesPageCategory>
+  cheapestPrices: Map<string, number>
   externalCategories: Map<string, ExternalCategory>
   externalCategoriesByCategoryId: Map<string, ExternalCategory[]>
   partPageCategories: Map<string, Category>
@@ -40,10 +42,17 @@ export default class ObjectCache {
   stores: Map<string, Store>
   activeCart: CartWithItems | undefined
   activeSearch: ActiveSearch | undefined
+  partVariantsByPartColor: Map<string, ItemVariant[]>
+  partVariantByPartColor: Map<string, ItemVariant>
+  externalPartsByPart: Map<number, ExternalItem[]>
   invItems: Map<string, InvItem>
   db: IDBPDatabase
   constructor(db: IDBPDatabase) {
     this.db = db
+    this.partVariantsByPartColor = new Map<string, ItemVariant[]>()
+    this.cheapestPrices = new Map<string, number>()
+    this.partVariantByPartColor = new Map<string, ItemVariant>()
+    this.externalPartsByPart = new Map<number, ExternalItem[]>()
     this.colors = new Map<string, UiColor>()
     this.categories = new Map<string, Category>()
     this.categoriesPageCategories = new Map<string, CategoriesPageCategory>()
@@ -55,6 +64,57 @@ export default class ObjectCache {
     this.invItems = new Map<string, InvItem>()
     this.stores = new Map<string, Store>()
     this.activeCart = undefined
+  }
+  async getCheapestPrice(itemId: number, targetQ: number, ignoreColor: boolean, colorId: string) {
+    const id = itemId + '-' + targetQ + '-' + ignoreColor + '-' + colorId
+    if (this.cheapestPrices.has(id)) {
+      return this.cheapestPrices.get(id)
+    }
+    const matchingParts = await this.getExternalPartsByPart(itemId)
+    console.log(itemId, id, matchingParts)
+    if (!matchingParts) {
+      return
+    }
+    const allMatchingInvItems = new Map<string, InvItem>()
+    for (let i = 0; i < matchingParts.length; i++) {
+      const matchingPart = matchingParts[i]
+      let matches: InvItem[] = []
+      if (ignoreColor) {
+        matches = await getAllFromIndex(this.db, indices.INV_ITEMS_BY_ITEM, matchingPart.externalItemId)
+      } else {
+        matches = await getAllFromIndex(this.db, indices.INV_ITEMS_BY_ITEM_AND_COLOR, [matchingPart.externalItemId, colorId])
+      }
+      matches.forEach((match) => allMatchingInvItems.set(match.storeId + '//' + match.invId, match))
+    }
+    const price = cheapestPrice(Array.from(allMatchingInvItems.values()), targetQ, true)
+    this.cheapestPrices.set(id, price)
+    return price
+  }
+  async getPartVariantsByPartColor(itemId: string, colorId: string) {
+    const id = itemId + colorId
+    if (this.partVariantsByPartColor.has(id)) {
+      return this.partVariantsByPartColor.get(id)
+    }
+    const variants: ItemVariant[] = await getAllFromIndex(this.db, indices.PART_VARIANTS_BY_PART_AND_COLOR, [itemId, colorId])
+    this.partVariantsByPartColor.set(id, variants)
+    return variants
+  }
+  async getPartVariantByPartColor(itemId: string, colorId: string) {
+    const id = itemId + colorId
+    if (this.partVariantByPartColor.has(id)) {
+      return this.partVariantByPartColor.get(id)
+    }
+    const variant: ItemVariant = await getFromIndex(this.db, indices.PART_VARIANTS_BY_PART_AND_COLOR, [itemId, colorId])
+    this.partVariantByPartColor.set(id, variant)
+    return variant
+  }
+  async getExternalPartsByPart(id: number) {
+    if (this.externalPartsByPart.has(id)) {
+      return this.externalPartsByPart.get(id)
+    }
+    const externalItems: ExternalItem[] = await getAllFromIndex(this.db, indices.EXTERNAL_PARTS_BY_PART, id)
+    this.externalPartsByPart.set(id, externalItems)
+    return externalItems
   }
   async getAllObjects<T>(map: Map<string | number, T>, getter: Function, idMapper: Function = (value: T) => value.id): Promise<T[]> {
     console.log(map.size, map)
@@ -162,7 +222,7 @@ export default class ObjectCache {
   async getExternalCategoriesByCategoryId(id: number): Promise<ExternalCategory[] | undefined> {
     return this.getObject<ExternalCategory[]>(this.externalCategoriesByCategoryId, id, async () => await getExternalCategoriesByCategoryId(id, this))
   }
-  async getExternalPartsInExternalCategory(type: string, externalCategoryId: string) {
+  async getExternalPartsInExternalCategory(type: string, externalCategoryId: string): Promise<ExternalItem[]> {
     return getAllFromIndex(this.db, indices.EXTERNAL_PARTS_BY_TYPE_AND_CATEGORY, [type, externalCategoryId])
   }
   async getHomeData(): Promise<HomeData | undefined> {

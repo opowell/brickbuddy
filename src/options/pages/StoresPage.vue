@@ -14,7 +14,10 @@ function setScraping(value: boolean) {
   }
   scrapingOn.value = value
 }
-const stores = objectCache.value.stores
+const stores = ref<StoresPageStore[] | undefined>()
+onMounted(async () => {
+  stores.value = await getStoresPageStores()
+})
 
 function add() {
   addNewStore({
@@ -26,7 +29,6 @@ const search = ref('')
 import HomeButton from '../components/HomeButton.vue';
 import ActiveSearchButton from '../components/ActiveSearchButton.vue';
 import ActiveCartButton from '../components/ActiveCartButton.vue';
-import { objectCache } from '../idb/idb';
 </script>
 
 <template>
@@ -59,7 +61,7 @@ import { objectCache } from '../idb/idb';
             <StoreButton :store="store" />
           </td>
           <td>
-            {{ store.invItems.length }}
+            {{ store.numInvItems }}
           </td>
           <td>
             {{ store.fetchPageIndex }} / {{ store.fetchMaxPageIndex }}

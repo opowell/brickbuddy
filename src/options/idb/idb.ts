@@ -545,15 +545,15 @@ const externalPartsInExternalCategory = computed<Map<string, ExternalItem[]>>(()
   return map
 })
 
-export async function getCategoriesPageCategory(category: CachedCategory, objectCache: ObjectCacheClass): Promise<CategoriesPageCategory | undefined> {
-  const externalCategories = await objectCache.getExternalCategoriesByCategoryId(category.id)
+export async function getCategoriesPageCategory(category: CachedCategory): Promise<CategoriesPageCategory | undefined> {
+  const externalCategories = await liveObjectCache.getExternalCategoriesByCategoryId(category.id)
   if (!externalCategories) {
     return
   }
   const categoriesPageExternalCategory: CategoriesPageExternalCategory[] = []
   for (let i = 0; i < externalCategories.length; i++) {
     const externalCategory = externalCategories[i]
-    const parts = await objectCache.getExternalPartsInExternalCategory(externalCategory.type, externalCategory.id)
+    const parts = await liveObjectCache.getExternalPartsInExternalCategory(externalCategory.type, externalCategory.id)
     if (!parts || parts.length === 0) {
       continue
     }

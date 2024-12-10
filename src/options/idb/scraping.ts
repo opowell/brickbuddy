@@ -2,7 +2,7 @@ import { IDBPDatabase } from "idb"
 import { Store, StoreType } from "../types"
 import { getBrickLinkPrices } from "./getBrickLinkPrices"
 import { getLegoPrices } from "./getLegoPrices"
-import { getDbConnection } from "./idb"
+import { getDbConnection, liveObjectCache } from "./idb"
 import { getAllFromIndex } from "./db"
 import INDICES from './indices'
 let stopFetch: boolean = false
@@ -116,14 +116,14 @@ async function scrapePartDetails() {
   console.log(partDetails)
 }
 
-export async function getStorePrices(db: IDBPDatabase, store: Store) {
+export async function getStorePrices(store: Store) {
   switch (store.type) {
     case StoreType.Lego:
-      getLegoPrices(db, store)
+      getLegoPrices(liveObjectCache.db, store)
       break
     case StoreType.BrickLink:
     default:
-      getBrickLinkPrices(db, store)
+      getBrickLinkPrices(liveObjectCache.db, store)
       break
   }
 }
