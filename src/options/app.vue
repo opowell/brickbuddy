@@ -4,14 +4,12 @@ import { startFetching } from './idb/scraping';
 import { objectCache } from './idb/idb';
 
 onMounted(async () => {
-  startTimer('app.vue')
   await importRbPartsToMemory()
   const db = await getDbConnection()
   // await loadObjectCache(db)
   await loadLiveObjectCache(db)
   await createActiveSearchIfNecessary(db)
   startFetching()
-  reportTime('app.vue')
   return {
     cacheLoaded,
     objectCache

@@ -109,8 +109,8 @@ export async function searchAllowsPart(db: IDBPDatabase, search: Search, part: E
   return true // TODO
 }
 
-export function getActiveSearch() {
-  return liveObjectCache.activeSearch
+export async function getActiveSearch() {
+  return await liveObjectCache.getActiveSearch()
 }
 
 export async function setPriceScoreQuantity(quantity: number) {

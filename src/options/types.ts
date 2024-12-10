@@ -557,6 +557,7 @@ export interface ExternalCategoryPageExternalPart extends ExternalItem {
 
 
 export interface CategoryPagePart extends Item {
+  variants: any
   numInvItems: number
   numVariants: number
   externalParts: ExternalItem[]

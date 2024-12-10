@@ -168,14 +168,18 @@ export async function getCategoriesPageCategories(): Promise<CategoriesPageCateg
 }
 
 export async function getCategoryPageCategory(id: number): Promise<CategoryPageCategory | undefined> {
-  const db = await getDbConnection()
-  const category: Category = await get(db, STORES.CATEGORIES, id)
+  const category = await liveObjectCache.getCategory(id)
   if (!category) {
     return
   }
-  const externalCategories: ExternalCategory[] = await getExternalCategories(db, id)
-  const parts: CategoryPagePart[] = await getCategoryPageParts(db, id)
-  console.log(parts)
+  const externalCategories = await liveObjectCache.getExternalCategoriesByCategoryId(id)
+  if (!externalCategories) {
+    return
+  }
+  const parts = await getCategoryPageParts(id)
+  if (!parts) {
+    return
+  }
   return {
     ...category,
     parts,

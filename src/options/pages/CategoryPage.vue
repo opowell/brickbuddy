@@ -11,23 +11,23 @@ import ExcludeCategoryButton from '../components/ExcludeCategoryButton.vue';
 const route = useRoute()
 import { useRouter } from 'vue-router'
 import ActiveSearchButton from '../components/ActiveSearchButton.vue';
-import ExternalPartButton from '../components/ExternalPartButton.vue';
+import PartButton from '../components/PartButton.vue';
 import NameIdLabel from '../components/NameIdLabel.vue';
-import { activeCache, activeCategories, categoriesMap, objectCache } from '../idb/idb';
 const router = useRouter()
-const category = computed(() => {
-  return categoriesMap.value.get(route.params.id - 0)
+const category = ref<CategoryPageCategory | undefined>()
+onMounted(async () => {
+  category.value = await getCategoryPageCategory(route.params.id - 0)
 })
 const parts = computed(() => {
   if (!category.value) {
     return []
   }
-  return category.value.parts.filter(p => p.variants.length > 0)
+  return category.value.parts
 })
 </script>
 
 <template>
-  <div v-if="activeCache && category && categoriesMap && objectCache && activeCategories">
+  <div v-if="category">
     <HomeButton />
     <CategoriesButton />
     <ActiveSearchButton />
@@ -50,10 +50,10 @@ const parts = computed(() => {
         <tr v-for="part in parts" :key="part.itemId">
           <td><img v-if="part.image" :src="part.image"></td>
           <td>
-            <ExternalPartButton :part="part" />
+            <PartButton :part="part" />
           </td>
-          <td>{{ part.variants.length }}</td>
-          <td>{{ part.invItems?.length }}</td>
+          <td>{{ part.numVariants }}</td>
+          <td>{{ part.numInvItems }}</td>
         </tr>
       </tbody>
     </table>

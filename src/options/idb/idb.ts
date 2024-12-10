@@ -793,7 +793,6 @@ interface RbPart {
 export const rbPartsLegoId: Map<string, RebrickableItem> = new Map<string, RebrickableItem>()
 export const rbPartsBrickLinkId: Map<string, RebrickableItem> = new Map<string, RebrickableItem>()
 export async function importRbPartsToMemory() {
-  startTimer('importRbPartsToMemory')
   // @ts-ignore
   const rbArray: RbPart[] = rbParts
   for (let i = 0; i < rbArray.length; i++) {
@@ -826,7 +825,6 @@ export async function importRbPartsToMemory() {
       })
     }
   }
-  reportTime('importRbPartsToMemory')
 }
 
 import ObjectCacheClass from './ObjectCacheClass'

@@ -4,7 +4,7 @@ import { countFromIndex, get, getAll, getAllFromIndex, getFromIndex, put } from 
 import STORES from './stores'
 import { toDataURL } from "../utils"
 import { getExternalPartsByPart, getItemVariant, getPartPageVariants, getPartsPageVariants, getUiPartVariants } from "./variants"
-import { filteredParts, getDbConnection, getObjectCache, objectCache, rbPartsBrickLinkId, rbPartsLegoId } from "./idb"
+import { filteredParts, getDbConnection, getObjectCache, liveObjectCache, objectCache, rbPartsBrickLinkId, rbPartsLegoId } from "./idb"
 import INDICES from "./indices"
 import { getNumInvItemsByPart, getPartPageInvItems, getVariantsByPart } from "./invItems"
 import ObjectCacheClass from "./ObjectCacheClass"
@@ -364,15 +364,29 @@ async function getExternalPartsByTypeAndCategory(db: IDBPDatabase, externalCateg
   return await getAllFromIndex(db, INDICES.EXTERNAL_PARTS_BY_TYPE_AND_CATEGORY, [externalCategory.type, externalCategory.id])
 }
 
-export async function getCategoryPageParts(db: IDBPDatabase, id: number): Promise<CategoryPagePart[]> {
+export async function getCategoryPageParts(id: number): Promise<CategoryPagePart[] | undefined> {
+  console.log('getCategoryPageParts', id)
   const search = getActiveSearch()
-  const externalCategories = await getExternalCategoriesByCategory(db, id)
+  if (!search) {
+    return
+  }
+  console.log('getCategoryPageParts', id)
+  const externalCategories = await liveObjectCache.getExternalCategoriesByCategoryId(id)
+  if (!externalCategories) {
+    return
+  }
+  console.log('getCategoryPageParts', id)
   const externalParts: ExternalItem[] = []
   for (let i = 0; i < externalCategories.length; i++) {
     const externalCategory = externalCategories[i]
-    externalParts.push(...await getExternalPartsByTypeAndCategory(db, externalCategory))
+    const parts = await liveObjectCache.getExternalPartsInExternalCategory(externalCategory.type, externalCategory.id)
+    if (!parts) {
+      continue
+    }
+    externalParts.push(...parts)
   }
-  const filteredExternalParts = externalParts.filter(part => searchAllowsPart(db, search, part))
+  console.log('getCategoryPageParts', id)
+  const filteredExternalParts = externalParts.filter(part => searchAllowsPart(liveObjectCache.db, search, part))
   const itemsMap = new Map<number, ExternalItem[]>()
   for (let i = 0; i < filteredExternalParts.length; i++) {
     const fp = filteredExternalParts[i]
@@ -386,6 +400,7 @@ export async function getCategoryPageParts(db: IDBPDatabase, id: number): Promis
     }
     map.push(fp)
   }
+  console.log('getCategoryPageParts', id)
   const items: CategoryPagePart[] = []
   itemsMap.forEach((value, key) => items.push({
     itemId: key,
@@ -397,13 +412,18 @@ export async function getCategoryPageParts(db: IDBPDatabase, id: number): Promis
     const item = items[i]
     for (let j = 0; j < item.externalParts.length; j++) {
       const externalPart = item.externalParts[j]
-      item.numInvItems += await getNumInvItemsByPart(db, externalPart)
-      const variants = await getVariantsByPart(db, externalPart)
-      item.numVariants += variants.length
-      const firstVariantWithImage = variants.find(v => v.image)
-      if (firstVariantWithImage) {
-        item.image = firstVariantWithImage.image
+      const numInvItems = await liveObjectCache.getNumInvItemsByPart(externalPart.externalItemId, externalPart.type)
+      if (numInvItems === undefined) {
+        continue
       }
+      const numVariants = await liveObjectCache.getNumVariantsByPart(externalPart.externalItemId, externalPart.type)
+      if (numVariants === undefined) {
+        continue
+      }
+      item.numInvItems += numInvItems
+      item.numVariants += numVariants
+      const firstVariant = await liveObjectCache.getFirstVariantByPart(externalPart.externalItemId)
+      item.image = firstVariant?.image
     }
   }
   return items
