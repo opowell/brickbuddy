@@ -10,6 +10,7 @@ import ColorButton from '@/options/components/ColorButton.vue';
 import ConditionButton from '@/options/components/ConditionButton.vue';
 import * as math from 'mathjs'
 import QuantityInput from '@/options/components/QuantityInput.vue';
+import { liveObjectCache } from '../idb/idb';
 
 const { hideVariant = false, items, showColor = false } = defineProps({
   hideVariant: Boolean,
@@ -25,8 +26,9 @@ interface StoreItemsTableInvItem extends UiInvItem {
   cartQuantity: number | undefined;
   priceScore: string
 }
-const search = computed(() => {
-  return getActiveSearch()
+const search = ref()
+onMounted(async () => {
+  search.value = await liveObjectCache.getActiveSearch()
 })
 
 const costOfCheapest = computed<number | undefined>(() => {

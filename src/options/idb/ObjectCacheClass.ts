@@ -1,5 +1,5 @@
 import { IDBPDatabase } from 'idb';
-import { ActiveSearch, CartWithItems, CategoriesPageCategory, Category, Color, ExternalCategory, ExternalCategoryPageExternalPart, ExternalItem, ExternalPartPageExternalPart, HomeData, InvItem, Item, ItemVariant, PartPageCategory, Search, SearchFilter, Store, StorePageInvItemItem, UiColor } from '../types';
+import { ActiveSearch, CartWithItems, CategoriesPageCategory, Category, Color, ExternalCategory, ExternalCategoryPageExternalPart, ExternalItem, ExternalPartPageExternalPart, ExternalPartPageInvItem, ExternalPartPageItemVariant, HomeData, InvItem, Item, ItemVariant, PartPageCategory, Search, SearchFilter, Store, StorePageInvItemItem, UiColor } from '../types';
 import STORES from './stores'
 import { getFirstActiveCart, getCartItems } from './carts';
 import { getExternalCategoriesByCategoryId, getCategoriesPageCategories, getCategory, getExternalCategory, getPartPageCategory } from './categories';
@@ -256,12 +256,13 @@ export default class ObjectCache {
   async getExternalCategoriesByCategoryId(id: number): Promise<ExternalCategory[] | undefined> {
     return this.getObject<ExternalCategory[]>(this.externalCategoriesByCategoryId, id, async () => await getExternalCategoriesByCategoryId(id, this))
   }
-  async getNumInvItemsByPart(externalItemId: string): Promise<number | undefined> {
-    if (this.numInvItemsByPart.has(externalItemId)) {
-      return this.numInvItemsByPart.get(externalItemId)
+  async getNumInvItemsByPart(externalItemId: string, type: 'Lego' | 'BrickLink' | 'Rebrickable'): Promise<number | undefined> {
+    const id = externalItemId + type
+    if (this.numInvItemsByPart.has(id)) {
+      return this.numInvItemsByPart.get(id)
     }
-    const num = await countFromIndex(this.db, indices.INV_ITEMS_BY_ITEM, externalItemId)
-    this.numInvItemsByPart.set(externalItemId, num)
+    const num = await countFromIndex(this.db, indices.INV_ITEMS_BY_TYPE_AND_ITEM, [type, externalItemId])
+    this.numInvItemsByPart.set(id, num)
     return num
   }
   async getVariantsByExternalPart(externalItemId: string, type: 'Lego' | 'BrickLink' | 'Rebrickable'): Promise<ItemVariant[] | undefined> {
@@ -300,9 +301,38 @@ export default class ObjectCache {
     if (!variants) {
       return
     }
+    const eppvs: ExternalPartPageItemVariant[] = []
+    for (let i = 0; i < variants.length; i++) {
+      const variant = variants[i]
+      const color = await this.getColor(variant.colorId)
+      if (!color) {
+        continue
+      }
+      eppvs.push({
+        ...variant,
+        color
+      })
+    }
     const invItems: InvItem[] | undefined = await this.getInvItemsByExternalPart(externalItemId, type)
     if (!invItems) {
       return
+    }
+    const eppiis: ExternalPartPageInvItem[] = []
+    for (let i = 0; i < invItems.length; i++) {
+      const invItem = invItems[i]
+      const color = await this.getColor(invItem.colorId)
+      if (!color) {
+        continue
+      }
+      const store = await this.getStore(invItem.storeId)
+      if (!store) {
+        continue
+      }
+      eppiis.push({
+        ...invItem,
+        color,
+        store
+      })
     }
     const category = await this.getExternalCategory(externalPart.externalCategoryId, externalPart.type)
     if (!category) {
@@ -310,8 +340,8 @@ export default class ObjectCache {
     }
     return {
       ...externalPart,
-      variants,
-      invItems,
+      variants: eppvs,
+      invItems: eppiis,
       category
     }
   }
@@ -323,11 +353,11 @@ export default class ObjectCache {
     const ecpeps: ExternalCategoryPageExternalPart[] = []
     for (let i = 0; i < parts.length; i++) {
       const part = parts[i]
-      const numInvItems: number | undefined = await this.getNumInvItemsByPart(part.externalItemId)
+      const numInvItems: number | undefined = await this.getNumInvItemsByPart(part.externalItemId, type)
       if (numInvItems === undefined) {
         continue
       }
-      const numVariants: number | undefined = await this.getNumVariantsByPart(part.externalItemId)
+      const numVariants: number | undefined = await this.getNumVariantsByPart(part.externalItemId, type)
       if (numVariants === undefined) {
         continue
       }

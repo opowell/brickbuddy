@@ -2,7 +2,7 @@
 import HomeButton from '../components/HomeButton.vue';
 import PartsButton from '../components/PartsButton.vue';
 import PartVariantButton from '../components/PartVariantButton.vue';
-import type { ExternalPartPageExternalPart, ExternalPartPageItemVariant, InvItem, ItemVariant, PartPagePart, PartPageVariant, PartPageVariantInvItem, UiInvItem, UiItem, UiItemVariant } from '../types'
+import type { ExternalPartPageExternalPart, InvItem, PartPageVariant, PartPageVariantInvItem, UiInvItem, UiItem, UiItemVariant } from '../types'
 import ActiveSearchButton from '../components/ActiveSearchButton.vue';
 import { formatInteger } from '../utils';
 import ActiveCartButton from '../components/ActiveCartButton.vue';

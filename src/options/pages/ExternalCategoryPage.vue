@@ -5,7 +5,7 @@ import CategoryButton from '../components/CategoryButton.vue';
 import HomeButton from '../components/HomeButton.vue';
 
 import { useRoute } from 'vue-router'
-import { ExternalCategoryPageExternalCategory } from '../types';
+import { ExternalCategoryPageExternalCategory, ExternalCategoryPageExternalPart } from '../types';
 import IncludeCategoryButton from '../components/IncludeCategoryButton.vue';
 import ExcludeCategoryButton from '../components/ExcludeCategoryButton.vue';
 const route = useRoute()
@@ -17,6 +17,20 @@ const router = useRouter()
 const category = ref<ExternalCategoryPageExternalCategory>()
 onMounted(async () => {
   category.value = await getExternalCategoryPageExternalCategory(route.params.type, route.params.id)
+})
+const sortedParts = computed<ExternalCategoryPageExternalPart[]>(() => {
+  if (!category.value) {
+    return []
+  }
+  return category.value.externalParts.sort((a, b) => {
+    if (!a.name) {
+      return 1
+    }
+    if (!b.name) {
+      return -1
+    }
+    return a.name > b.name ? 1 : -1
+  })
 })
 </script>
 
@@ -40,7 +54,7 @@ onMounted(async () => {
         </tr>
       </thead>
       <tbody>
-        <tr v-for="part in category.externalParts" :key="part.itemId">
+        <tr v-for="part in sortedParts" :key="part.itemId">
           <td><img v-if="part.image" :src="part.image"></td>
           <td>
             <ExternalPartButton :part="part" />

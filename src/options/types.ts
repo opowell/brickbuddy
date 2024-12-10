@@ -209,14 +209,21 @@ export interface PartsPagePart extends Item {
   image?: string
   priceRange: string
 }
+export interface ExternalPartPageInvItem extends InvItem {
+  color: Color
+  store: Store
+}
 export interface StorePagePart extends Item {
   variants: UiItemVariant[]
   category: Category
 }
 export interface ExternalPartPageExternalPart extends ExternalItem {
-  variants: ItemVariant[]
-  invItems: InvItem[]
+  variants: ExternalPartPageItemVariant[]
+  invItems: ExternalPartPageInvItem[]
   category: ExternalCategory
+}
+export interface ExternalPartPageItemVariant extends ItemVariant {
+  color: Color
 }
 export interface PartPagePart extends Item {
   variants: PartPageVariant[]
