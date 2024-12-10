@@ -1,3 +1,5 @@
+import { number } from "mathjs"
+
 export interface Cart {
   id: number
   name: string
@@ -525,10 +527,24 @@ export interface CachedExternalCategory extends ExternalCategory {
   image: ComputedRef<string | undefined> | undefined
 }
 
+export interface CachedExternalCategory extends ExternalCategory {
+  externalPartsFiltered: ComputedRef<CachedExternalItem[]>
+  externalParts: Ref<CachedExternalItem[]>
+  category: CachedCategory
+  image: ComputedRef<string | undefined> | undefined
+}
+
 export interface ExternalCategoryPageExternalCategory extends ExternalCategory {
-  externalParts: ExternalItem[]
+  externalParts: ExternalCategoryPageExternalPart[]
   category: CategoryWithExternals
 }
+
+export interface ExternalCategoryPageExternalPart extends ExternalItem {
+  image?: string
+  numVariants: number
+  numInvItems: number
+}
+
 
 export interface CategoryPagePart extends Item {
   numInvItems: number
@@ -542,8 +558,9 @@ export interface CategoryPageCategory extends Category {
   externalCategories: ExternalCategory[]
 }
 
-export interface CategoriesPageExternalCategory extends CachedExternalCategory {
+export interface CategoriesPageExternalCategory extends ExternalCategory {
   parts: ExternalItem[]
+  image?: string
 }
 
 export interface CategoriesPageCategory extends Category {

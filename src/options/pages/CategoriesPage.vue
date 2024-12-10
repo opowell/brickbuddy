@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { CachedExternalCategory, CategoriesPageCategory, ExternalCategory, SearchFilter } from '../types';
+import { CategoriesPageCategory, CategoriesPageExternalCategory, ExternalCategory, SearchFilter } from '../types';
 import ExcludeCategoryButton from '../components/ExcludeCategoryButton.vue';
 import IncludeCategoryButton from '../components/IncludeCategoryButton.vue';
-import { activeExternalCategories, externalCategoriesMap, getDbConnection, liveObjectCache } from '../idb/idb';
+import { getDbConnection, liveObjectCache } from '../idb/idb';
 interface CategoriesPageUniqueCategory {
-  externalCategories: CachedExternalCategory[]
+  externalCategories: CategoriesPageExternalCategory[]
   isExternal: boolean
   numParts: number
-  image?: ComputedRef<string | undefined>
+  image?: string
   id: number | string
   category: CategoriesPageCategory
 }
@@ -29,13 +29,13 @@ const uniqueExternalCategories = computed<CategoriesPageUniqueCategory[]>(() => 
     if (countUnique(types) < types.length) {
       // add each ec individually
       category.externalCategories.forEach(ec => {
-        if (ec.externalPartsFiltered.length === 0) {
+        if (ec.parts.length === 0) {
           return
         }
         out.push({
           isExternal: true,
           externalCategories: [ec],
-          numParts: ec.externalPartsFiltered.length,
+          numParts: ec.parts.length,
           image: ec.image,
           id: ec.id,
           category
@@ -43,7 +43,7 @@ const uniqueExternalCategories = computed<CategoriesPageUniqueCategory[]>(() => 
       })
     } else {
       // add all ec together
-      const numParts = category.externalCategories.reduce((sum, currentValue) => sum + currentValue.externalPartsFiltered.length, 0)
+      const numParts = category.externalCategories.reduce((sum, currentValue) => sum + currentValue.parts.length, 0)
       const imageEc = category.externalCategories.find(ec => ec.image)
       const image = imageEc ? imageEc.image : undefined
       out.push({

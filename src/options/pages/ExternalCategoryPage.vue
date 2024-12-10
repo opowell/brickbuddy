@@ -5,21 +5,16 @@ import CategoryButton from '../components/CategoryButton.vue';
 import HomeButton from '../components/HomeButton.vue';
 
 import { useRoute } from 'vue-router'
-import { CachedExternalCategory, ExternalCategory, ExternalItem } from '../types';
+import { ExternalCategoryPageExternalCategory } from '../types';
 import IncludeCategoryButton from '../components/IncludeCategoryButton.vue';
 import ExcludeCategoryButton from '../components/ExcludeCategoryButton.vue';
 const route = useRoute()
 import { useRouter } from 'vue-router'
 import ActiveSearchButton from '../components/ActiveSearchButton.vue';
 import ExternalPartButton from '../components/ExternalPartButton.vue';
-import { externalCategoriesMap } from '../idb/idb';
 import { getExternalCategoryPageExternalCategory } from '../idb/categories';
 const router = useRouter()
-interface Item extends ExternalItem {
-  numVariants: number
-  numInvItems: number
-}
-const category = ref()
+const category = ref<ExternalCategoryPageExternalCategory>()
 onMounted(async () => {
   category.value = await getExternalCategoryPageExternalCategory(route.params.type, route.params.id)
 })
@@ -50,8 +45,8 @@ onMounted(async () => {
           <td>
             <ExternalPartButton :part="part" />
           </td>
-          <td>{{ part.variants?.length }}</td>
-          <td>{{ part.invItems?.length }}</td>
+          <td>{{ part.numVariants }}</td>
+          <td>{{ part.numInvItems }}</td>
         </tr>
       </tbody>
     </table>

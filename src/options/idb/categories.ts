@@ -121,7 +121,10 @@ export async function getExternalCategoryPageExternalCategory(type: 'BrickLink' 
   if (!externalCategories) {
     return
   }
-  const externalParts = await liveObjectCache.getExternalPartsInExternalCategory(type, id)
+  const externalParts = await liveObjectCache.getExternalCategoryPageExternalParts(type, id)
+  if (!externalParts) {
+    return
+  }
   return {
     ...externalCategory,
     category: {
@@ -132,16 +135,16 @@ export async function getExternalCategoryPageExternalCategory(type: 'BrickLink' 
   }
 }
 
-export async function getCategoriesPageCategories(objectCache: ObjectCache): Promise<CategoriesPageCategory[] | undefined> {
-  const db = objectCache.db
-  const categories = await getAllCategories(db)
+export async function getCategoriesPageCategories(): Promise<CategoriesPageCategory[] | undefined> {
+  const objectCache = liveObjectCache
+  const categories = await objectCache.getAllCategories()
   const categoriesPageCategories: CategoriesPageCategory[] = []
   const search = await objectCache.getActiveSearch()
   if (!search) {
     return
   }
   for (let i = 0; i < categories.length; i++) {
-    const category: CachedCategory = categories[i]
+    const category: Category = categories[i]
     if (
       search.categories.excluded.includes(category.id)
     ) {
@@ -153,7 +156,7 @@ export async function getCategoriesPageCategories(objectCache: ObjectCache): Pro
     ) {
       continue
     }
-    const categoriesPageCategory = await getCategoriesPageCategory(category, objectCache)
+    const categoriesPageCategory = await getCategoriesPageCategory(category)
     if (!categoriesPageCategory || categoriesPageCategory.externalCategories.length === 0) {
       console.log(categoriesPageCategory, category)
       continue

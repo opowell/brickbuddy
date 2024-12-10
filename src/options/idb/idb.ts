@@ -1,5 +1,5 @@
 import { objectCache } from './idb';
-import { CachedCart, CachedCartItem, CachedCategory, CachedColor, CachedExternalCategory, CachedExternalItem, CachedInvItem, CachedItem, CachedItemVariant, CachedList, CachedSearch, CachedSearchFilter, CachedStore, Cart, CategoriesPageCategory, CategoriesPageExternalCategory, Color, ExternalCategory, ExternalItem, InvItem, RebrickableItem, Search, SearchFilter, ShopList, Store } from './../types';
+import { CachedCart, CachedCartItem, CachedCategory, CachedColor, CachedExternalCategory, CachedExternalItem, CachedInvItem, CachedItem, CachedItemVariant, CachedList, CachedSearch, CachedSearchFilter, CachedStore, Cart, CategoriesPageCategory, CategoriesPageExternalCategory, Category, Color, ExternalCategory, ExternalItem, InvItem, RebrickableItem, Search, SearchFilter, ShopList, Store } from './../types';
 import { IDBPDatabase, openDB } from "idb";
 import STORES from './stores'
 import INDICES from './indices'
@@ -545,7 +545,7 @@ const externalPartsInExternalCategory = computed<Map<string, ExternalItem[]>>(()
   return map
 })
 
-export async function getCategoriesPageCategory(category: CachedCategory): Promise<CategoriesPageCategory | undefined> {
+export async function getCategoriesPageCategory(category: Category): Promise<CategoriesPageCategory | undefined> {
   const externalCategories = await liveObjectCache.getExternalCategoriesByCategoryId(category.id)
   if (!externalCategories) {
     return
@@ -557,11 +557,11 @@ export async function getCategoriesPageCategory(category: CachedCategory): Promi
     if (!parts || parts.length === 0) {
       continue
     }
+    const variant = await liveObjectCache.getFirstVariantByPart(parts[0].externalItemId)
     categoriesPageExternalCategory.push({
       ...externalCategory,
       parts,
-      externalPartsFiltered: parts,
-      image: externalCategory.image
+      image: variant?.image
     })
   }
   return {
