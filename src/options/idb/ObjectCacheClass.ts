@@ -1,5 +1,5 @@
 import { IDBPDatabase } from 'idb';
-import { ActiveSearch, CartWithItems, CategoriesPageCategory, Category, Color, ExternalCategory, ExternalCategoryPageExternalPart, ExternalItem, HomeData, InvItem, Item, ItemVariant, PartPageCategory, Search, SearchFilter, Store, StorePageInvItemItem, UiColor } from '../types';
+import { ActiveSearch, CartWithItems, CategoriesPageCategory, Category, Color, ExternalCategory, ExternalCategoryPageExternalPart, ExternalItem, ExternalPartPageExternalPart, HomeData, InvItem, Item, ItemVariant, PartPageCategory, Search, SearchFilter, Store, StorePageInvItemItem, UiColor } from '../types';
 import STORES from './stores'
 import { getFirstActiveCart, getCartItems } from './carts';
 import { getExternalCategoriesByCategoryId, getCategoriesPageCategories, getCategory, getExternalCategory, getPartPageCategory } from './categories';
@@ -9,7 +9,7 @@ import { getStorePageExternalPart, getStorePagePart } from './parts';
 import { getFirstActiveSearch, getSearchFilters } from './searches';
 import { getStore } from './storeMethods';
 import { getNumStores } from './idb2';
-import { countFromIndex, getAll, getAllFromIndex, getFromIndex } from './db';
+import { countFromIndex, get, getAll, getAllFromIndex, getFromIndex } from './db';
 import indices from './indices';
 import { cheapestPrice } from '../utils';
 
@@ -37,13 +37,16 @@ export default class ObjectCache {
   cheapestPrices: Map<string, number>
   externalCategories: Map<string, ExternalCategory>
   externalCategoriesByCategoryId: Map<string, ExternalCategory[]>
+  externalParts: Map<string, ExternalItem>
   externalPartsByPart: Map<number, ExternalItem[]>
   externalPartsByExternalCategory: Map<string, ExternalItem[]>
   partPageCategories: Map<string, Category>
   parts: Map<string, Item>
-  externalParts: Map<string, StorePageInvItemItem>
+  storePageExternalParts: Map<string, StorePageInvItemItem>
   numInvItemsByPart: Map<string, number>
   numVariantsByPart: Map<string, number>
+  variantsByPart: Map<string, ItemVariant[]>
+  invItemsByPart: Map<string, InvItem[]>
   stores: Map<string, Store>
   activeCart: CartWithItems | undefined
   activeSearch: ActiveSearch | undefined
@@ -60,7 +63,10 @@ export default class ObjectCache {
     this.firstVariantByPart = new Map<string, ItemVariant>()
     this.numInvItemsByPart = new Map<string, number>()
     this.numVariantsByPart = new Map<string, number>()
+    this.variantsByPart = new Map<string, ItemVariant[]>()
+    this.invItemsByPart = new Map<string, InvItem[]>()
     this.externalPartsByPart = new Map<number, ExternalItem[]>()
+    this.externalParts = new Map<string, ExternalItem>()
     this.externalPartsByExternalCategory = new Map<string, ExternalItem[]>()
     this.colors = new Map<string, UiColor>()
     this.categories = new Map<number, Category>()
@@ -69,7 +75,7 @@ export default class ObjectCache {
     this.externalCategories = new Map<string, ExternalCategory>()
     this.partPageCategories = new Map<string, Category>()
     this.parts = new Map<string, Item>()
-    this.externalParts = new Map<string, StorePageInvItemItem>()
+    this.storePageExternalParts = new Map<string, StorePageInvItemItem>()
     this.invItems = new Map<string, InvItem>()
     this.stores = new Map<string, Store>()
     this.activeCart = undefined
@@ -239,7 +245,10 @@ export default class ObjectCache {
     return this.getObject<Item | undefined>(this.parts, partId, async () => await getStorePagePart(partId, this))
   }
   async getStorePageExternalPart(invItem: InvItem, type: "BrickLink" | "Lego"): Promise<StorePageInvItemItem | undefined> {
-    return this.getObject<StorePageInvItemItem | undefined>(this.externalParts, invItem.itemId, async () => await getStorePageExternalPart(invItem, type, this))
+    return this.getObject<StorePageInvItemItem | undefined>(this.storePageExternalParts, invItem.itemId, async () => await getStorePageExternalPart(invItem, type, this))
+  }
+  async getExternalPart(type: "BrickLink" | "Lego", externalItemId: string): Promise<ExternalItem | undefined> {
+    return this.getObject<ExternalItem | undefined>(this.externalParts, type + externalItemId, async () => await get(this.db, STORES.EXTERNAL_PARTS, [type, externalItemId]))
   }
   async getCategoriesPageCategories(): Promise<CategoriesPageCategory[]> {
     return this.getAllObjects<CategoriesPageCategory>(this.categoriesPageCategories, async () => await getCategoriesPageCategories())
@@ -255,13 +264,56 @@ export default class ObjectCache {
     this.numInvItemsByPart.set(externalItemId, num)
     return num
   }
-  async getNumVariantsByPart(externalItemId: string): Promise<number | undefined> {
-    if (this.numVariantsByPart.has(externalItemId)) {
-      return this.numVariantsByPart.get(externalItemId)
+  async getVariantsByExternalPart(externalItemId: string, type: 'Lego' | 'BrickLink' | 'Rebrickable'): Promise<ItemVariant[] | undefined> {
+    const id = externalItemId + type
+    if (this.variantsByPart.has(id)) {
+      return this.variantsByPart.get(id)
     }
-    const num = await countFromIndex(this.db, indices.PART_VARIANTS_BY_PART, externalItemId)
-    this.numVariantsByPart.set(externalItemId, num)
+    const variants = await getAllFromIndex(this.db, indices.PART_VARIANTS_BY_TYPE_AND_PART, [type, externalItemId])
+    this.variantsByPart.set(id, variants)
+    return variants
+  }
+  async getInvItemsByExternalPart(externalItemId: string, type: 'Lego' | 'BrickLink' | 'Rebrickable'): Promise<InvItem[] | undefined> {
+    const id = externalItemId + type
+    if (this.invItemsByPart.has(id)) {
+      return this.invItemsByPart.get(id)
+    }
+    const invItems = await getAllFromIndex(this.db, indices.INV_ITEMS_BY_TYPE_AND_ITEM, [type, externalItemId])
+    this.invItemsByPart.set(id, invItems)
+    return invItems
+  }
+  async getNumVariantsByPart(externalItemId: string, type: 'Lego' | 'BrickLink' | 'Rebrickable'): Promise<number | undefined> {
+    const id = externalItemId + type
+    if (this.numVariantsByPart.has(id)) {
+      return this.numVariantsByPart.get(id)
+    }
+    const num = await countFromIndex(this.db, indices.PART_VARIANTS_BY_TYPE_AND_PART, [type, externalItemId])
+    this.numVariantsByPart.set(id, num)
     return num
+  }
+  async getExternalPartPageExternalPart(type: 'Lego' | 'BrickLink', externalItemId: string): Promise<ExternalPartPageExternalPart | undefined> {
+    const externalPart = await this.getExternalPart(type, externalItemId)
+    if (!externalPart) {
+      return
+    }
+    const variants: ItemVariant[] | undefined = await this.getVariantsByExternalPart(externalItemId, type)
+    if (!variants) {
+      return
+    }
+    const invItems: InvItem[] | undefined = await this.getInvItemsByExternalPart(externalItemId, type)
+    if (!invItems) {
+      return
+    }
+    const category = await this.getExternalCategory(externalPart.externalCategoryId, externalPart.type)
+    if (!category) {
+      return
+    }
+    return {
+      ...externalPart,
+      variants,
+      invItems,
+      category
+    }
   }
   async getExternalCategoryPageExternalParts(type: 'Lego' | 'BrickLink' | 'Rebrickable', categoryId: string): Promise<ExternalCategoryPageExternalPart[] | undefined> {
     const parts: ExternalItem[] | undefined = await this.getExternalPartsInExternalCategory(type, categoryId)

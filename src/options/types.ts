@@ -213,7 +213,10 @@ export interface StorePagePart extends Item {
   variants: UiItemVariant[]
   category: Category
 }
-export interface ExternalPartPageExternalPart extends CachedExternalItem {
+export interface ExternalPartPageExternalPart extends ExternalItem {
+  variants: ItemVariant[]
+  invItems: InvItem[]
+  category: ExternalCategory
 }
 export interface PartPagePart extends Item {
   variants: PartPageVariant[]

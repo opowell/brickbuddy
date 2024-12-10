@@ -2,14 +2,11 @@
 import HomeButton from '../components/HomeButton.vue';
 import PartsButton from '../components/PartsButton.vue';
 import PartVariantButton from '../components/PartVariantButton.vue';
-import { externalPartPageExternalPartMap, getPartPagePart } from '../idb/parts';
-import type { CachedInvItem, CachedItemVariant, InvItem, PartPagePart, PartPageVariant, PartPageVariantInvItem, UiInvItem, UiItem, UiItemVariant } from '../types'
+import type { ExternalPartPageExternalPart, ExternalPartPageItemVariant, InvItem, ItemVariant, PartPagePart, PartPageVariant, PartPageVariantInvItem, UiInvItem, UiItem, UiItemVariant } from '../types'
 import ActiveSearchButton from '../components/ActiveSearchButton.vue';
-import CategoryButton from '../components/CategoryButton.vue';
 import { formatInteger } from '../utils';
 import ActiveCartButton from '../components/ActiveCartButton.vue';
 import StoreItemsTable from '../components/StoreItemsTable.vue';
-import ExternalPartButton from '../components/ExternalPartButton.vue';
 interface VariantWithPriceQuantity extends PartPageVariant {
   price: number
   maxPrice: number
@@ -17,23 +14,27 @@ interface VariantWithPriceQuantity extends PartPageVariant {
 }
 import { useRoute } from 'vue-router'
 import ColorButton from '../components/ColorButton.vue';
+import { liveObjectCache } from '../idb/idb';
+import ExternalCategoryButton from '../components/ExternalCategoryButton.vue';
 const route = useRoute()
 
-const item = computed(() => {
-  return externalPartPageExternalPartMap.value.get(route.params.type + route.params.id)
+const item = ref<ExternalPartPageExternalPart | undefined>()
+onMounted(async () => {
+  item.value = await liveObjectCache.getExternalPartPageExternalPart(route.params.type, route.params.id)
 })
 const maxPrice = ref<number | undefined>(Number.POSITIVE_INFINITY)
 const minQuantity = ref(0)
 const variants = computed<VariantWithPriceQuantity[]>(() => {
-  if (!item.value) {
+  const itemValue = item.value
+  if (!itemValue) {
     return []
   }
-  const variantsWithPQ: VariantWithPriceQuantity[] = item.value.variants.map((variant: CachedItemVariant) => {
+  const variantsWithPQ: VariantWithPriceQuantity[] = itemValue.variants.map((variant: ExternalPartPageItemVariant) => {
     let price = Number.POSITIVE_INFINITY
     let varMaxPrice = 0
     let quantity = 0
-    const matchingInvItems = variant.externalPart.invItems.filter(iv => iv.colorId === variant.colorId)
-    matchingInvItems.forEach((invItem: CachedInvItem) => {
+    const matchingInvItems = itemValue.invItems.filter(iv => iv.colorId === variant.colorId)
+    matchingInvItems.forEach((invItem: InvItem) => {
       if (condition.value !== 'Any' && invItem.condition !== condition.value) {
         return
       }
@@ -69,11 +70,12 @@ const variants = computed<VariantWithPriceQuantity[]>(() => {
 })
 const condition = ref<string>('New')
 const invItems = computed<PartPageVariantInvItem[] | undefined>(() => {
-  if (!item.value) {
+  const itemValue = item.value
+  if (!itemValue) {
     return []
   }
-  return item.value.variants.flatMap(variant => {
-    return variant.externalPart.invItems.filter(ii => ii.colorId === variant.colorId).map(invItem => {
+  return itemValue.variants.flatMap(variant => {
+    return itemValue.invItems.filter(ii => ii.colorId === variant.colorId).map(invItem => {
       return {
         ...invItem,
         variant
@@ -88,7 +90,7 @@ function refreshCartButton() {
   }
 }
 function setCartQuantity({ invItem, newQuantity }: { invItem: InvItem, newQuantity: number}) {
-  const originalItem = item.value?.variants.flatMap(v => v.externalPart.invItems).find(i => i.invId === invItem.invId && i.storeId === invItem.storeId)
+  const originalItem = item.value?.variants.flatMap(v => item.value?.invItems).find(i => i.invId === invItem.invId && i.storeId === invItem.storeId)
   if (!originalItem) {
     return
   }
@@ -106,26 +108,11 @@ function setCartQuantity({ invItem, newQuantity }: { invItem: InvItem, newQuanti
     <HomeButton />
     <PartsButton />
     <h4>External Item {{ item.name }}</h4>
-    <div>Item: {{ item.part?.itemId }}</div>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="(externalPart, index) in item.externalParts" :key="index">
-          <td>
-            <ExternalPartButton :part="externalPart" />
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <div>Item: {{ item.itemId }}</div>
+    <div>External Category: <ExternalCategoryButton :category="item.category" /></div>
     <div>Min quantity:<input v-model="minQuantity" type="number"></div>
     <div>Min quantity:<input v-model="minQuantity" type="number"></div>
     <div>Max price:<input v-model="maxPrice" type="number"></div>
-    <div>Category: <CategoryButton :category="item.category" /></div>
-    <div>BrickLink Categories: <CategoryButton :category="item.category" /></div>
     <div>
       Condition:<select v-model="condition">
         <option value="New">
@@ -167,6 +154,7 @@ function setCartQuantity({ invItem, newQuantity }: { invItem: InvItem, newQuanti
         </tr>
       </tbody>
     </table>
+    <h4>Inventory items ({{ invItems?.length }})</h4>
     <StoreItemsTable
       v-if="invItems"
       :items="invItems"
