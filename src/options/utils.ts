@@ -1,5 +1,4 @@
 import * as math from "mathjs"
-
 export async function toDataURL(url: string): Promise<string> {
   return new Promise(resolve => {
     var xhr = new XMLHttpRequest()
@@ -25,9 +24,13 @@ export async function getUsage() {
     return
   }
   const percentageUsed = (quota.usage / quota.quota) * 100;
-  console.log(`You've used ${percentageUsed}% of the available storage.`);
-  const remaining = (quota.quota - quota.usage)/1024/1024/1024;
-  console.log(`You can write up to ${remaining} more GB.`);
+  const quotaInGB = formatInteger(quota.quota / 1024/1024/1024)
+  const usageInGB = formatInteger(quota.usage / 1024/1024/1024)
+  const remaining = formatInteger(quotaInGB - usageInGB)
+  console.log(`Quota: ${quotaInGB} GB`)
+  console.log(`Usage: ${usageInGB} GB`)
+  console.log(`Usage %: ${percentageUsed}`)
+  console.log(`Remaining: ${remaining} GB`);
   return quota
 }
 
