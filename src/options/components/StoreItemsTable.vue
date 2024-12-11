@@ -1,14 +1,12 @@
 <script setup lang="ts">
 import { PropType } from 'vue';
-import { ActiveSearch, type UiInvItem } from '../types'
-import { formatAmount, formatInteger, formatFloat, cheapestPrice, getScore } from '@/options/utils';
+import { type UiInvItem } from '../types'
+import { formatAmount, formatInteger, cheapestPrice, getScore } from '@/options/utils';
 import PartVariantButton from '@/options/components/PartVariantButton.vue';
 import StoreButton from '@/options/components/StoreButton.vue';
-import { getActiveSearch } from '@/options/idb/searches';
 import { setCartQuantity } from '@/options/idb/carts';
 import ColorButton from '@/options/components/ColorButton.vue';
 import ConditionButton from '@/options/components/ConditionButton.vue';
-import * as math from 'mathjs'
 import QuantityInput from '@/options/components/QuantityInput.vue';
 import { liveObjectCache } from '../idb/idb';
 

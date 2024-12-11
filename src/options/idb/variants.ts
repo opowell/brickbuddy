@@ -3,7 +3,7 @@ import { UiItemVariant, ItemVariant, InvItem, UiInvItem, UiItem, Color, VariantP
 import { getCartQuantity } from "./carts"
 import { getColor, colors } from "./colors"
 import { get, getAllFromIndex } from "./db"
-import { cacheLoaded, colorsMap, getDbConnection, objectCache } from "./idb"
+import { cacheLoaded, colorsMap, getDbConnection, liveObjectCache, objectCache } from "./idb"
 import INDICES from "./indices"
 import { getPartPageVariantInvItems, getPartsPageVariantInvItems } from "./invItems"
 import ObjectCacheClass from "./ObjectCacheClass"
@@ -72,17 +72,24 @@ export async function getUiPartVariants(db: IDBPDatabase, id: string, objectCach
   }
   return variants
 }
-export async function getPartPageVariants(db: IDBPDatabase, id: number, objectCache?: ObjectCache): Promise<PartPageVariant[]> {
-  const variants: ItemVariant[] = await getAllFromIndex(db, INDICES.PART_VARIANTS_BY_PART, id)
+export async function getPartPageVariants(db: IDBPDatabase, id: number, objectCache?: ObjectCache): Promise<PartPageVariant[] | undefined> {
   const partPageVariants: PartPageVariant[] = []
-  for (let i = 0; i < variants.length; i++) {
-    const variant = variants[i]
-    const partPageVariant = {
-      ...variant,
-      color: await getColor(db, variant.colorId),
-      invItems: await getPartPageVariantInvItems(db, variant)
+  const externalItems = await liveObjectCache.getExternalPartsByPart(id)
+  if (!externalItems) {
+    return
+  }
+  for (let j = 0; j < externalItems.length; j++) {
+    const externalItem = externalItems[j]    
+    const variants: ItemVariant[] = await getAllFromIndex(db, INDICES.PART_VARIANTS_BY_TYPE_AND_PART, [externalItem.type, externalItem.externalItemId])
+    for (let i = 0; i < variants.length; i++) {
+      const variant = variants[i]
+      const partPageVariant = {
+        ...variant,
+        color: await getColor(db, variant.colorId),
+        invItems: await getPartPageVariantInvItems(db, variant)
+      }
+      partPageVariants.push(partPageVariant)
     }
-    partPageVariants.push(partPageVariant)
   }
   return partPageVariants
 }

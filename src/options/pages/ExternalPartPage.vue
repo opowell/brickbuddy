@@ -54,7 +54,6 @@ const variants = computed<VariantWithPriceQuantity[]>(() => {
         quantity += invItem.quantity
       }
     })
-    console.log('add', quantity, variant.colorId)
     return {
       ...variant,
       price,

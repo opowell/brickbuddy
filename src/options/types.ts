@@ -212,6 +212,7 @@ export interface PartsPagePart extends Item {
 export interface ExternalPartPageInvItem extends InvItem {
   color: Color
   store: Store
+  cartQuantity: number
 }
 export interface StorePagePart extends Item {
   variants: UiItemVariant[]

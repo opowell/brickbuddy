@@ -1,7 +1,7 @@
 import { IDBPDatabase } from 'idb';
 import { ActiveSearch, CartWithItems, CategoriesPageCategory, Category, Color, ExternalCategory, ExternalCategoryPageExternalPart, ExternalItem, ExternalPartPageExternalPart, ExternalPartPageInvItem, ExternalPartPageItemVariant, HomeData, InvItem, Item, ItemVariant, PartPageCategory, Search, SearchFilter, Store, StorePageInvItemItem, UiColor } from '../types';
 import STORES from './stores'
-import { getFirstActiveCart, getCartItems } from './carts';
+import { getFirstActiveCart, getCartItems, getCartQuantity } from './carts';
 import { getExternalCategoriesByCategoryId, getCategoriesPageCategories, getCategory, getExternalCategory, getPartPageCategory } from './categories';
 import { getColor } from './colors';
 import { getInvItemFromId } from './invItems';
@@ -12,6 +12,7 @@ import { getNumStores } from './idb2';
 import { countFromIndex, get, getAll, getAllFromIndex, getFromIndex } from './db';
 import indices from './indices';
 import { cheapestPrice } from '../utils';
+import { liveObjectCache } from './idb';
 
 interface Filter<T> {
   included: T[]
@@ -95,7 +96,6 @@ export default class ObjectCache {
       return this.cheapestPrices.get(id)
     }
     const matchingParts = await this.getExternalPartsByPart(itemId)
-    console.log(itemId, id, matchingParts)
     if (!matchingParts) {
       return
     }
@@ -293,6 +293,10 @@ export default class ObjectCache {
     return num
   }
   async getExternalPartPageExternalPart(type: 'Lego' | 'BrickLink', externalItemId: string): Promise<ExternalPartPageExternalPart | undefined> {
+    const cart = await liveObjectCache.getActiveCart()
+    if (!cart) {
+      return
+    }
     const externalPart = await this.getExternalPart(type, externalItemId)
     if (!externalPart) {
       return
@@ -328,10 +332,12 @@ export default class ObjectCache {
       if (!store) {
         continue
       }
+      const cartQuantity = getCartQuantity(cart, invItem)
       eppiis.push({
         ...invItem,
         color,
-        store
+        store,
+        cartQuantity
       })
     }
     const category = await this.getExternalCategory(externalPart.externalCategoryId, externalPart.type)

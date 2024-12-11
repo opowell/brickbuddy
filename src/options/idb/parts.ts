@@ -171,9 +171,18 @@ export async function getPartPagePart(id: number): Promise<PartPagePart | undefi
   if (!part) {
     return
   }
-  const externalParts: ExternalItem[] = await getExternalParts(db, part.itemId)
-  const variants: PartPageVariant[] = await getPartPageVariants(db, part.itemId)
-  const invItems: PartPageVariantInvItem[] = await getPartPageInvItems(db, part.itemId)
+  const externalParts = await liveObjectCache.getExternalPartsByPart(id)
+  if (!externalParts) {
+    return
+  }
+  const variants = await getPartPageVariants(db, part.itemId)
+  if (!variants) {
+    return
+  }
+  const invItems = await getPartPageInvItems(db, part.itemId)
+  if (!invItems) {
+    return
+  }
   return {
     ...part,
     variants,
@@ -365,17 +374,14 @@ async function getExternalPartsByTypeAndCategory(db: IDBPDatabase, externalCateg
 }
 
 export async function getCategoryPageParts(id: number): Promise<CategoryPagePart[] | undefined> {
-  console.log('getCategoryPageParts', id)
   const search = getActiveSearch()
   if (!search) {
     return
   }
-  console.log('getCategoryPageParts', id)
   const externalCategories = await liveObjectCache.getExternalCategoriesByCategoryId(id)
   if (!externalCategories) {
     return
   }
-  console.log('getCategoryPageParts', id)
   const externalParts: ExternalItem[] = []
   for (let i = 0; i < externalCategories.length; i++) {
     const externalCategory = externalCategories[i]
@@ -385,7 +391,6 @@ export async function getCategoryPageParts(id: number): Promise<CategoryPagePart
     }
     externalParts.push(...parts)
   }
-  console.log('getCategoryPageParts', id)
   const filteredExternalParts = externalParts.filter(part => searchAllowsPart(liveObjectCache.db, search, part))
   const itemsMap = new Map<number, ExternalItem[]>()
   for (let i = 0; i < filteredExternalParts.length; i++) {
@@ -400,7 +405,6 @@ export async function getCategoryPageParts(id: number): Promise<CategoryPagePart
     }
     map.push(fp)
   }
-  console.log('getCategoryPageParts', id)
   const items: CategoryPagePart[] = []
   itemsMap.forEach((value, key) => items.push({
     itemId: key,

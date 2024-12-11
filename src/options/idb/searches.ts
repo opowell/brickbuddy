@@ -22,9 +22,7 @@ export async function addNewSearch() {
 }
 
 export async function getActiveCart(): Promise<CartWithItems> {
-  const db = await getDbConnection()
-  const objectCache = new ObjectCacheClass(db)
-  return await objectCache.getActiveCart()
+  return await liveObjectCache.getActiveCart()
 }
 export async function getActiveSearchButtonActiveSearch(): Promise<ActiveSearchButtonActiveSearch | undefined> {
   const db = await getDbConnection()

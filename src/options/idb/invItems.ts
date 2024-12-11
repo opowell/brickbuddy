@@ -124,22 +124,29 @@ export async function getVariantsByPart(db: IDBPDatabase, part: ExternalItem): P
   return await getAllFromIndex(db, INDICES.PART_VARIANTS_BY_PART, part.externalItemId)
 }
 
-export async function getPartPageInvItems(db: IDBPDatabase, itemId: number): Promise<PartPageVariantInvItem[]> {
-  const invItems = await getAllFromIndex(
-    db,
-    INDICES.INV_ITEMS_BY_ITEM,
-    itemId
-  )
+export async function getPartPageInvItems(db: IDBPDatabase, itemId: number): Promise<PartPageVariantInvItem[] | undefined> {
+  const externalItems = await liveObjectCache.getExternalPartsByPart(itemId)
+  if (!externalItems) {
+    return
+  }
   const partPageInvItems = []
-  for (let i = 0; i < invItems.length; i++) {
-    const invItem: InvItem = invItems[i]
-    const partPageVariantInvItem: PartPageVariantInvItem = {
-      ...invItem,
-      color: await getColor(db, invItem.colorId),
-      store: await getStore(db, invItem.storeId),
-      cartQuantity: -1
+  for (let j = 0; j < externalItems.length; j++) {
+    const externalItem = externalItems[j]
+    const invItems = await getAllFromIndex(
+      db,
+      INDICES.INV_ITEMS_BY_TYPE_AND_ITEM,
+      [externalItem.type, externalItem.externalItemId]
+    )
+    for (let i = 0; i < invItems.length; i++) {
+      const invItem: InvItem = invItems[i]
+      const partPageVariantInvItem: PartPageVariantInvItem = {
+        ...invItem,
+        color: await getColor(db, invItem.colorId),
+        store: await getStore(db, invItem.storeId),
+        cartQuantity: -1
+      }
+      partPageInvItems.push(partPageVariantInvItem)
     }
-    partPageInvItems.push(partPageVariantInvItem)
   }
   return partPageInvItems
 }
