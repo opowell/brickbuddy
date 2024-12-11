@@ -4,6 +4,7 @@
 ### v1
 
 ### v2
+- keyboard controls.
 - Table views
   - standard
   - image
