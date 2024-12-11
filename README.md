@@ -1,29 +1,33 @@
 # Brick Buddy
 
 ## TODO
-### v1
-
 ### v2
+- table filters
+  - "show all parts from multiple categories".
+- "buy" a list
+  - shop order cost.
+- add global quantity minimum.
+- combine similar lots.
+- scrape more often on first initialization.
+
+### v3
 - keyboard controls.
 - Table views
   - standard
   - image
     - click/select to expand, click again to open.
-- table filters
-  - "show all parts from multiple categories".
-- "buy" a list
-  - shop order cost.
 - scrape in background?
   - https://developer.chrome.com/docs/extensions/develop/migrate/to-service-workers#convert-timers
-- add global quantity minimum.
 - import BrickLink stores dynamically.
   - fetch + parse https://www.bricklink.com/browseStores.asp?countryID=AT&groupState=Y
-- combine similar lots.
 - alert if scraping not working.
-- scrape more often on first initialization.
-- verify/update cart prices
+- verify/update cart prices/quantities
+- "add to cart X quantity", "add to cart up to price X"
 
-### v3
+### v4
+- $$ payment options $$.
+
+### v5
 - UI improvements
 - show categories / props from different sources:
   - BrickLink category
