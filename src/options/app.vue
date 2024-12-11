@@ -18,7 +18,6 @@ onMounted(async () => {
 
 import { watch } from "vue";
 import { useRoute } from "vue-router";
-import { reportTime, startTimer } from './utils';
 
 const route = useRoute();
 

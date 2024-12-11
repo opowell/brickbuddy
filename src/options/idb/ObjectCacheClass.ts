@@ -1,5 +1,5 @@
 import { IDBPDatabase } from 'idb';
-import { ActiveSearch, CartWithItems, CategoriesPageCategory, Category, Color, ExternalCategory, ExternalCategoryPageExternalPart, ExternalItem, ExternalPartPageExternalPart, ExternalPartPageInvItem, ExternalPartPageItemVariant, HomeData, InvItem, Item, ItemVariant, PartPageCategory, Search, SearchFilter, Store, StorePageInvItemItem, UiColor } from '../types';
+import { ActiveSearch, CartItem, CartWithItems, CategoriesPageCategory, Category, Color, ExternalCategory, ExternalCategoryPageExternalPart, ExternalItem, ExternalPartPageExternalPart, ExternalPartPageInvItem, ExternalPartPageItemVariant, HomeData, InvItem, Item, ItemVariant, PartPageCategory, Search, SearchFilter, Store, StorePageInvItemItem, UiColor } from '../types';
 import STORES from './stores'
 import { getFirstActiveCart, getCartItems, getCartQuantity } from './carts';
 import { getExternalCategoriesByCategoryId, getCategoriesPageCategories, getCategory, getExternalCategory, getPartPageCategory } from './categories';
@@ -45,6 +45,7 @@ export default class ObjectCache {
   parts: Map<string, Item>
   storePageExternalParts: Map<string, StorePageInvItemItem>
   numInvItemsByPart: Map<string, number>
+  cartItemsByCart: Map<number, CartItem[]>
   numVariantsByPart: Map<string, number>
   variantsByPart: Map<string, ItemVariant[]>
   invItemsByPart: Map<string, InvItem[]>
@@ -54,6 +55,7 @@ export default class ObjectCache {
   partVariantsByPartColor: Map<string, ItemVariant[]>
   partVariantByPartColor: Map<string, ItemVariant>
   firstVariantByPart: Map<string, ItemVariant>
+  invItemsByExternalPartColor: Map<string, InvItem[]>
   invItems: Map<string, InvItem>
   db: IDBPDatabase
   constructor(db: IDBPDatabase) {
@@ -62,10 +64,12 @@ export default class ObjectCache {
     this.cheapestPrices = new Map<string, number>()
     this.partVariantByPartColor = new Map<string, ItemVariant>()
     this.firstVariantByPart = new Map<string, ItemVariant>()
+    this.cartItemsByCart = new Map<number, CartItem[]>()
     this.numInvItemsByPart = new Map<string, number>()
     this.numVariantsByPart = new Map<string, number>()
     this.variantsByPart = new Map<string, ItemVariant[]>()
     this.invItemsByPart = new Map<string, InvItem[]>()
+    this.invItemsByExternalPartColor = new Map<string, InvItem[]>()
     this.externalPartsByPart = new Map<number, ExternalItem[]>()
     this.externalParts = new Map<string, ExternalItem>()
     this.externalPartsByExternalCategory = new Map<string, ExternalItem[]>()
@@ -244,6 +248,19 @@ export default class ObjectCache {
   async getStorePagePart(partId: string): Promise<Item | undefined> {
     return this.getObject<Item | undefined>(this.parts, partId, async () => await getStorePagePart(partId, this))
   }
+  async getCartItems(cartId: number): Promise<CartItem[] | undefined> {
+    return this.getObject<CartItem[] | undefined>(this.cartItemsByCart, cartId, async () => getAllFromIndex(this.db, indices.CART_ITEMS_BY_CART, cartId))
+  }
+  async getInvItemsByExternalPartColor(type: 'Rebrickable' | 'Lego' | 'BrickLink', externalItemId: string, colorId: string): Promise<InvItem[] | undefined> {
+    return this.getObject<InvItem[] | undefined>(
+      this.invItemsByExternalPartColor,
+      type + '-' + externalItemId + '-' + colorId,
+      async () => await getAllFromIndex(
+        this.db,
+        indices.INV_ITEMS_BY_ITEM_AND_COLOR,
+        [externalItemId, colorId]
+      ))
+  }
   async getStorePageExternalPart(invItem: InvItem, type: "BrickLink" | "Lego"): Promise<StorePageInvItemItem | undefined> {
     return this.getObject<StorePageInvItemItem | undefined>(this.storePageExternalParts, invItem.itemId, async () => await getStorePageExternalPart(invItem, type, this))
   }
@@ -387,7 +404,7 @@ export default class ObjectCache {
     return externalItems
   }
   async getHomeData(): Promise<HomeData | undefined> {
-    const stores = (await this.db.getAllKeys(STORES.CATEGORIES.name)).length
+    const stores = (await this.db.getAllKeys(STORES.STORES.name)).length
     const categories = (await this.db.getAllKeys(STORES.CATEGORIES.name)).length
     const colors = (await this.db.getAllKeys(STORES.COLORS.name)).length
     const parts = (await this.db.getAllKeys(STORES.PARTS.name)).length

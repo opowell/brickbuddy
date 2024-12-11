@@ -35,7 +35,7 @@ const parts = computed(() => {
     <IncludeCategoryButton :category="category" @include="router.push(Crumbs.categories.href)"/>
     <ExcludeCategoryButton :category="category" @exclude="router.push(Crumbs.categories.href)"/>
     <h4>External categories</h4>
-    <div v-for="externalCategory in category.externalCategories">{{ externalCategory.type }}: <NameIdLabel is-span :id="externalCategory.id" :name="externalCategory.name" /></div>
+    <div v-for="externalCategory in category.externalCategories"><ExternalCategoryButton :category="externalCategory" /></div>
     <h4>Parts ({{ parts.length }})</h4>
     <table>
       <thead>

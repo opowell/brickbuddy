@@ -1,5 +1,5 @@
 import { IDBPDatabase } from "idb"
-import { BrickLinkCategory, BrickLinkItem, CachedExternalCategory, CachedExternalItem, CachedItem, CategoryPagePart, ExternalCategory, ExternalItem, ExternalPartPageExternalPart, InvItem, Item, ItemVariant, LegoItem, ObjectCache, PartPagePart, PartPageVariant, PartPageVariantInvItem, PartsPagePart, RebrickableItem, StorePageInvItemItem, StorePageItemVariant, StorePageVariant, UiItem, UiItemVariant, VariantPagePart } from "../types"
+import { BrickLinkCategory, BrickLinkItem, CachedExternalCategory, CachedExternalItem, CachedItem, CategoryPagePart, ExternalCategory, ExternalItem, ExternalPartPageExternalPart, InvItem, Item, ItemVariant, LegoItem, ObjectCache, PartPagePart, PartPageVariant, PartPageVariantInvItem, PartsPagePart, RebrickableItem, StorePageExternalPart, StorePageInvItemItem, StorePageItemVariant, StorePageVariant, UiItem, UiItemVariant, VariantPagePart } from "../types"
 import { countFromIndex, get, getAll, getAllFromIndex, getFromIndex, put } from "./db"
 import STORES from './stores'
 import { toDataURL } from "../utils"
@@ -269,8 +269,8 @@ export const getPartsPagePart = computed(() => {
 interface PartsPageExternalItem extends ExternalItem {
   category: ExternalCategory
 }
-async function getPartsPageExternalItems(objectCache: ObjectCacheClass, item: Item): Promise<PartsPageExternalItem[]> {
-  return getAllFromIndex(objectCache.db, INDICES.EXTERNAL_PARTS_BY_PART, item.itemId)
+async function getPartsPageExternalItems(objectCache: ObjectCacheClass, itemId: number): Promise<PartsPageExternalItem[]> {
+  return getAllFromIndex(objectCache.db, INDICES.EXTERNAL_PARTS_BY_PART, itemId)
 }
 
 export async function getStorePagePart(id: string, objectCache?: ObjectCacheClass): Promise<StorePageInvItemItem | undefined> {
@@ -316,37 +316,57 @@ export async function getStorePagePart(id: string, objectCache?: ObjectCacheClas
   }
 }
 
-export async function getStorePageExternalPart(invItem: InvItem, type: 'BrickLink' | 'Lego', objectCache?: ObjectCacheClass): Promise<StorePageInvItemItem | undefined> {
-  const db = await getDbConnection()
-  const externalPart: ExternalItem = await get(db, STORES.EXTERNAL_PARTS, [type, invItem.itemId])
+export async function getStorePageExternalPart(invItem: InvItem, type: 'BrickLink' | 'Lego'): Promise<StorePageInvItemItem | undefined> {
+  const externalPart = await liveObjectCache.getExternalPart(type, invItem.itemId)
   if (!externalPart) {
-    console.log('getStorePageExternalPart: error, no part', invItem.itemId, type, invItem)
     return
   }
-  if (!objectCache) {
-    objectCache = new ObjectCacheClass(db)
+  const variants = await liveObjectCache.getVariantsByExternalPart(externalPart.externalItemId, type)
+  if (!variants) {
+    return
   }
-  const variants: ItemVariant[] = await getAllFromIndex(db, INDICES.PART_VARIANTS_BY_TYPE_AND_PART, [type, externalPart.itemId])
+  const storePageItemVariants: StorePageItemVariant[] = []
   for (let i = 0; i < variants.length; i++) {
     const variant = variants[i]
-    variant.color = await objectCache.getColor(variant.colorId)
-    variant.invItems = await getAllFromIndex(
-      db,
-      INDICES.INV_ITEMS_BY_ITEM_AND_COLOR,
-      [variant.itemId, variant.colorId]
+
+    const color = await liveObjectCache.getColor(variant.colorId)
+    if (!color) {
+      continue
+    }
+    const invItems = await liveObjectCache.getInvItemsByExternalPartColor(
+      variant.type,
+      variant.itemId,
+      variant.colorId
     )
+    if (!invItems) {
+      continue
+    }
+    storePageItemVariants.push({
+      ...variant,
+      color,
+      invItems
+    })
   }
-  const externalParts = await getPartsPageExternalItems(objectCache, externalPart.itemId)
+  const externalParts = await liveObjectCache.getExternalPartsByPart(externalPart.itemId)
+  if (!externalParts) {
+    return
+  }
+  const storePageExternalParts: StorePageExternalPart[] = []
   for (let i = 0; i < externalParts.length; i++) {
     const e = externalParts[i]
-    if (e.categoryId) {
-      e.category = await getExternalCategory(objectCache, externalPart.categoryId, externalPart.type)
+    const category = await liveObjectCache.getExternalCategory(externalPart.externalCategoryId, externalPart.type)
+    if (!category) {
+      continue
     }
+    storePageExternalParts.push({
+      ...e,
+      category
+    })
   }
   return {
     ...externalPart,
-    variants,
-    externalParts
+    variants: storePageItemVariants,
+    externalParts: storePageExternalParts
   }
 }
 

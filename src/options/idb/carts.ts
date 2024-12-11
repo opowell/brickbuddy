@@ -77,11 +77,12 @@ export async function getCartsPageCarts(): Promise<CartsPageCart[]> {
   }))
 }
 
-export async function getCartItems(db: IDBPDatabase, cart: Cart): Promise<CartItem[]> {
-  return getAllFromIndex(db, INDICES.CART_ITEMS_BY_CART, cart.id)
+export async function getCartItems(cart: Cart): Promise<CartItem[] | undefined> {
+  return await liveObjectCache.getCartItems(cart.id)
 }
 
-export async function getCartPageCartItem(objectCache: ObjectCacheClass, cartItem: CartItem): Promise<CartPageCartItem | undefined> {
+export async function getCartPageCartItem(cartItem: CartItem): Promise<CartPageCartItem | undefined> {
+  const objectCache = liveObjectCache
   const invItem: InvItem | undefined = await objectCache.getInvItem(cartItem.storeId, cartItem.invItemId)
   if (!invItem) {
     return
@@ -90,7 +91,7 @@ export async function getCartPageCartItem(objectCache: ObjectCacheClass, cartIte
   if (!store) {
     return
   }
-  const externalPart = await getStorePageExternalPart(invItem, store.type, objectCache)
+  const externalPart = await getStorePageExternalPart(invItem, store.type)
   if (!externalPart) {
     return
   }

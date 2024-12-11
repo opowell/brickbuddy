@@ -85,6 +85,17 @@ export async function createInitialStores(db: IDBPDatabase) {
       cost: 4750,
     },
   ], 'BrickDom', 98, db)
+  await addStore("BT´s Brickshop", "1203949", [
+    {
+      region: 'AT',
+      cost: 5000,
+    },
+    {
+      region: 'AT',
+      cost: 0,
+      minOrderPrice: 10000
+    },
+  ], 'btsbrickshop', 98, db)
   await addStore("Steinemichl", "1801484", [
     {
       region: 'AT',

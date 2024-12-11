@@ -10,15 +10,17 @@ const cartItems = ref<CartItem[] | undefined>(undefined)
 const items = ref<CartPageCartItem[]>([])
 onMounted(async () => {
   const db = await getDbConnection()
-  const objectCache = new ObjectCache(db)
   cart.value = await getCartPageCart(db, route.params.id - 0)
   if (!cart.value) {
     return
   }
 
-  cartItems.value = await getCartItems(db, cart.value)
+  cartItems.value = await getCartItems(cart.value)
+  if (!cartItems.value) {
+    return
+  }
   for (let i = 0; i < cartItems.value.length; i++) {
-    const cartPageCartItem = await getCartPageCartItem(objectCache, cartItems.value[i])
+    const cartPageCartItem = await getCartPageCartItem(cartItems.value[i])
     if (!cartPageCartItem) {
       continue
     }

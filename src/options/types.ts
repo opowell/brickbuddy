@@ -138,8 +138,8 @@ export interface CachedExternalItem extends ExternalItem {
   image: string | undefined
 }
 export interface StorePageInvItemItem extends ExternalItem {
-  variants: ItemVariant[]
-  color: UiColor
+  variants: StorePageItemVariant[]
+  externalParts: StorePageExternalPart[]
 }
 export interface ItemVariant {
   itemId: string
@@ -255,7 +255,7 @@ export interface PartsPageVariantInvItem extends InvItem {
 }
 
 export interface StorePageExternalPart extends ExternalItem {
-  
+  category: ExternalCategory
 }
 
 export interface StorePageInvItem extends InvItem {
