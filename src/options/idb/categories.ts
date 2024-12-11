@@ -1,62 +1,19 @@
 import { IDBPDatabase } from "idb"
 import { BrickLinkCategory, CachedCategory, CachedExternalCategory, CategoriesPageCategory, Category, CategoryPageCategory, CategoryPagePart, ExternalCategory, ExternalCategoryPageExternalCategory, ExternalItem, Item, ItemVariant, LegoCategory, PartPageCategory, RebrickableCategory, SearchFilter, UiCategory } from "../types"
-import { get, getAllFromIndex, getAllKeys, getFromIndex, put } from "./db"
+import { get, getAllFromIndex, getFromIndex, put } from "./db"
 import STORES from './stores'
 import INDICES from './indices'
-import { activeSearch, getCategoriesPageCategory, getDbConnection, liveObjectCache } from "./idb"
+import { getCategoriesPageCategory, getDbConnection, liveObjectCache } from "./idb"
 import { getCategoryPageParts } from "./parts"
 import ObjectCache from "./ObjectCacheClass"
 export const categories = ref<Map<string, UiCategory>>(new Map<string, UiCategory>())
 
-export async function getCategoriesCount(db: IDBPDatabase): Promise<number | undefined> {
-  const all = await getAllKeys(db, STORES.CATEGORIES)
-  const search = activeSearch.value
-  if (!search) {
-    return
-  }
-  return all.filter(key => {
-    if (typeof key !== 'number') {
-      return true
-    }
-    if (search.categories.excluded.includes(key)) {
-      return false
-    }
-    if (search.categories.included.length > 0) {
-      if (!search.categories.included.includes(key)) {
-        return false
-      }
-    }
-    return true
-  }).length
-}
-
-export async function getCategories(ids: string[]): Promise<Category[]> {
-  const db = await getDbConnection()
+export async function getCategories(ids: number[]): Promise<(Category | undefined)[]> {
   return await Promise.all(ids.map(id => {
-     return get(db, STORES.CATEGORIES, id)
+     return liveObjectCache.getCategory(id)
   }))
 }
 
-export async function excludeCategory(category: Category) {
-  return await filterCategory(category, true)
-}
-export async function includeCategory(category: Category) {
-  return await filterCategory(category, false)
-}
-export async function filterCategory(category: Category, isExcluded: boolean) {
-  const search = activeSearch.value
-  if (!search) {
-    return
-  }
-  const db = await getDbConnection()
-  const filter: SearchFilter = {
-    searchId: search.id,
-    type: 'category',
-    objectId: category.id,
-    isExcluded
-  }
-  await db.put(STORES.SEARCH_FILTERS.name, filter)
-}
 export const excludedCategories = ref<Category[]>([])
 export async function getExcludedCategories(): Promise<Category[] | undefined> {
   return excludedCategories.value

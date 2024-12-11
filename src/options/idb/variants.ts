@@ -3,7 +3,7 @@ import { UiItemVariant, ItemVariant, InvItem, UiInvItem, UiItem, Color, VariantP
 import { getCartQuantity } from "./carts"
 import { getColor, colors } from "./colors"
 import { get, getAllFromIndex } from "./db"
-import { cacheLoaded, colorsMap, getDbConnection, liveObjectCache, objectCache } from "./idb"
+import { cacheLoaded, getDbConnection, liveObjectCache } from "./idb"
 import INDICES from "./indices"
 import { getPartPageVariantInvItems, getPartsPageVariantInvItems } from "./invItems"
 import ObjectCacheClass from "./ObjectCacheClass"
@@ -72,7 +72,7 @@ export async function getUiPartVariants(db: IDBPDatabase, id: string, objectCach
   }
   return variants
 }
-export async function getPartPageVariants(db: IDBPDatabase, id: number, objectCache?: ObjectCache): Promise<PartPageVariant[] | undefined> {
+export async function getPartPageVariants(id: number): Promise<PartPageVariant[] | undefined> {
   const partPageVariants: PartPageVariant[] = []
   const externalItems = await liveObjectCache.getExternalPartsByPart(id)
   if (!externalItems) {
@@ -80,13 +80,16 @@ export async function getPartPageVariants(db: IDBPDatabase, id: number, objectCa
   }
   for (let j = 0; j < externalItems.length; j++) {
     const externalItem = externalItems[j]    
-    const variants: ItemVariant[] = await getAllFromIndex(db, INDICES.PART_VARIANTS_BY_TYPE_AND_PART, [externalItem.type, externalItem.externalItemId])
+    const variants = await liveObjectCache.getVariantsByExternalPart(externalItem.externalItemId, externalItem.type)
+    if (!variants) {
+      continue
+    }
     for (let i = 0; i < variants.length; i++) {
       const variant = variants[i]
       const partPageVariant = {
         ...variant,
-        color: await getColor(db, variant.colorId),
-        invItems: await getPartPageVariantInvItems(db, variant)
+        color: await liveObjectCache.getColor(variant.colorId),
+        invItems: await getPartPageVariantInvItems(variant)
       }
       partPageVariants.push(partPageVariant)
     }

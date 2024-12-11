@@ -49,6 +49,7 @@ export default class ObjectCache {
   numVariantsByPart: Map<string, number>
   variantsByPart: Map<string, ItemVariant[]>
   invItemsByPart: Map<string, InvItem[]>
+  invItemsByStore: Map<string, InvItem[]>
   stores: Map<string, Store>
   activeCart: CartWithItems | undefined
   activeSearch: ActiveSearch | undefined
@@ -82,6 +83,7 @@ export default class ObjectCache {
     this.parts = new Map<string, Item>()
     this.storePageExternalParts = new Map<string, StorePageInvItemItem>()
     this.invItems = new Map<string, InvItem>()
+    this.invItemsByStore = new Map<string, InvItem[]>()
     this.stores = new Map<string, Store>()
     this.activeCart = undefined
   }
@@ -172,7 +174,7 @@ export default class ObjectCache {
     }
     return object
   }
-  async getActiveCart(): Promise<CartWithItems> {
+  async getActiveCart(): Promise<CartWithItems | undefined> {
     if (!this.activeCart) {
       let cart = await getFirstActiveCart(this.db)
       if (!cart) {
@@ -182,12 +184,20 @@ export default class ObjectCache {
         }
         cart = {
           ...newCart,
+          // @ts-ignore guaranteed to be number
           id: await this.db.put(STORES.CARTS.name, newCart)
         }
       }
+      if (!cart) {
+        return
+      }
+      const cartItems = await getCartItems(cart)
+      if (!cartItems) {
+        return
+      }
       this.activeCart = {
         ...cart,
-        cartItems: await getCartItems(this.db, cart)
+        cartItems
       }
     }
     return this.activeCart
@@ -231,10 +241,10 @@ export default class ObjectCache {
     return this.getObject(this.invItems, storeId + '//' + invItemId, async () => await getInvItemFromId(this.db, storeId, invItemId))
   }
   async getStore(storeId: string) {
-    return this.getObject(this.stores, storeId, async () => await getStore(this.db, storeId))
+    return this.getObject(this.stores, storeId, async () => await get(this.db, STORES.STORES, storeId))
   }
   async getColor(colorId: string): Promise<Color | undefined> {
-    return this.getObject(this.colors, colorId, async () => await getColor(this.db, colorId))
+    return this.getObject(this.colors, colorId, async () => await get(this.db, STORES.COLORS, colorId))
   }
   async getCategory(categoryId: number): Promise<Category | undefined> {
     return this.getObject<Category | undefined>(this.categories, categoryId, async () => await getCategory(this.db, categoryId))
@@ -266,6 +276,10 @@ export default class ObjectCache {
   }
   async getExternalPart(type: "BrickLink" | "Lego", externalItemId: string): Promise<ExternalItem | undefined> {
     return this.getObject<ExternalItem | undefined>(this.externalParts, type + externalItemId, async () => await get(this.db, STORES.EXTERNAL_PARTS, [type, externalItemId]))
+  }
+  async getInvItemsByStore(storeId: string): Promise<InvItem[] | undefined> {
+    console.log('get', storeId)
+    return this.getObject<InvItem[] | undefined>(this.invItemsByStore, storeId, async () => await getAllFromIndex(this.db, indices.INV_ITEMS_BY_STORE, storeId))
   }
   async getCategoriesPageCategories(): Promise<CategoriesPageCategory[]> {
     return this.getAllObjects<CategoriesPageCategory>(this.categoriesPageCategories, async () => await getCategoriesPageCategories())

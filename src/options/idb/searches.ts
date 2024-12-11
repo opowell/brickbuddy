@@ -1,12 +1,11 @@
 import { IDBPDatabase } from "idb"
-import { Search, UiStore, CartWithItems, ActiveSearch, ActiveSearchButtonActiveSearch, SearchesPageSearch, Item, SearchPageSearch, SearchFilter, ExternalItem, CachedSearch } from "../types"
-import { getCategories, getCategory } from "./categories"
+import { Search, CartWithItems, ActiveSearch, ActiveSearchButtonActiveSearch, SearchesPageSearch, Item, SearchPageSearch, SearchFilter, ExternalItem, CachedSearch } from "../types"
+import { getCategories } from "./categories"
 import { getCondition } from "./condition"
 import { get, getAll, getAllFromIndex, getFromIndex } from "./db"
-import { activeSearch, categoriesMap, getCategoriesPageCategory, getDbConnection, liveObjectCache, objectCache } from "./idb"
+import { getCategoriesPageCategory, getDbConnection, liveObjectCache } from "./idb"
 import STORES from "./stores"
 import INDICES from './indices'
-import ObjectCacheClass from "./ObjectCacheClass"
 
 export async function addNewSearch() {
   const db = await getDbConnection()
@@ -34,9 +33,9 @@ export async function getActiveSearchButtonActiveSearch(): Promise<ActiveSearchB
     ...search,
     categories: {
       excluded: search.categories.excluded,
-      excludedNames: (await getCategories(search.categories.excluded)).map(category => category.name),
+      excludedNames: (await getCategories(search.categories.excluded)).map(category => category?.id + ''),
       included: search.categories.included,
-      includedNames: (await getCategories(search.categories.included)).map(category => category.name)
+      includedNames: (await getCategories(search.categories.included)).map(category => category?.id + '')
     },
     colors: {
       excluded: search.colors.excluded,
@@ -112,7 +111,7 @@ export async function getActiveSearch() {
 }
 
 export async function setPriceScoreQuantity(quantity: number) {
-  const search = getActiveSearch()
+  const search = await getActiveSearch()
   if (!search) {
     return
   }
@@ -184,7 +183,7 @@ export async function getSearchPageSearch(id: number): Promise<SearchPageSearch 
   const db = await getDbConnection()
   for (let i = 0; i < search.categories.included.length; i++) {
     const id = search.categories.included[i]
-    const category = categoriesMap.value.get(id)
+    const category = await liveObjectCache.getCategory(id)
     if (!category) {
       continue
     }
@@ -196,7 +195,7 @@ export async function getSearchPageSearch(id: number): Promise<SearchPageSearch 
   }
   for (let i = 0; i < search.categories.excluded.length; i++) {
     const id = search.categories.excluded[i]
-    const category = categoriesMap.value.get(id)
+    const category = await liveObjectCache.getCategory(id)
     if (!category) {
       continue
     }

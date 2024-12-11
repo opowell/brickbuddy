@@ -281,8 +281,8 @@ export async function createInitialStores(db: IDBPDatabase) {
   await addStore("A brick per day...", "709693", [], 'stefxan', 100, db)
 }
 
-export async function getStore(db: IDBPDatabase, storeId: string): Promise<Store> {
-  return await get(db, STORES.STORES, storeId)
+export async function getStore(storeId: string): Promise<Store | undefined> {
+  return await liveObjectCache.getStore(storeId)
 }
 
 export async function getAllStores(db: IDBPDatabase): Promise<CachedStore[]> {
@@ -315,13 +315,14 @@ export async function getStoresPageStores(): Promise<StoresPageStore[] | undefin
 }
 
 export async function getStorePageStore(id: string, type: 'BrickLink' | 'Lego' | 'Rebrickable'): Promise<StorePageStore | undefined> {
-  const store: Store = await get(liveObjectCache.db, STORES.STORES, id)
+  console.log(id, type)
+  const store = await liveObjectCache.getStore(id)
   if (!store) {
     return
   }
-  const invItems: InvItem[] = await getStorePageInvItems(liveObjectCache.db, id)
+  const invItems = await getStorePageInvItems(id)
   return {
     ...store,
-    items: invItems,
+    items: invItems || [],
   }
 }

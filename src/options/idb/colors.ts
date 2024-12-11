@@ -3,7 +3,7 @@ import { get, getAll, getAllFromIndex, getFromIndex, put } from "./db"
 import { Color, ColorPageColor, ColorPageInvItem, ColorsPageColor, InvItem, ItemVariant, Store, StoreType, UiColor } from "../types"
 import STORES from './stores'
 import INDICES from './indices'
-import { getDbConnection } from "./idb"
+import { getDbConnection, liveObjectCache } from "./idb"
 import { countInvItemsWithColor, getInvItemsWithColor } from "./invItems"
 import { getPart } from "./parts"
 import { getItemVariant } from "./variants"
@@ -91,6 +91,6 @@ export async function addColor(
   await put(db, STORES.COLORS, color)
 }
 
-export async function getColor(db: IDBPDatabase, colorId: string): Promise<Color> {
-  return await get(db, STORES.COLORS, colorId)
+export async function getColor(colorId: string): Promise<Color | undefined> {
+  return await liveObjectCache.getColor(colorId)
 }

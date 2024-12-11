@@ -12,7 +12,6 @@ const route = useRoute()
 import { useRouter } from 'vue-router'
 import ActiveSearchButton from '../components/ActiveSearchButton.vue';
 import PartButton from '../components/PartButton.vue';
-import NameIdLabel from '../components/NameIdLabel.vue';
 const router = useRouter()
 const category = ref<CategoryPageCategory | undefined>()
 onMounted(async () => {

@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { includeCategory } from '../idb/categories';
 import { Category } from '../types';
 import { PropType } from 'vue'
 const { category } = defineProps({
@@ -10,7 +9,7 @@ function include() {
   if (!category) {
     return
   }
-  includeCategory(category)
+  // includeCategory(category)
   emits('include')
 }
 </script>

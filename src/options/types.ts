@@ -260,11 +260,16 @@ export interface StorePageExternalPart extends ExternalItem {
 
 export interface StorePageInvItem extends InvItem {
   item: StorePageInvItemItem
-  colorName: string
+  color: Color
+  externalCategory: ExternalCategory
   category: CategoryWithExternals
-  variant: ItemVariant
+  variant: StorePageInvItemVariant
   cartQuantity: number
   priceScore: string
+}
+
+export interface StorePageInvItemVariant extends ItemVariant {
+  color: Color
 }
 
 export interface ColorPageInvItem extends InvItem {

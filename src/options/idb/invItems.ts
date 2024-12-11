@@ -12,7 +12,7 @@ import STORES from './stores'
 import INDICES from './indices'
 import { getCartQuantity } from "./carts"
 import { getScore } from "../utils"
-import { colorsMap, liveObjectCache, objectCache } from "./idb"
+import { liveObjectCache } from "./idb"
 
 export async function addInvItem(
   db: IDBPDatabase,
@@ -124,7 +124,7 @@ export async function getVariantsByPart(db: IDBPDatabase, part: ExternalItem): P
   return await getAllFromIndex(db, INDICES.PART_VARIANTS_BY_PART, part.externalItemId)
 }
 
-export async function getPartPageInvItems(db: IDBPDatabase, itemId: number): Promise<PartPageVariantInvItem[] | undefined> {
+export async function getPartPageInvItems(itemId: number): Promise<PartPageVariantInvItem[] | undefined> {
   const externalItems = await liveObjectCache.getExternalPartsByPart(itemId)
   if (!externalItems) {
     return
@@ -132,17 +132,24 @@ export async function getPartPageInvItems(db: IDBPDatabase, itemId: number): Pro
   const partPageInvItems = []
   for (let j = 0; j < externalItems.length; j++) {
     const externalItem = externalItems[j]
-    const invItems = await getAllFromIndex(
-      db,
-      INDICES.INV_ITEMS_BY_TYPE_AND_ITEM,
-      [externalItem.type, externalItem.externalItemId]
-    )
+    const invItems = await liveObjectCache.getInvItemsByExternalPart(externalItem.externalItemId, externalItem.type)
+    if (!invItems) {
+      continue
+    }
     for (let i = 0; i < invItems.length; i++) {
       const invItem: InvItem = invItems[i]
+      const color = await getColor(invItem.colorId)
+      if (!color) {
+        continue
+      }
+      const store = await getStore(invItem.storeId)
+      if (!store) {
+        continue
+      }
       const partPageVariantInvItem: PartPageVariantInvItem = {
         ...invItem,
-        color: await getColor(db, invItem.colorId),
-        store: await getStore(db, invItem.storeId),
+        color,
+        store,
         cartQuantity: -1
       }
       partPageInvItems.push(partPageVariantInvItem)
@@ -153,7 +160,7 @@ export async function getPartPageInvItems(db: IDBPDatabase, itemId: number): Pro
 
 export async function getStorePageInvItem(invItem: InvItem, type: "Lego" | "BrickLink"): Promise<StorePageInvItem | undefined> {
   const objectCache = liveObjectCache
-  const search = getActiveSearch()
+  const search = await getActiveSearch()
   if (!search) {
     return
   }
@@ -184,10 +191,14 @@ export async function getStorePageInvItem(invItem: InvItem, type: "Lego" | "Bric
   return {
     ...invItem,
     item: part,
-    colorName: color?.name,
-    variant,
+    color,
+    variant: {
+      ...variant,
+      color
+    },
     priceScore: priceScoreString,
     cartQuantity,
+    externalCategory,
     category: {
       id: category.id,
       externalCategories: [
@@ -197,16 +208,15 @@ export async function getStorePageInvItem(invItem: InvItem, type: "Lego" | "Bric
   }
 }
 
-export async function getStorePageInvItems(db: IDBPDatabase, id: string): Promise<InvItem[]> {
-  const search = getActiveSearch()
-  const invItems: InvItem[] = await getAllFromIndex(db, INDICES.INV_ITEMS_BY_STORE, id)
-  return invItems
+export async function getStorePageInvItems(id: string): Promise<InvItem[] | undefined> {
+  console.log(id)
+  return await liveObjectCache.getInvItemsByStore(id)
 }
 
 export const getPartsPageVariantInvItems = computed<Map<string, PartsPageVariantInvItem[]>>(() => {
   const map = new Map<string, PartsPageVariantInvItem[]>()
   const search = getActiveSearch()
-  objectCache.value.variants.forEach(v => {
+  objectCache.value.variants.forEach(async (v) => {
     let value: PartsPageVariantInvItem[] | undefined = map.get(v.itemId + v.colorId)
     if (!value) {
       value = []
@@ -226,7 +236,7 @@ export const getPartsPageVariantInvItems = computed<Map<string, PartsPageVariant
       if (conditions.included.length > 0 && !conditions.included.includes(storeItem.condition)) {
         continue
       }
-      const color = colorsMap.value.get(v.colorId)
+      const color = await liveObjectCache.getColor(v.colorId)
       if (!color) {
         continue
       }
@@ -250,22 +260,29 @@ const invItemsByItemColor = computed(() => {
   return map
 })
 
-export async function getPartPageVariantInvItems(db: IDBPDatabase, variant: ItemVariant): Promise<PartPageVariantInvItem[]> {
+export async function getPartPageVariantInvItems(variant: ItemVariant): Promise<PartPageVariantInvItem[]> {
   const activeCart = await getActiveCart()
-  const invItems = await getAllFromIndex(
-    db,
-    INDICES.INV_ITEMS_BY_ITEM_AND_COLOR,
-    [variant.itemId, variant.colorId]
-  )
+  const invItems = await liveObjectCache.getInvItemsByExternalPartColor(variant.type, variant.itemId, variant.colorId)
+  if (!invItems) {
+    return []
+  }
   const partPageVariantInvItems = []
   for (let i = 0; i < invItems.length; i++) {
     const invItem: InvItem = invItems[i]
     const cartQuantity = getCartQuantity(activeCart, invItem)
+    const color = await liveObjectCache.getColor(invItem.colorId)
+    if (!color) {
+      continue
+    }
+    const store = await liveObjectCache.getStore(invItem.storeId)
+    if (!store) {
+      continue
+    }
     const partPageVariantInvItem: PartPageVariantInvItem = {
       ...invItem,
       cartQuantity,
-      color: await getColor(db, invItem.colorId),
-      store: await getStore(db, invItem.storeId)
+      color,
+      store
     }
     partPageVariantInvItems.push(partPageVariantInvItem)
   }

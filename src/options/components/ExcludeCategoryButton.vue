@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { excludeCategory } from '../idb/categories';
 import { Category } from '../types';
 import { PropType } from 'vue'
 const { category } = defineProps({
@@ -10,7 +9,7 @@ function exclude() {
   if (!category) {
     return
   }
-  excludeCategory(category)
+  // excludeCategory(category)
   emits('exclude')
 }
 </script>

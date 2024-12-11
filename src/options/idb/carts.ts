@@ -25,7 +25,7 @@ export async function getActiveCartButtonCart(): Promise<ActiveCartButtonCart> {
   let totalCost = 0
   let totalQuantity = 0
   cart.cartItems.forEach((i) => {
-    totalCost += i.price * i.quantity
+    totalCost += Number.parseFloat(i.price) * i.quantity
     totalQuantity += i.quantity
   })
   totalCost = totalCost / 100
@@ -62,17 +62,20 @@ export async function getCartPageCart(db: IDBPDatabase, cartId: number): Promise
 export async function getAllCarts(db: IDBPDatabase): Promise<CachedCart[]> {
   return await getAll(db, STORES.CARTS)
 }
-export async function getCartsPageCarts(): Promise<CartsPageCart[]> {
+export async function getCartsPageCarts(): Promise<(CartsPageCart | undefined)[]> {
   const db = await getDbConnection()
   const carts = await getAllCarts(db)
-  return await Promise.all<CartsPageCart>(carts.map(async cart => {
-    const cartItems = await getCartItems(db, cart)
+  return await Promise.all<CartsPageCart | undefined>(carts.map(async cart => {
+    const cartItems = await getCartItems(cart)
+    if (!cartItems) {
+      return
+    }
     return {
       ...cart,
       numStores: cartItems.map(cartItem => cartItem.storeId).filter(onlyUnique).length,
       numInvItems: cartItems.length,
       quantity: sum(cartItems, (cartItem: CartItem) => cartItem.quantity),
-      cost: sum(cartItems, (cartItem: CartItem) => cartItem.quantity * cartItem.price),
+      cost: sum(cartItems, (cartItem: CartItem) => cartItem.quantity * Number.parseFloat(cartItem.price)),
     }
   }))
 }

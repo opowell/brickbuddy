@@ -1,23 +1,20 @@
 <script setup lang="ts">
 import HomeButton from '../components/HomeButton.vue';
 import StoresButton from '../components/StoresButton.vue';
-import { ActiveSearch, Category, Item, StorePageInvItem, StorePageStore, StoreType, type UiInvItem } from '../types';
+import { ActiveSearch, StorePageInvItem, StorePageStore, StoreType } from '../types';
 import { useRoute } from 'vue-router'
 import { getStorePrices } from '../idb/scraping';
 import { getStorePageStore } from '../idb/storeMethods';
-import { getActiveSearch } from '../idb/searches';
-import { getDbConnection, liveObjectCache, objectCache, storesMap } from '../idb/idb';
+import { liveObjectCache } from '../idb/idb';
 import { getStorePageInvItem } from '../idb/invItems';
 import { setCartQuantity } from '../idb/carts';
 import ExternalPartButton from '../components/ExternalPartButton.vue';
 import ColorButton from '../components/ColorButton.vue';
 import ActiveSearchButton from '../components/ActiveSearchButton.vue';
 import ActiveCartButton from '../components/ActiveCartButton.vue';
-import { IDBPDatabase } from 'idb';
 import { formatAmount, formatInteger } from '../utils';
 import ExternalCategoryButton from '../components/ExternalCategoryButton.vue';
 import ConditionButton from '../components/ConditionButton.vue';
-import ObjectCache from '../idb/ObjectCacheClass';
 import PartVariantButton from '../components/PartVariantButton.vue';
 import QuantityInput from '../components/QuantityInput.vue';
 const route = useRoute()
@@ -112,9 +109,9 @@ const cartButton = ref<typeof ActiveCartButton | undefined>(undefined)
           </td>
           <td v-if="search && search.conditions.excluded.length < 1"><ConditionButton :condition="invItem.condition" /></td>
           <td><ColorButton :color="invItem.color" /></td>
-          <td><ExternalCategoryButton v-if="invItem.item?.externalCategory" :category="invItem.item.externalCategory" /></td>
+          <td><ExternalCategoryButton :category="invItem.externalCategory" /></td>
           <td>{{ formatInteger(invItem.quantity) }}</td>
-          <td>{{ formatAmount(invItem.price*store.priceAdjustment/100) }}</td>
+          <td>{{ formatAmount(Number.parseFloat(invItem.price)*store.priceAdjustment/100) }}</td>
           <td>{{ invItem.priceScore }}</td>
           <td>
             <QuantityInput

@@ -49,7 +49,7 @@ const sortedItems = computed<StoreItemsTableInvItem[]>(() => {
   })
 })
 
-const viewedItems = computed<StoreItemsTableInvItem[]>(() => {
+const viewedItems = computed<StoreItemsTableInvItem[] | undefined>(() => {
   if (!search.value) {
     return
   }

@@ -1,12 +1,12 @@
 import { IDBPDatabase } from "idb"
-import { BrickLinkCategory, BrickLinkItem, CachedExternalCategory, CachedExternalItem, CachedItem, CategoryPagePart, ExternalCategory, ExternalItem, ExternalPartPageExternalPart, InvItem, Item, ItemVariant, LegoItem, ObjectCache, PartPagePart, PartPageVariant, PartPageVariantInvItem, PartsPagePart, RebrickableItem, StorePageExternalPart, StorePageInvItemItem, StorePageItemVariant, StorePageVariant, UiItem, UiItemVariant, VariantPagePart } from "../types"
+import { BrickLinkItem, CachedExternalCategory, CachedExternalItem, CachedItem, CategoryPagePart, ExternalCategory, ExternalItem, ExternalPartPageExternalPart, InvItem, Item, ItemVariant, LegoItem, ObjectCache, PartPagePart, PartPageVariant, PartPageVariantInvItem, PartsPagePart, RebrickableItem, StorePageExternalPart, StorePageInvItemItem, StorePageItemVariant, StorePageVariant, UiItem, UiItemVariant, VariantPagePart } from "../types"
 import { countFromIndex, get, getAll, getAllFromIndex, getFromIndex, put } from "./db"
 import STORES from './stores'
 import { toDataURL } from "../utils"
 import { getExternalPartsByPart, getItemVariant, getPartPageVariants, getPartsPageVariants, getUiPartVariants } from "./variants"
-import { filteredParts, getDbConnection, getObjectCache, liveObjectCache, objectCache, rbPartsBrickLinkId, rbPartsLegoId } from "./idb"
+import { getDbConnection, liveObjectCache, rbPartsBrickLinkId, rbPartsLegoId } from "./idb"
 import INDICES from "./indices"
-import { getNumInvItemsByPart, getPartPageInvItems, getVariantsByPart } from "./invItems"
+import { getPartPageInvItems } from "./invItems"
 import ObjectCacheClass from "./ObjectCacheClass"
 import { getActiveSearch, searchAllowsPart } from "./searches"
 
@@ -166,25 +166,20 @@ export const externalPartPageExternalPartMap = computed<Map<string, ExternalPart
 })
 
 export async function getPartPagePart(id: number): Promise<PartPagePart | undefined> {
-  const db = await getDbConnection()
-  const part: Item = await getPart(db, id)
-  if (!part) {
-    return
-  }
   const externalParts = await liveObjectCache.getExternalPartsByPart(id)
   if (!externalParts) {
     return
   }
-  const variants = await getPartPageVariants(db, part.itemId)
+  const variants = await getPartPageVariants(id)
   if (!variants) {
     return
   }
-  const invItems = await getPartPageInvItems(db, part.itemId)
+  const invItems = await getPartPageInvItems(id)
   if (!invItems) {
     return
   }
   return {
-    ...part,
+    itemId: id,
     variants,
     invItems,
     externalParts

@@ -2,6 +2,9 @@
 
 ## TODO
 ### v2
+- typescript.
+- table paging.
+- linting.
 - table filters
   - "show all parts from multiple categories".
 - "buy" a list

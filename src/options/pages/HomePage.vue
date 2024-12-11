@@ -2,8 +2,7 @@
 import { Crumbs } from '../idb/constants';
 import ActiveSearchButton from '../components/ActiveSearchButton.vue';
 import ActiveCartButton from '../components/ActiveCartButton.vue';
-import { activeCategories, activeCategories2, externalCategoriesPartsFilteredMap, liveObjectCache } from '../idb/idb';
-// import { objectCache } from '../idb/idb';
+import { liveObjectCache } from '../idb/idb';
 import CardComponent from '../components/CardComponent.vue';
 import { HomeData } from '../types';
 

@@ -1,18 +1,15 @@
 <script setup lang="ts">
-import { cacheLoaded, createActiveSearchIfNecessary, getDbConnection, importRbPartsToMemory, loadLiveObjectCache, loadObjectCache, setScores } from './idb/idb';
+import { cacheLoaded, createActiveSearchIfNecessary, getDbConnection, importRbPartsToMemory, loadLiveObjectCache } from './idb/idb';
 import { startFetching } from './idb/scraping';
-import { objectCache } from './idb/idb';
 
 onMounted(async () => {
   await importRbPartsToMemory()
   const db = await getDbConnection()
-  // await loadObjectCache(db)
   await loadLiveObjectCache(db)
   await createActiveSearchIfNecessary(db)
   startFetching()
   return {
     cacheLoaded,
-    objectCache
   }
 })
 
