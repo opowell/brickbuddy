@@ -36,7 +36,7 @@ import ActiveCartButton from '../components/ActiveCartButton.vue';
     <HomeButton />
     <ActiveCartButton />
     <ActiveSearchButton />
-    <h4>Stores</h4>
+    <h4 v-if="stores">Stores ({{ stores.length }})</h4>
     <h4>Scraping: {{ scrapingOn ? 'On' : 'Off' }}</h4>
     <div><button>Import from BrickLink</button></div>
     <div>

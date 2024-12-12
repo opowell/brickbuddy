@@ -7,6 +7,7 @@ onMounted(async () => {
   const db = await getDbConnection()
   await loadLiveObjectCache(db)
   await createActiveSearchIfNecessary(db)
+  // await addStore("brickflip.at", "541603", [], 'BrickFlip', 100, db)
   startFetching()
   return {
     cacheLoaded,
@@ -15,6 +16,7 @@ onMounted(async () => {
 
 import { watch } from "vue";
 import { useRoute } from "vue-router";
+import { addStore } from './idb/storeMethods';
 
 const route = useRoute();
 
