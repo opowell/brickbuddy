@@ -20,7 +20,7 @@ export async function addNewSearch() {
   return newSearch
 }
 
-export async function getActiveCart(): Promise<CartWithItems> {
+export async function getActiveCart(): Promise<CartWithItems | undefined> {
   return await liveObjectCache.getActiveCart()
 }
 export async function getActiveSearchButtonActiveSearch(): Promise<ActiveSearchButtonActiveSearch | undefined> {
@@ -66,7 +66,10 @@ export async function getActiveSearchButtonActiveSearch(): Promise<ActiveSearchB
 }
 
 export async function getFirstActiveSearch(db: IDBPDatabase): Promise<ActiveSearch | undefined> {
-  const search: ActiveSearch = await getFromIndex(db, INDICES.SEARCHES_BY_ACTIVE, 1)
+  const search = await getFromIndex(db, INDICES.SEARCHES_BY_ACTIVE, 1)
+  if (!search) {
+    return
+  }
   const filters: SearchFilter[] = await getAllFromIndex(db, INDICES.SEARCH_FILTERS_BY_SEARCH, search.id)
   const filterTypes = ['categories', 'colors', 'conditions', 'stores', 'parts']
   filterTypes.forEach(ft => {
@@ -187,7 +190,7 @@ export async function getSearchPageSearch(id: number): Promise<SearchPageSearch 
     if (!category) {
       continue
     }
-    const cpc = getCategoriesPageCategory(category)
+    const cpc = await getCategoriesPageCategory(category)
     if (!cpc) {
       continue
     }
@@ -199,7 +202,7 @@ export async function getSearchPageSearch(id: number): Promise<SearchPageSearch 
     if (!category) {
       continue
     }
-    const cpc = getCategoriesPageCategory(category)
+    const cpc = await getCategoriesPageCategory(category)
     if (!cpc) {
       continue
     }    

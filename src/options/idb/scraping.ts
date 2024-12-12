@@ -19,10 +19,10 @@ async function getPrices() {
   if (blStore) {
     getBrickLinkPrices(db, blStore)
   }
-  // const legoStore: Store = await getLegoFetchStore(db)
-  // if (legoStore) {
-  //   getLegoPrices(db, legoStore)
-  // }
+  const legoStore: Store = await getLegoFetchStore(db)
+  if (legoStore) {
+    getLegoPrices(db, legoStore)
+  }
 }
 
 export async function startFetching() {
@@ -39,7 +39,7 @@ export async function startFetching() {
       return
     }
     getPrices()
-  }, 20000 + Math.floor(Math.random() * 20000))
+  }, 15000 + Math.floor(Math.random() * 5000))
 }
 
 async function getBrickLinkFetchStore(db: IDBPDatabase): Promise<Store> {
@@ -70,7 +70,7 @@ async function getLegoFetchStore(db: IDBPDatabase): Promise<Store> {
   return stores[0]
 }
 
-const partDetails = []
+const partDetails: any[] = []
 let partDetailsScrapePage = 1
 let partScrapingInterval: undefined | NodeJS.Timeout
 let stopPartScraping = false
@@ -109,9 +109,9 @@ async function scrapePartDetails() {
     "mode": "cors",
     "credentials": "omit"
   });
-    partDetailsScrapePage++
-    const json = await response.json()
-    partDetailsMaxPage = Math.ceil(json.count / 1000) + 1
+  partDetailsScrapePage++
+  const json = await response.json()
+  partDetailsMaxPage = Math.ceil(json.count / 1000) + 1
   partDetails.push(...json.results)
   console.log(partDetails)
 }
