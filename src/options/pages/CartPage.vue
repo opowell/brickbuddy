@@ -2,7 +2,7 @@
 import HomeButton from '../components/HomeButton.vue';
 import { formatAmount, formatInteger } from '../utils';
 
-import { CartItem, CartPageCart, CartPageCartItem, Store } from '../types';
+import { CartItem, CartPageCart, CartPageCartItem, Store, StoreType } from '../types';
 import { useRoute } from 'vue-router'
 const route = useRoute()
 const cart = ref<CartPageCart | undefined>(undefined)
@@ -27,11 +27,11 @@ onMounted(async () => {
     items.value.push(cartPageCartItem)
   }
 })
-const filteredItems = computed(() => {
+const filteredItems = computed<CartPageCartItem[]>(() => {
   if (!selectedStoreId.value) {
     return items.value
   }
-  return items.value.filter(i => i.storeId === selectedStoreId.value)
+  return items.value.filter((i: CartPageCartItem) => i.storeId === selectedStoreId.value)
 })
 import ExternalCategoryButton from '../components/ExternalCategoryButton.vue';
 import ConditionButton from '../components/ConditionButton.vue';
@@ -45,8 +45,10 @@ import { getDbConnection } from '../idb/idb';
 interface CartPageStore {
   store: Store
   pieces: number
-  items: number
-  cost: number  
+  items: CartPageCartItem[]
+  cost: number
+  addingToBrickLink?: boolean
+  resultAdding?: RESULT
 }
 
 async function updateCartQuantity(item: CartPageCartItem, newQuantity: number, index: number) {
@@ -64,6 +66,7 @@ async function updateCartQuantity(item: CartPageCartItem, newQuantity: number, i
   }
 }
 const selectedStoreId = ref<string | undefined>()
+const addingToBrickLinkMap = ref(new Map<string, boolean>())
 const stores = computed(() => {
   const map = new Map<string, CartPageCartItem[]>()
   items.value.forEach(item => {
@@ -75,12 +78,11 @@ const stores = computed(() => {
     map.set(item.storeId, value)
   })
   const stores: CartPageStore[] = []
-  map.forEach((value) => {
+  map.forEach((items) => {
     let pieces = 0
-    let items = value.length
     let cost = 0
-    const store = value[0].store
-    value.forEach(cartItem => {
+    const store = items[0].store
+    items.forEach(cartItem => {
       pieces += cartItem.quantity
       cost += cartItem.quantity * Number.parseFloat(cartItem.price)
     })
@@ -89,12 +91,61 @@ const stores = computed(() => {
       store,
       pieces,
       items,
-      cost
+      cost,
+      addingToBrickLink: addingToBrickLinkMap.value.get(store.id),
+      resultAdding: resultAddingCartMap.value.get(store.id)
     })
   })
   return stores
 })
+enum RESULT {
+  SUCCESS = 'success',
+  FAILURE = 'failure'
+}
 
+const resultAddingCartMap = ref(new Map<string, RESULT>())
+async function addToBrickLinkCart(store: CartPageStore) {
+  resultAddingCartMap.value.delete(store.store.id)
+  addingToBrickLinkMap.value.set(store.store.id, true)
+  const itemArray = encodeURIComponent(JSON.stringify(store.items.map(
+    i => {
+      return {
+        invID: i.invItemId,
+        invQty: i.quantity,
+        sellerID: store.store.id,
+        sourceType: 1
+      }
+    }
+  )))
+  const response = await fetch("https://store.bricklink.com/ajax/clone/cart/add.ajax", {
+    "headers": {
+      "accept": "application/json, text/javascript, */*; q=0.01",
+      "accept-language": "en,de;q=0.9,es;q=0.8,en-US;q=0.7",
+      "cache-control": "no-cache",
+      "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+      "pragma": "no-cache",
+      "priority": "u=1, i",
+      "sec-ch-ua": "\"Google Chrome\";v=\"131\", \"Chromium\";v=\"131\", \"Not_A Brand\";v=\"24\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"macOS\"",
+      "sec-fetch-dest": "empty",
+      "sec-fetch-mode": "cors",
+      "sec-fetch-site": "same-origin",
+      "x-requested-with": "XMLHttpRequest"
+    },
+    "referrer": "https://store.bricklink.com/" + store.store.slug + "?p=" + store.store.slug,
+    "referrerPolicy": "no-referrer-when-downgrade",
+    "body": "itemArray=" + itemArray + "&sid=" + store.store.id + "&srcLocation=1100",
+    "method": "POST",
+    "mode": "cors",
+    "credentials": "include"
+  })
+  const responseJson = await response.json()
+  if (responseJson.errors === 0) {
+    resultAddingCartMap.value.set(store.store.id, RESULT.SUCCESS)
+  }
+  addingToBrickLinkMap.value.set(store.store.id, false)
+}
 </script>
 
 <template>
@@ -109,6 +160,7 @@ const stores = computed(() => {
           <th>Pieces</th>
           <th>Items</th>
           <th>Cost</th>
+          <th>Add to BrickLink cart</th>
         </tr>
       </thead>
       <tbody>
@@ -117,8 +169,20 @@ const stores = computed(() => {
             <StoreButton :store="store.store" />
           </td>
           <td>{{ formatInteger(store.pieces) }}</td>
-          <td>{{ formatInteger(store.items) }}</td>
+          <td>{{ formatInteger(store.items.length) }}</td>
           <td>EUR {{ formatAmount(store.cost) }}</td>
+          <td>
+            <button
+              v-if="store.store.type === StoreType.BrickLink"
+              :disabled="store.addingToBrickLink"
+              @click="addToBrickLinkCart(store)"
+            >
+              {{ store.addingToBrickLink ? 'Adding...' : 'Add' }}
+            </button>
+            <span v-if="store.resultAdding">
+              &nbsp;{{ store.resultAdding === RESULT.SUCCESS ? 'OK' : 'ERROR' }}
+            </span>
+          </td>
         </tr>
       </tbody>
     </table>

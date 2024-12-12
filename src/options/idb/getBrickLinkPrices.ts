@@ -93,11 +93,13 @@ export async function getBrickLinkPrices(db: IDBPDatabase, store: Store) {
         if (!brickLinkCategory) {
           const blCategoryName = blCategories.get(resultItem.categoryString)
           if (!blCategoryName) {
-            console.log('NO BL NAME!', blItem, blCategories, resultItem.categoryString)
             continue
           }
           const rebrickableItem: RebrickableItem | undefined = rbPartsBrickLinkId.get(blItem.externalItemId)
-          const rebrickableCategory: RebrickableCategory = await getRebrickableCategory(db, rebrickableItem?.externalCategoryId)
+          if (!rebrickableItem) {
+            continue
+          }
+          const rebrickableCategory = await getRebrickableCategory(db, rebrickableItem.externalCategoryId)
           await addBrickLinkCategory(db, blItem.externalCategoryId, blCategoryName, rebrickableCategory.categoryId)
         }
         blItem.name = resultItem.itemName

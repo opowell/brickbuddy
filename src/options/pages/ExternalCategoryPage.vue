@@ -29,7 +29,7 @@ const sortedParts = computed<ExternalCategoryPageExternalPart[]>(() => {
     if (!b.name) {
       return -1
     }
-    return a.name > b.name ? 1 : -1
+    return a.name.localeCompare(b.name, undefined, {numeric: true, sensitivity: 'base'})
   })
 })
 </script>

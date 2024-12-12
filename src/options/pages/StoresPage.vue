@@ -19,12 +19,6 @@ onMounted(async () => {
   stores.value = await getStoresPageStores()
 })
 
-function add() {
-  addNewStore({
-    id: newStoreId.value,
-    name: newStoreName.value
-  })
-}
 const search = ref('')
 import HomeButton from '../components/HomeButton.vue';
 import ActiveSearchButton from '../components/ActiveSearchButton.vue';
@@ -75,10 +69,7 @@ import ActiveCartButton from '../components/ActiveCartButton.vue';
         </tr>
       </tbody>
     </table>
-    <h4>Add</h4>
-    <div>Id:<input v-model="newStoreId" type="text"></div>
-    <div>Name:<input v-model="newStoreName" type="text"></div>
-    <button @click="add">
+    <button @click="addNewStore">
       Add new
     </button>
   </div>

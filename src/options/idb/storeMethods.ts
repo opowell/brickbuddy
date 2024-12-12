@@ -1,17 +1,16 @@
 import { IDBPDatabase } from "idb"
-import { UiStore, AddNewStore, ShippingCost, StoreType, StoresPageStore, StorePageStore, InvItem, Store, ItemVariant, CachedStore, CachedItemVariant, CachedInvItem } from "../types"
+import { UiStore, ShippingCost, StoreType, StoresPageStore, StorePageStore, InvItem, Store, ItemVariant, CachedStore, CachedItemVariant, CachedInvItem } from "../types"
 import { getDbConnection, liveObjectCache } from "./idb"
 import { countInvItems, getStorePageInvItems } from "./invItems"
-import ObjectCacheClass from "./ObjectCacheClass"
-import { getActiveSearch, getFirstActiveSearch } from "./searches"
+import { getFirstActiveSearch } from "./searches"
 import { get } from "./db"
 import STORES from './stores'
 
 export const openStore = ref<UiStore | null>(null)
 
-export async function addNewStore(store: AddNewStore) {
+export async function addNewStore() {
   const db = await getDbConnection()
-  await addStore(store.name, store.id, [], '', 100, db)
+  await addStore('', 'abcd', [], '', 100, db)
 }
 
 export async function addStore(
@@ -192,7 +191,8 @@ export async function createInitialStores(db: IDBPDatabase) {
       cost: 599,
     },
   ], 'UnsortedBrick', 100, db)
-  await addStore("MoccaBriggs", "1850805", [
+  await addStore("Vineyard Bricks e.U.", "1821152", [], 'jgutzwar97', 100, db)
+  await addStore("Mocca Briggs", "1850805", [
     {
       region: 'AT',
       cost: 0,
@@ -205,7 +205,7 @@ export async function createInitialStores(db: IDBPDatabase) {
       minOrderPrice: 3000,
       type: 'priority'
     },
-  ], 'Mocca Briggs', 100, db)
+  ], 'MoccaBriggs', 100, db)
   await addStore("Die Steinschleuder", "1832236", [], 'KleinerBandit', 100, db)
   await addStore("BunteSteinewelt", "1801484", [
     {

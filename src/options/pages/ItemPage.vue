@@ -34,22 +34,22 @@ const variants = computed<VariantWithPriceQuantity[]>(() => {
     let price = Number.POSITIVE_INFINITY
     let varMaxPrice = 0
     let quantity = 0
-    variant.invItems.forEach((invItem: UiInvItem) => {
+    variant.invItems.forEach((invItem: PartPageVariantInvItem) => {
       if (condition.value !== 'Any' && invItem.condition !== condition.value) {
         return
       }
-      if (maxPrice.value && maxPrice.value !== 0 && maxPrice.value < invItem.price) {
+      if (maxPrice.value && maxPrice.value !== 0 && maxPrice.value < Number.parseFloat(invItem.price)) {
         return
       }
       if (invItem.quantity >= minQuantity.value) {
-        if (invItem.price < price) {
-          price = invItem.price
+        if (Number.parseFloat(invItem.price) < price) {
+          price = Number.parseFloat(invItem.price)
         }
-        if (invItem.price > varMaxPrice) {
-          varMaxPrice = invItem.price
+        if (Number.parseFloat(invItem.price) > varMaxPrice) {
+          varMaxPrice = Number.parseFloat(invItem.price)
         }
       }
-      if (!maxPrice.value || invItem.price <= maxPrice.value) {
+      if (!maxPrice.value || Number.parseFloat(invItem.price) <= maxPrice.value) {
         quantity += invItem.quantity
       }
     })

@@ -7,7 +7,7 @@ onMounted(async () => {
   const db = await getDbConnection()
   await loadLiveObjectCache(db)
   await createActiveSearchIfNecessary(db)
-  // await addStore("brickflip.at", "541603", [], 'BrickFlip', 100, db)
+  // await addStore("Vineyard Bricks e.U.", "1821152", [], 'jgutzwar97', 100, db)
   startFetching()
   return {
     cacheLoaded,
