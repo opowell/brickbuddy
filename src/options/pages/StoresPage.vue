@@ -51,6 +51,7 @@ import ActiveCartButton from '../components/ActiveCartButton.vue';
           <th>Name</th>
           <th>Inventory</th>
           <th>Fetch Index</th>
+          <th>Fetch %</th>
           <th>Last Scraped</th>
         </tr>
       </thead>
@@ -66,6 +67,8 @@ import ActiveCartButton from '../components/ActiveCartButton.vue';
           <td>
             {{ store.fetchPageIndex }} / {{ store.fetchMaxPageIndex }}
           </td>
+          <td>
+          {{  store.fetchPercent.toFixed(1) }}</td>
           <td>
             {{ store.lastScraped.toISOString() }}
           </td>

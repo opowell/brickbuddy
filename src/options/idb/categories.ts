@@ -115,7 +115,6 @@ export async function getCategoriesPageCategories(): Promise<CategoriesPageCateg
     }
     const categoriesPageCategory = await getCategoriesPageCategory(category)
     if (!categoriesPageCategory || categoriesPageCategory.externalCategories.length === 0) {
-      console.log(categoriesPageCategory, category)
       continue
     }
     categoriesPageCategories.push(categoriesPageCategory)

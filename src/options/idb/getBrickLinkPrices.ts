@@ -45,6 +45,7 @@ export async function getBrickLinkPrices(db: IDBPDatabase, store: Store) {
   }
   if (store.fetchPageIndex >= store.fetchMaxPageIndex) {
     store.fetchPageIndex = 1
+    store.fullyFetched = true
     const invItems: InvItem[] = await getFromIndex(db, INDICES.INV_ITEMS_BY_STORE, store.id)
     for (let i = 0; i < invItems.length; i++) {
       const invItem = invItems[i]

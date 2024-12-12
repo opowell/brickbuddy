@@ -19,10 +19,10 @@ async function getPrices() {
   if (blStore) {
     getBrickLinkPrices(db, blStore)
   }
-  const legoStore: Store = await getLegoFetchStore(db)
-  if (legoStore) {
-    getLegoPrices(db, legoStore)
-  }
+  // const legoStore: Store = await getLegoFetchStore(db)
+  // if (legoStore) {
+  //   getLegoPrices(db, legoStore)
+  // }
 }
 
 export async function startFetching() {

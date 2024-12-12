@@ -29,7 +29,8 @@ const variants = computed<VariantWithPriceQuantity[]>(() => {
   if (!item.value) {
     return []
   }
-  return item.value.variants.map((variant: PartPageVariant) => {
+  const variantsMap = new Map<string, PartPageVariant>()
+  item.value.variants.forEach((variant: PartPageVariant) => {
     let price = Number.POSITIVE_INFINITY
     let varMaxPrice = 0
     let quantity = 0
@@ -52,27 +53,33 @@ const variants = computed<VariantWithPriceQuantity[]>(() => {
         quantity += invItem.quantity
       }
     })
-    return {
+    variantsMap.set(variant.colorId, {
       ...variant,
       price,
       maxPrice: varMaxPrice,
       quantity
-    }
-  }).filter((variant: VariantWithPriceQuantity) => {
+    })
+  })
+  return Array.from(variantsMap.values()).filter((variant: VariantWithPriceQuantity) => {
     return variant.price < Number.POSITIVE_INFINITY && variant.quantity > 0
   })
     .sort((a: VariantWithPriceQuantity, b: VariantWithPriceQuantity) => a.price - b.price)
 })
 const condition = ref<string>('New')
 const invItems = computed<PartPageVariantInvItem[] | undefined>(() => {
-  return item.value?.variants.flatMap(variant => {
-    return variant.invItems.map(invItem => {
-      return {
+  const invItemsMap = new Map<string, PartPageVariantInvItem>()
+  if (!item.value) {
+    return
+  }
+  item.value.variants.forEach(variant => {
+    variant.invItems.forEach(invItem => {
+      invItemsMap.set(invItem.type + invItem.storeId + invItem.invId, {
         ...invItem,
         variant
-      }
+      })
     })
   })
+  return Array.from(invItemsMap.values())
 })
 const cartButton = ref<typeof ActiveCartButton | undefined>(undefined)
 function refreshCartButton() {

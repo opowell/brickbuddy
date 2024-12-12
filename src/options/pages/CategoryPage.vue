@@ -23,6 +23,7 @@ const parts = computed(() => {
   }
   return category.value.parts
 })
+import ExternalCategoryButton from '../components/ExternalCategoryButton.vue';
 </script>
 
 <template>

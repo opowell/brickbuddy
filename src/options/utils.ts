@@ -5,6 +5,7 @@ export async function toDataURL(url: string): Promise<string> {
     xhr.onload = function() {
       var reader = new FileReader()
       reader.onloadend = function() {
+        // @ts-ignore
         resolve(reader.result)
       }
       reader.readAsDataURL(xhr.response);
@@ -24,9 +25,9 @@ export async function getUsage() {
     return
   }
   const percentageUsed = (quota.usage / quota.quota) * 100;
-  const quotaInGB = formatInteger(quota.quota / 1024/1024/1024)
-  const usageInGB = formatInteger(quota.usage / 1024/1024/1024)
-  const remaining = formatInteger(quotaInGB - usageInGB)
+  const quotaInGB = (quota.quota / 1024/1024/1024).toFixed(2)
+  const usageInGB = (quota.usage / 1024/1024/1024).toFixed(2)
+  const remaining = formatInteger(Number.parseFloat(quotaInGB) - Number.parseFloat(usageInGB))
   console.log(`Quota: ${quotaInGB} GB`)
   console.log(`Usage: ${usageInGB} GB`)
   console.log(`Usage %: ${percentageUsed}`)

@@ -86,6 +86,7 @@ export enum StoreType {
   Lego = 'Lego'
 }
 export interface Store {
+  fullyFetched?: boolean
   id: string
   name: string
   fetchPageIndex: number
@@ -194,6 +195,7 @@ export interface PartPageVariantInvItem extends InvItem {
   store: Store
   color: Color
   cartQuantity: number
+  variant: ItemVariant
 }
 export interface UiItem extends Item {
   variants: UiItemVariant[]
@@ -284,6 +286,7 @@ export interface ConditionsPageCondition {
   numInvItems: number
 }
 export interface StoresPageStore extends Store {
+  fetchPercent: number
   numInvItems: number
 }
 export interface UiStore extends Store {

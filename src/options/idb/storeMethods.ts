@@ -307,9 +307,15 @@ export async function getStoresPageStores(): Promise<StoresPageStore[] | undefin
   const uiStores: StoresPageStore[] = []
   for (let i = 0; i < stores.length; i++) {
     const store = stores[i]
+    const numInvItems = await countInvItems(liveObjectCache.db, store.id, search)
+    let fetchPercent = 100*numInvItems / (store.fetchMaxPageIndex * (store.type === StoreType.BrickLink ? 100 : 400))
+    if (store.fullyFetched) {
+      fetchPercent = 100
+    }
     uiStores.push({
       ...store,
-      numInvItems: await countInvItems(liveObjectCache.db, store.id, search)
+      numInvItems,
+      fetchPercent
     })
   }
   return uiStores
