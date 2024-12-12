@@ -26,14 +26,18 @@ onMounted(async () => {
     }
     items.value.push(cartPageCartItem)
   }
-
+})
+const filteredItems = computed(() => {
+  if (!selectedStoreId.value) {
+    return items.value
+  }
+  return items.value.filter(i => i.storeId === selectedStoreId.value)
 })
 import ExternalCategoryButton from '../components/ExternalCategoryButton.vue';
 import ConditionButton from '../components/ConditionButton.vue';
 import StoreButton from '../components/StoreButton.vue';
 import PartButton from '../components/PartButton.vue';
 import ColorButton from '../components/ColorButton.vue';
-import ObjectCache from '../idb/ObjectCacheClass';
 import QuantityInput from '../components/QuantityInput.vue';
 import { getCartItems, getCartPageCart, getCartPageCartItem, setCartQuantity } from '../idb/carts';
 import { getDbConnection } from '../idb/idb';
@@ -59,6 +63,7 @@ async function updateCartQuantity(item: CartPageCartItem, newQuantity: number, i
     }
   }
 }
+const selectedStoreId = ref<string | undefined>()
 const stores = computed(() => {
   const map = new Map<string, CartPageCartItem[]>()
   items.value.forEach(item => {
@@ -107,7 +112,7 @@ const stores = computed(() => {
         </tr>
       </thead>
       <tbody>
-        <tr v-for="(store, index) in stores" :key="store.store.id">
+        <tr v-for="store in stores" :key="store.store.id">
           <td>
             <StoreButton :store="store.store" />
           </td>
@@ -117,7 +122,17 @@ const stores = computed(() => {
         </tr>
       </tbody>
     </table>
-    <h4 v-if="cartItems">Items (<span v-if="items.length < cartItems.length">{{ items.length }} / </span>{{ cart.cartItems.length }})</h4>
+    <template v-if="cartItems">
+      <h4 v-if="selectedStoreId">Items ({{ filteredItems.length }})</h4>
+      <h4 v-else>Items (<span v-if="items.length < cartItems.length">{{ items.length }} / </span>{{ cart.cartItems.length }})</h4>
+    </template>
+    <div>
+      Store:
+      <select v-model="selectedStoreId">
+        <option v-for="store in stores" :value="store.store.id">{{ store.store.name }}</option>
+      </select>
+      <button @click="selectedStoreId = undefined">Clear</button>
+    </div>
     <table>
       <thead>
         <tr>
@@ -134,7 +149,7 @@ const stores = computed(() => {
         </tr>
       </thead>
       <tbody>
-        <tr v-for="(item, index) in items" :key="item.id">
+        <tr v-for="(item, index) in filteredItems" :key="item.id">
           <td><img
             :src="item.variant.image"
             @click="goVariant(item.variant)"
