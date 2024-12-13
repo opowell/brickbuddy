@@ -120,8 +120,8 @@ export async function getPart(db: IDBPDatabase, partId: IDBValidKey): Promise<It
   return await get(db, STORES.PARTS, partId)
 }
 
-function getParts(): CachedItem[] {
-  const search = getActiveSearch()
+async function getParts(): CachedItem[] {
+  const search = await getActiveSearch()
   const parts = computed(() => filteredParts.value)
   const fps: CachedItem[] = []
   for (let i = 0; i < parts.value.length; i++) {

@@ -3,10 +3,23 @@ import { BrickLinkCategory, CachedCategory, CachedExternalCategory, CategoriesPa
 import { get, getAllFromIndex, getFromIndex, put } from "./db"
 import STORES from './stores'
 import INDICES from './indices'
-import { getCategoriesPageCategory, getDbConnection, liveObjectCache } from "./idb"
+import { getCategoriesPageCategory, liveObjectCache } from "./idb"
 import { getCategoryPageParts } from "./parts"
 import ObjectCache from "./ObjectCacheClass"
-export const categories = ref<Map<string, UiCategory>>(new Map<string, UiCategory>())
+import { getActiveSearch } from "./searches"
+
+export const externalPartPriceMap = ref<Map<string, number>>(new Map<string, number>())
+
+export async function loadExternalPartPrice(type: 'Lego' | 'BrickLink' | 'Rebrickable', itemId: number) {
+  const cache = liveObjectCache
+  const search = await getActiveSearch()
+  const price = await cache.getCheapestPrice(itemId, search.priceScoreQuantity, true, '')
+  console.log('price', itemId, price)
+  if (!price) {
+    return
+  }
+  externalPartPriceMap.value.set(type + itemId, price)
+}
 
 export async function getCategories(ids: number[]): Promise<(Category | undefined)[]> {
   return await Promise.all(ids.map(id => {

@@ -10,9 +10,10 @@ import IncludeCategoryButton from '../components/IncludeCategoryButton.vue';
 import ExcludeCategoryButton from '../components/ExcludeCategoryButton.vue';
 const route = useRoute()
 import { useRouter } from 'vue-router'
+import { formatAmount } from '../utils';
 import ActiveSearchButton from '../components/ActiveSearchButton.vue';
 import ExternalPartButton from '../components/ExternalPartButton.vue';
-import { getExternalCategoryPageExternalCategory } from '../idb/categories';
+import { externalPartPriceMap, getExternalCategoryPageExternalCategory } from '../idb/categories';
 const router = useRouter()
 const category = ref<ExternalCategoryPageExternalCategory>()
 onMounted(async () => {
@@ -51,6 +52,7 @@ const sortedParts = computed<ExternalCategoryPageExternalPart[]>(() => {
           <th>Name</th>
           <th>Colors</th>
           <th>Inv. items</th>
+          <th>Price</th>
         </tr>
       </thead>
       <tbody>
@@ -61,6 +63,7 @@ const sortedParts = computed<ExternalCategoryPageExternalPart[]>(() => {
           </td>
           <td>{{ part.numVariants }}</td>
           <td>{{ part.numInvItems }}</td>
+          <td>{{ formatAmount(externalPartPriceMap.get(part.type + part.itemId)) }}</td>
         </tr>
       </tbody>
     </table>

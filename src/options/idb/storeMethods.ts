@@ -191,6 +191,7 @@ export async function createInitialStores(db: IDBPDatabase) {
       cost: 599,
     },
   ], 'UnsortedBrick', 100, db)
+  await addStore("DopfiBrixKing", "2118718", [], 'Dopfi', 100, db)
   await addStore("Vineyard Bricks e.U.", "1821152", [], 'jgutzwar97', 100, db)
   await addStore("Mocca Briggs", "1850805", [
     {

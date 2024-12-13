@@ -15,6 +15,7 @@
 
 ### v3
 - keyboard controls.
+- price adjustment per condition (by search? globally?)
 - Table views
   - standard
   - image

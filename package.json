@@ -3,20 +3,20 @@
     "idb": "^8.0.0",
     "marked": "^14.1.3",
     "mathjs": "^14.0.0",
-    "pinia": "^2.2.4",
+    "pinia": "^2.2.5",
     "vue": "^3.5.12",
     "vue-router": "^4.4.5",
     "webextension-polyfill": "^0.12.0"
   },
-  "description": "A Vue 3 + Vite project for building Chrome extensions",
+  "description": "Compare prices across LEGO stores",
   "devDependencies": {
     "@antfu/eslint-config": "^3.8.0",
-    "@crxjs/vite-plugin": "^2.0.0-beta.28",
+    "@crxjs/vite-plugin": "2.0.0-beta.28",
     "@iconify-json/mdi": "^1.2.1",
     "@tailwindcss/forms": "^0.5.9",
     "@tailwindcss/typography": "^0.5.15",
     "@types/eslint": "^9.6.1",
-    "@types/node": "^22.7.8",
+    "@types/node": "^22.8.4",
     "@types/webextension-polyfill": "^0.12.1",
     "@vitejs/plugin-vue": "^5.1.4",
     "@vue/compiler-sfc": "^3.5.12",
@@ -25,7 +25,7 @@
     "chrome-types": "^0.1.312",
     "concurrently": "^9.0.1",
     "cross-env": "^7.0.3",
-    "daisyui": "^4.12.13",
+    "daisyui": "^4.12.14",
     "eslint": "^9.13.0",
     "eslint-plugin-vue": "^9.31.0",
     "globals": "^15.11.0",
@@ -40,10 +40,10 @@
     "unplugin-icons": "^0.19.3",
     "unplugin-vue-components": "^0.27.4",
     "unplugin-vue-router": "^0.10.8",
-    "vite": "^5.4.9",
+    "vite": "^6.0.3",
     "vite-plugin-pages": "^0.32.3",
-    "vite-plugin-vue-devtools": "^7.5.3",
-    "vue-tsc": "^2.1.6",
+    "vite-plugin-vue-devtools": "^7.5.6",
+    "vue-tsc": "^2.1.8",
     "web-ext": "^8.3.0",
     "webext-bridge": "^6.0.1"
   },
@@ -82,5 +82,5 @@
     "typecheck": "vue-tsc --noEmit"
   },
   "type": "module",
-  "version": "0.0.2"
+  "version": "0.0.3"
 }

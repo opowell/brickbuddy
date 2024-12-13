@@ -2,7 +2,7 @@ import { IDBPDatabase } from 'idb';
 import { ActiveSearch, CartItem, CartWithItems, CategoriesPageCategory, Category, Color, ExternalCategory, ExternalCategoryPageExternalPart, ExternalItem, ExternalPartPageExternalPart, ExternalPartPageInvItem, ExternalPartPageItemVariant, HomeData, InvItem, Item, ItemVariant, PartPageCategory, Search, SearchFilter, Store, StorePageInvItemItem, UiColor } from '../types';
 import STORES from './stores'
 import { getFirstActiveCart, getCartItems, getCartQuantity } from './carts';
-import { getExternalCategoriesByCategoryId, getCategoriesPageCategories, getCategory, getExternalCategory, getPartPageCategory } from './categories';
+import { getExternalCategoriesByCategoryId, getCategoriesPageCategories, getCategory, getExternalCategory, getPartPageCategory, loadExternalPartPrice } from './categories';
 import { getColor } from './colors';
 import { getInvItemFromId } from './invItems';
 import { getStorePageExternalPart, getStorePagePart } from './parts';
@@ -384,14 +384,14 @@ export default class ObjectCache {
   }
   async getExternalCategoryPageExternalParts(type: 'Lego' | 'BrickLink' | 'Rebrickable', categoryId: string): Promise<ExternalCategoryPageExternalPart[] | undefined> {
     const parts: ExternalItem[] | undefined = await this.getExternalPartsInExternalCategory(type, categoryId)
-    if (!parts) {
+    if (!parts || parts.length === 0) {
       return
     }
     const ecpeps: ExternalCategoryPageExternalPart[] = []
     for (let i = 0; i < parts.length; i++) {
       const part = parts[i]
       const numInvItems: number | undefined = await this.getNumInvItemsByPart(part.externalItemId, type)
-      if (numInvItems === undefined) {
+      if (numInvItems === undefined || numInvItems === 0) {
         continue
       }
       const numVariants: number | undefined = await this.getNumVariantsByPart(part.externalItemId, type)
@@ -399,6 +399,7 @@ export default class ObjectCache {
         continue
       }
       const firstVariant = await this.getFirstVariantByPart(part.externalItemId)
+      loadExternalPartPrice(part.type, part.itemId)
       ecpeps.push({
         ...part,
         numInvItems,
@@ -414,8 +415,20 @@ export default class ObjectCache {
       return this.externalPartsByExternalCategory.get(id)
     }
     const externalItems: ExternalItem[] = await getAllFromIndex(this.db, indices.EXTERNAL_PARTS_BY_TYPE_AND_CATEGORY, [type, externalCategoryId])
-    this.externalPartsByExternalCategory.set(id, externalItems)
-    return externalItems
+    const externalItemsWithStoreItems: ExternalItem[] = []
+    for (let i = 0; i < externalItems.length; i++) {
+      const item = externalItems[i]
+      const storeItems = await liveObjectCache.getInvItemsByExternalPart(item.externalItemId, item.type)
+      if (item.type === 'Rebrickable' && item.externalItemId == 1) {
+        console.log(item.externalItemId, item.type, storeItems?.length)
+      }
+      if (!storeItems || storeItems.length === 0) {
+        continue
+      }
+      externalItemsWithStoreItems.push(item)
+    }
+    this.externalPartsByExternalCategory.set(id, externalItemsWithStoreItems)
+    return externalItemsWithStoreItems
   }
   async getHomeData(): Promise<HomeData | undefined> {
     const stores = (await this.db.getAllKeys(STORES.STORES.name)).length
