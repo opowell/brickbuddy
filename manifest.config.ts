@@ -18,41 +18,13 @@ export default {
   // semver is OK in "version_name"
   version_name: version,
   manifest_version: 3,
-  // key: '',
-  action: {
-    default_popup: 'src/popup/index.html',
-  },
   background: {
     service_worker: 'src/background/index.ts',
     type: 'module',
   },
-  content_scripts: [
-    {
-      all_frames: true,
-      js: ['src/content-script/index.ts'],
-      matches: ['*://*/*'],
-      run_at: 'document_end',
-    },
-  ],
-  // Full options page
   options_page: 'src/options/index.html',
-  // Embedded options page
-  // options_ui: {
-  //   page: 'src/options/index.html',
-  // },
   offline_enabled: true,
-  // host_permissions: [],
-  permissions: ['storage', 'tabs', 'background', 'alarms'],
-  // web_accessible_resources: [
-    // {
-    //   matches: ['*://*/*'],
-    //   resources: ['src/content-script/index.ts'],
-    // },
-    // {
-    //   matches: ['*://*/*'],
-    //   resources: ['src/content-script/iframe/index.html'],
-    // },
-  // ],
+  permissions: ['storage', 'background', 'alarms'],
   icons: {
     16: 'src/assets/logo.png',
     24: 'src/assets/logo.png',
