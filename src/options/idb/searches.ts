@@ -157,6 +157,7 @@ async function loadSearchFilters(search: Search): Promise<ActiveSearch> {
   filterTypes.forEach(ft => {
     const included = filters.filter(f => f.type === ft.type && !f.isExcluded).map(f => f.objectId)
     const excluded = filters.filter(f => f.type === ft.type && f.isExcluded).map(f => f.objectId)
+    console.log('set', filters, ft.arrayName, ft.type, included, excluded)
     // @ts-ignore
     activeSearch[ft.arrayName] = {
       included,

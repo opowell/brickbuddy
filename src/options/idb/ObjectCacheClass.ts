@@ -54,6 +54,7 @@ export default class ObjectCache {
   stores: Map<string, Store>
   activeCart: CartWithItems | undefined
   activeSearch: ActiveSearch | undefined
+  activeSearchRef: Ref<ActiveSearch | undefined>
   partVariantsByPartColor: Map<string, ItemVariant[]>
   partVariantByPartColor: Map<string, ItemVariant>
   firstVariantByPart: Map<string, ItemVariant>
@@ -63,6 +64,7 @@ export default class ObjectCache {
   computedCache: ComputedObjectCacheClass
   constructor(db: IDBPDatabase) {
     this.db = db
+    this.activeSearchRef = ref()
     this.partVariantsByPartColor = new Map<string, ItemVariant[]>()
     this.cheapestPrices = new Map<string, number>()
     this.partVariantByPartColor = new Map<string, ItemVariant>()
@@ -222,24 +224,31 @@ export default class ObjectCache {
         }
         search = {
           ...newSearch,
-          id: await this.db.put(STORES.SEARCHES.name, newSearch)
+          id: await this.db.put(STORES.SEARCHES.name, newSearch),
+          categories: {
+            included: [],
+            excluded: [],
+          },
+          colors: {
+            included: [],
+            excluded: [],
+          },
+          conditions: {
+            included: [],
+            excluded: [],
+          },
+          stores: {
+            included: [],
+            excluded: [],
+          },
+          parts: {
+            included: [],
+            excluded: [],
+          },
         }
       }
-      const filters = await getSearchFilters(this.db, search)
-      const categories = getTypeFilters<number>(filters, 'category')
-      const colors = getTypeFilters<number>(filters, 'color')
-      const conditions = getTypeFilters<string>(filters, 'condition')
-      const parts = getTypeFilters<number>(filters, 'part')
-      const stores = getTypeFilters<string>(filters, 'store')
-      this.activeSearch = {
-        ...search,
-        filters,
-        categories,
-        colors,
-        conditions,
-        parts,
-        stores
-      }
+      this.activeSearch = search
+      this.activeSearchRef.value = search
     }
     return this.activeSearch
   }

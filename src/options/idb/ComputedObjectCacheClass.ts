@@ -46,7 +46,7 @@ export default class ComputedObjectCache {
     this.searchesMap = ref(new Map<string, Search>)
     this.searchesArray = ref<Search[] | undefined>()
     this.storesMap = ref(new Map<string, Store>)
-    this.storesArray = ref<Store[] | undefined>()
+    this.storesArray = ref<Store[] | undefined>()
     this.homeData = computed<HomeData>(() => {
       return {
         stores: this.storesArray.value?.length || 0,
@@ -61,7 +61,7 @@ export default class ComputedObjectCache {
     })
     this.categoriesArraySearchFiltered = computed(() => {
       console.log('compute')
-      const search = this.activeSearch.value
+      const search = objectCache.activeSearchRef.value
       if (!search) {
         console.log('no search')
         return undefined
@@ -76,9 +76,6 @@ export default class ComputedObjectCache {
         }
         return !search.categories.excluded.includes(c.id)
       })
-    })
-    this.activeSearch = computed(() => {
-      return objectCache.activeSearch
     })
     objectCache.getActiveSearch()
     this.loadColors()

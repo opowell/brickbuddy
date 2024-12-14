@@ -16,6 +16,12 @@ const computedHomeData = computed<HomeData | undefined>(() => {
 const computedCache = computed(() => {
   return liveObjectCache.computedCache
 })
+const categories = computed(() => {
+  if (computedCache.value.categoriesArraySearchFiltered.value) {
+    return computedCache.value.categoriesArraySearchFiltered.value.length
+  }
+  return homeData.value?.categories
+})
 onMounted(async () => {
   if (!liveObjectCache.computedCache.homeData.value) {
     homeData.value = await liveObjectCache.getHomeData()
@@ -36,7 +42,7 @@ onMounted(async () => {
     <div v-else class="cards">
       <CardComponent name="Stores" :count="computedHomeData.stores" :href="Crumbs.stores.href" />
       <CardComponent name="Colors" :count="computedHomeData.colors" :href="Crumbs.colors.href" />
-      <CardComponent name="Categories" :count="computedHomeData.categories" :href="Crumbs.categories.href" />
+      <CardComponent v-if="categories" name="Categories" :count="categories" :href="Crumbs.categories.href" />
       <CardComponent name="Parts" :count="computedHomeData.parts" :href="Crumbs.parts.href" />
       <CardComponent name="Searches" :count="computedHomeData.searches" :href="Crumbs.searches.href" />
       <CardComponent name="Conditions" :count="computedHomeData.conditions" :href="Crumbs.conditions.href" />
