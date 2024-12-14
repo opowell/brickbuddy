@@ -34,7 +34,7 @@ export async function put(db: IDBPDatabase, storeDef: StoreDefinition, value: an
   }
 }
 
-export async function getAllFromIndex(db: IDBPDatabase, index: IndexDefinition, query?: IDBKeyRange | IDBValidKey | null | undefined, count?: number) {
+export async function getAllFromIndex<T>(db: IDBPDatabase, index: IndexDefinition, query?: IDBKeyRange | IDBValidKey | null | undefined, count?: number): Promise<T[] | undefined> {
   return db.getAllFromIndex(index.store, index.name, query, count)
 }
 

@@ -8,7 +8,7 @@ onMounted(async () => {
   await loadLiveObjectCache(db)
   await createActiveSearchIfNecessary(db)
   // await addStore("DopfiBrixKing", "2118718", [], 'Dopfi', 100, db)
-  // startFetching()
+  startFetching()
   return {
     cacheLoaded,
   }

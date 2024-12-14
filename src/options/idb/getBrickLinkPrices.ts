@@ -3,7 +3,7 @@ import { BrickLinkCategory, BrickLinkItem, Category, Color, ExternalItem, InvIte
 import * as math from 'mathjs'
 import INDICES from './indices'
 import { addBrickLinkCategory, getBrickLinkCategory, getCategory, getRebrickableCategory, updateCategory } from "./categories";
-import { getFromIndex, put } from "./db";
+import { getAllFromIndex, getFromIndex, put } from "./db";
 import { addInvItem } from "./invItems";
 import { getBrickLinkItem, addBrickLinkItem } from "./parts";
 import { updateStore } from "./storeMethods";
@@ -46,19 +46,22 @@ export async function getBrickLinkPrices(db: IDBPDatabase, store: Store) {
   if (store.fetchPageIndex >= store.fetchMaxPageIndex) {
     store.fetchPageIndex = 1
     store.fullyFetched = true
-    const invItems: InvItem[] = await getFromIndex(db, INDICES.INV_ITEMS_BY_STORE, store.id)
-    for (let i = 0; i < invItems.length; i++) {
-      const invItem = invItems[i]
-      if (invItem.stale) {
-        await db.delete(stores.INVENTORY_ITEMS.name, [store.id, invItem.invId])
-      } else {
-        invItem.stale = true
-        await put(db, stores.INVENTORY_ITEMS, invItem)
+    const invItems = await getAllFromIndex<InvItem>(db, INDICES.INV_ITEMS_BY_STORE, store.id)
+    if (invItems) {
+      for (let i = 0; i < invItems.length; i++) {
+        const invItem = invItems[i]
+        if (invItem.stale) {
+          await db.delete(stores.INVENTORY_ITEMS.name, [store.id, invItem.invId])
+        } else {
+          invItem.stale = true
+          await put(db, stores.INVENTORY_ITEMS, invItem)
+        }
       }
     }
   }
   const json = await response.json()
   if (!json?.result) {
+    addMinutes(store.lastScraped, 60)
     await updateStore(db, store)
     return
   }
