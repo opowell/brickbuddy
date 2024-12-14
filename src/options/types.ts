@@ -462,6 +462,11 @@ export interface UiListItem extends ShopListItem {
   shopList?: UiShopList
 }
 
+export interface Condition {
+  id: string
+  name: string
+}
+
 export interface Color {
   id: string
   name: string

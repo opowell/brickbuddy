@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { CategoriesPageCategory, CategoriesPageExternalCategory, ExternalCategory, SearchFilter } from '../types';
+import { CategoriesPageCategory, CategoriesPageExternalCategory, Category, ExternalCategory, SearchFilter } from '../types';
 import ExcludeCategoryButton from '../components/ExcludeCategoryButton.vue';
 import IncludeCategoryButton from '../components/IncludeCategoryButton.vue';
 import { getDbConnection, liveObjectCache } from '../idb/idb';
@@ -23,7 +23,6 @@ const uniqueExternalCategories = computed<CategoriesPageUniqueCategory[]>(() => 
     return []
   }
   const out: CategoriesPageUniqueCategory[] = []
-  // console.log(categories.value.map(c => c.id).join(','))
   categories.value.forEach(category => {
     const types = category.externalCategories.map(ec => ec.type)
     if (countUnique(types) < types.length) {
@@ -58,20 +57,18 @@ const uniqueExternalCategories = computed<CategoriesPageUniqueCategory[]>(() => 
   })
   return out
 })
-async function excludeCategory(externalCategory: ExternalCategory, index: number) {
-  const search = getActiveSearch()
+async function excludeCategory(category: Category) {
+  const search = await getActiveSearch()
   if (!search) {
     return
   }
-  const db = await getDbConnection()
   const filter: SearchFilter = {
     searchId: search.id,
-    type: 'externalCategory',
+    type: 'category',
     isExcluded: true,
-    objectId: externalCategory.type + externalCategory.id
+    objectId: category.id
   }
-  put(db, stores.SEARCH_FILTERS, filter)
-  search.externalCategories.excluded.push(externalCategory.type + externalCategory.id)
+  put(liveObjectCache.db, stores.SEARCH_FILTERS, filter)
 }
 function includeCategory(externalCategory: ExternalCategory, index: number) {
   // categories.value = categories.value?.splice(index, 1)
@@ -113,7 +110,7 @@ import stores from '../idb/stores';
             {{ externalCategory.numParts }}
           </td>
           <td>
-            <ExcludeCategoryButton :category="externalCategory.category" @exclude="excludeCategory(externalCategory, index)"/>
+            <ExcludeCategoryButton :category="externalCategory.category" @exclude="excludeCategory(externalCategory.category)"/>
             <IncludeCategoryButton :category="externalCategory.category" @include="includeCategory(externalCategory, index)"/>
           </td>
         </tr>

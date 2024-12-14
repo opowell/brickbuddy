@@ -13,6 +13,7 @@ import { countFromIndex, get, getAll, getAllFromIndex, getFromIndex } from './db
 import indices from './indices';
 import { cheapestPrice } from '../utils';
 import { liveObjectCache } from './idb';
+import ComputedObjectCacheClass from './ComputedObjectCacheClass'
 
 interface Filter<T> {
   included: T[]
@@ -59,6 +60,7 @@ export default class ObjectCache {
   invItemsByExternalPartColor: Map<string, InvItem[]>
   invItems: Map<string, InvItem>
   db: IDBPDatabase
+  computedCache: ComputedObjectCacheClass
   constructor(db: IDBPDatabase) {
     this.db = db
     this.partVariantsByPartColor = new Map<string, ItemVariant[]>()
@@ -86,10 +88,14 @@ export default class ObjectCache {
     this.invItemsByStore = new Map<string, InvItem[]>()
     this.stores = new Map<string, Store>()
     this.activeCart = undefined
+    this.computedCache = new ComputedObjectCacheClass(this)
   }
   async getAllCategories() {
     if (!this.allCategories) {
       this.allCategories = await getAll(this.db, STORES.CATEGORIES)
+      if (!this.allCategories) {
+        return
+      }
       this.allCategories.forEach(c => {
         this.categories.set(c.id, c)
       })
@@ -244,6 +250,10 @@ export default class ObjectCache {
     return this.getObject(this.stores, storeId, async () => await get(this.db, STORES.STORES, storeId))
   }
   async getColor(colorId: string): Promise<Color | undefined> {
+    const computedColor = this.computedCache.colorsMap.value.get(colorId)
+    if (computedColor) {
+      return computedColor
+    }
     return this.getObject(this.colors, colorId, async () => await get(this.db, STORES.COLORS, colorId))
   }
   async getCategory(categoryId: number): Promise<Category | undefined> {
@@ -429,6 +439,9 @@ export default class ObjectCache {
     }
     this.externalPartsByExternalCategory.set(id, externalItemsWithStoreItems)
     return externalItemsWithStoreItems
+  }
+  getComputedHomeData(): Ref<HomeData> {
+    return this.computedCache.homeData
   }
   async getHomeData(): Promise<HomeData | undefined> {
     const stores = (await this.db.getAllKeys(STORES.STORES.name)).length

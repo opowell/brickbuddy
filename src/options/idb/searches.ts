@@ -66,29 +66,19 @@ export async function getActiveSearchButtonActiveSearch(): Promise<ActiveSearchB
 }
 
 export async function getFirstActiveSearch(db: IDBPDatabase): Promise<ActiveSearch | undefined> {
-  const search = await getFromIndex(db, INDICES.SEARCHES_BY_ACTIVE, 1)
+  const search = await getFromIndex<Search>(db, INDICES.SEARCHES_BY_ACTIVE, 1)
   if (!search) {
     return
   }
-  const filters: SearchFilter[] = await getAllFromIndex(db, INDICES.SEARCH_FILTERS_BY_SEARCH, search.id)
-  const filterTypes = ['categories', 'colors', 'conditions', 'stores', 'parts']
-  filterTypes.forEach(ft => {
-    const included = filters.filter(f => f.type === ft && !f.isExcluded)
-    const excluded = filters.filter(f => f.type === ft && f.isExcluded)
-    // @ts-ignore
-    search[ft] = {
-      included,
-      excluded
-    }
-  })
-  return search
+  const activeSearch = await loadSearchFilters(search)
+  return activeSearch
 }
 
-export async function getAllSearches(db: IDBPDatabase): Promise<CachedSearch[]> {
+export async function getAllSearches(db: IDBPDatabase): Promise<CachedSearch[] | undefined> {
   return await getAll(db, STORES.SEARCHES)
 }
 
-export async function getAllSearchFilters(db: IDBPDatabase): Promise<SearchFilter[]> {
+export async function getAllSearchFilters(db: IDBPDatabase): Promise<SearchFilter[] | undefined> {
   return await getAll(db, STORES.SEARCH_FILTERS)
 }
 
@@ -128,10 +118,15 @@ export async function getSearchFilters(db: IDBPDatabase, search: Search): Promis
 }
 
 export async function getSearch(id: number): Promise<ActiveSearch | undefined> {
-  const search: ActiveSearch = await get(liveObjectCache.db, STORES.SEARCHES, id)
+  const search = await get<Search>(liveObjectCache.db, STORES.SEARCHES, id)
   if (!search) {
     return
   }
+  const activeSearch = await loadSearchFilters(search)
+  return activeSearch
+}
+
+async function loadSearchFilters(search: Search): Promise<ActiveSearch> {
   const filters: SearchFilter[] = await getAllFromIndex(liveObjectCache.db, INDICES.SEARCH_FILTERS_BY_SEARCH, search.id)
   const filterTypes = [
     {
@@ -155,17 +150,21 @@ export async function getSearch(id: number): Promise<ActiveSearch | undefined> {
       type: 'part'
     }
   ]
-  search.filters = filters
+  const activeSearch = {
+    ...search,
+    filters
+  }
   filterTypes.forEach(ft => {
-    const included = filters.filter(f => f.type === ft.type && !f.isExcluded)
-    const excluded = filters.filter(f => f.type === ft.type && f.isExcluded)
+    const included = filters.filter(f => f.type === ft.type && !f.isExcluded).map(f => f.objectId)
+    const excluded = filters.filter(f => f.type === ft.type && f.isExcluded).map(f => f.objectId)
     // @ts-ignore
-    search[ft.arrayName] = {
+    activeSearch[ft.arrayName] = {
       included,
       excluded
     }
   })
-  return search
+  // @ts-ignore
+  return activeSearch
 }
 
 export async function getSearchPageSearch(id: number): Promise<SearchPageSearch | undefined> {

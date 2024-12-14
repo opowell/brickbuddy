@@ -13,14 +13,14 @@ export async function getAllKeys(db: IDBPDatabase, storeDefinition: StoreDefinit
   return await db.getAllKeys(storeDefinition.name)
 }
 
-export async function getFromIndex(
+export async function getFromIndex<T>(
   db: IDBPDatabase,
   index: IndexDefinition,
   query: IDBKeyRange | IDBValidKey
-): Promise<any> {
+): Promise<T | undefined> {
   return await db.getFromIndex(index.store, index.name, query)
 }
-export async function get(db: IDBPDatabase, store: StoreDefinition, query: IDBKeyRange | IDBValidKey) {
+export async function get<T>(db: IDBPDatabase, store: StoreDefinition, query: IDBKeyRange | IDBValidKey): Promise<T | undefined> {
   return await db.get(store.name, query)
 }
 export async function countFromIndex(db: IDBPDatabase, index: IndexDefinition, query?: IDBKeyRange | IDBValidKey | null | undefined) {

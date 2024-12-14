@@ -7,8 +7,19 @@ import CardComponent from '../components/CardComponent.vue';
 import { HomeData } from '../types';
 
 const homeData = ref<HomeData | undefined>()
+const computedHomeData = computed<HomeData | undefined>(() => {
+  if (liveObjectCache.computedCache.loaded) {
+    return liveObjectCache.computedCache.homeData.value
+  }
+  return homeData.value
+})
+const computedCache = computed(() => {
+  return liveObjectCache.computedCache
+})
 onMounted(async () => {
-  homeData.value = await liveObjectCache.getHomeData()
+  if (!liveObjectCache.computedCache.homeData.value) {
+    homeData.value = await liveObjectCache.getHomeData()
+  }
 })
 </script>
 
@@ -19,16 +30,18 @@ onMounted(async () => {
       <ActiveSearchButton />
       <ActiveCartButton />
     </p>
-    <div v-if="!homeData">Loading...</div>
+    <div v-if="computedHomeData">Cache loaded</div>
+    <div v-if="computedCache.categoriesArraySearchFiltered.value">Computed cache loaded: {{ computedCache.categoriesArraySearchFiltered.value.length }}</div>
+    <div v-if="!computedHomeData">Loading...</div>
     <div v-else class="cards">
-      <CardComponent name="Stores" :count="homeData.stores" :href="Crumbs.stores.href" />
-      <CardComponent name="Colors" :count="homeData.colors" :href="Crumbs.colors.href" />
-      <CardComponent name="Categories" :count="homeData.categories" :href="Crumbs.categories.href" />
-      <CardComponent name="Parts" :count="homeData.parts" :href="Crumbs.parts.href" />
-      <CardComponent name="Searches" :count="homeData.searches" :href="Crumbs.searches.href" />
-      <CardComponent name="Conditions" :count="homeData.conditions" :href="Crumbs.conditions.href" />
-      <CardComponent name="Lists" :count="homeData.lists" :href="Crumbs.lists.href" />
-      <CardComponent name="Carts" :count="homeData.carts" :href="Crumbs.carts.href" />
+      <CardComponent name="Stores" :count="computedHomeData.stores" :href="Crumbs.stores.href" />
+      <CardComponent name="Colors" :count="computedHomeData.colors" :href="Crumbs.colors.href" />
+      <CardComponent name="Categories" :count="computedHomeData.categories" :href="Crumbs.categories.href" />
+      <CardComponent name="Parts" :count="computedHomeData.parts" :href="Crumbs.parts.href" />
+      <CardComponent name="Searches" :count="computedHomeData.searches" :href="Crumbs.searches.href" />
+      <CardComponent name="Conditions" :count="computedHomeData.conditions" :href="Crumbs.conditions.href" />
+      <CardComponent name="Lists" :count="computedHomeData.lists" :href="Crumbs.lists.href" />
+      <CardComponent name="Carts" :count="computedHomeData.carts" :href="Crumbs.carts.href" />
     </div>
   </div>
 </template>
