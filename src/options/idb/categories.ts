@@ -14,7 +14,6 @@ export async function loadExternalPartPrice(type: 'Lego' | 'BrickLink' | 'Rebric
   const cache = liveObjectCache
   const search = await getActiveSearch()
   const price = await cache.getCheapestPrice(itemId, search.priceScoreQuantity, true, '')
-  console.log('price', itemId, price)
   if (!price) {
     return
   }
@@ -32,20 +31,26 @@ export async function getExcludedCategories(): Promise<Category[] | undefined> {
   return excludedCategories.value
 }
 
-export async function getExternalCategories(db: IDBPDatabase, categoryId: number): Promise<ExternalCategory[]> {
-  return await getAllFromIndex(db, INDICES.EXTERNAL_CATEGORIES_BY_CATEGORY, categoryId)
+export async function getExternalCategories(db: IDBPDatabase, categoryId: number): Promise<ExternalCategory[] | undefined> {
+  return await getAllFromIndex<ExternalCategory>(db, INDICES.EXTERNAL_CATEGORIES_BY_CATEGORY, categoryId)
 }
 
 export async function getCategoryImage(db: IDBPDatabase, id: number): Promise<string | undefined> {
   const externalCategories = await getExternalCategories(db, id)
+  if (!externalCategories) {
+    return
+  }
   for (let i = 0; i < externalCategories.length; i++) {
-    const parts: Item[] = await getAllFromIndex(db, INDICES.EXTERNAL_PARTS_BY_CATEGORY, id)
+    const parts = await getAllFromIndex<Item>(db, INDICES.EXTERNAL_PARTS_BY_CATEGORY, id)
     if (!parts) {
       continue
     }
     for (let j = 0; j < parts.length; j++) {
       const part = parts[j]
-      const variants: ItemVariant[] = await getAllFromIndex(db, INDICES.PART_VARIANTS_BY_PART, part.itemId)
+      const variants = await getAllFromIndex<ItemVariant>(db, INDICES.PART_VARIANTS_BY_PART, part.itemId)
+      if (!variants) {
+        continue
+      }
       const variant = variants.find((v) => v.image)
       if (variant) {
         return variant.image
@@ -55,11 +60,11 @@ export async function getCategoryImage(db: IDBPDatabase, id: number): Promise<st
 }
 
 export async function getExternalCategoryImage(db: IDBPDatabase, category: ExternalCategory): Promise<string | undefined> {
-  const externalPart: ExternalItem = await getFromIndex(db, INDICES.EXTERNAL_PARTS_BY_TYPE_AND_CATEGORY, [category.type, category.id])
+  const externalPart = await getFromIndex<ExternalItem>(db, INDICES.EXTERNAL_PARTS_BY_TYPE_AND_CATEGORY, [category.type, category.id])
   if (!externalPart) {
     return
   }
-  const variant: ItemVariant = await getFromIndex(db, INDICES.PART_VARIANTS_BY_TYPE_AND_PART, [externalPart.type, externalPart.externalItemId])
+  const variant = await getFromIndex<ItemVariant>(db, INDICES.PART_VARIANTS_BY_TYPE_AND_PART, [externalPart.type, externalPart.externalItemId])
   if (!variant) {
     return
   }
@@ -108,11 +113,14 @@ export async function getExternalCategoryPageExternalCategory(type: 'BrickLink' 
 export async function getCategoriesPageCategories(): Promise<CategoriesPageCategory[] | undefined> {
   const objectCache = liveObjectCache
   const categories = await objectCache.getAllCategories()
-  const categoriesPageCategories: CategoriesPageCategory[] = []
+  if (!categories) {
+    return
+  }
   const search = await objectCache.getActiveSearch()
   if (!search) {
     return
   }
+  const categoriesPageCategories: CategoriesPageCategory[] = []
   for (let i = 0; i < categories.length; i++) {
     const category: Category = categories[i]
     if (

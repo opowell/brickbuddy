@@ -2,7 +2,7 @@
 import { CategoriesPageCategory, CategoriesPageExternalCategory, Category, ExternalCategory, SearchFilter } from '../types';
 import ExcludeCategoryButton from '../components/ExcludeCategoryButton.vue';
 import IncludeCategoryButton from '../components/IncludeCategoryButton.vue';
-import { getDbConnection, liveObjectCache } from '../idb/idb';
+import { liveObjectCache } from '../idb/idb';
 interface CategoriesPageUniqueCategory {
   externalCategories: CategoriesPageExternalCategory[]
   isExternal: boolean
@@ -15,15 +15,23 @@ function countUnique(iterable: Iterable) {
   return new Set(iterable).size;
 }
 const categories = ref<CategoriesPageCategory[] | undefined>(undefined)
+const computedCategories = computed<CategoriesPageCategory[] | undefined>(() => {
+  if (liveObjectCache.computedCache.loaded) {
+    return liveObjectCache.computedCache.categoriesPageCategories.value
+  }
+  return categories.value
+})
 onMounted(async () => {
-  categories.value = await liveObjectCache.getCategoriesPageCategories()
+  if (!liveObjectCache.computedCache.categoriesPageCategories.value) {
+    categories.value = await liveObjectCache.getCategoriesPageCategories()
+  }
 })
 const uniqueExternalCategories = computed<CategoriesPageUniqueCategory[]>(() => {
-  if (!categories.value) {
+  if (!computedCategories.value) {
     return []
   }
   const out: CategoriesPageUniqueCategory[] = []
-  categories.value.forEach(category => {
+  computedCategories.value.forEach(category => {
     const types = category.externalCategories.map(ec => ec.type)
     if (countUnique(types) < types.length) {
       // add each ec individually

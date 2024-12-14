@@ -91,11 +91,10 @@ export async function getBrickLinkItem(db: IDBPDatabase, brickLinkId: string, br
   return await getFromIndex(db, INDICES.EXTERNAL_PARTS_BY_TYPE_AND_EXTERNAL_ID, ['BrickLink', brickLinkId])
 }
 export async function getLegoItem(db: IDBPDatabase, legoId: string): Promise<LegoItem | undefined> {
-  let blItem: LegoItem = await getFromIndex(db, INDICES.EXTERNAL_PARTS_BY_TYPE_AND_EXTERNAL_ID, ['Lego', legoId])
+  let blItem = await getFromIndex<LegoItem>(db, INDICES.EXTERNAL_PARTS_BY_TYPE_AND_EXTERNAL_ID, ['Lego', legoId])
   if (!blItem) {
     const rebrickableItem: RebrickableItem | undefined = rbPartsLegoId.get(legoId)
     if (!rebrickableItem) {
-      console.log('no item', legoId, rebrickableItem, Object.keys(rbPartsLegoId).includes(legoId))
       return
     }
     const itemId = await put(db, STORES.PARTS, {})
@@ -108,19 +107,19 @@ export async function getLegoItem(db: IDBPDatabase, legoId: string): Promise<Leg
   return await getFromIndex(db, INDICES.EXTERNAL_PARTS_BY_TYPE_AND_EXTERNAL_ID, ['Lego', legoId])
 }
 
-export async function getAllParts(db: IDBPDatabase): Promise<CachedItem[]> {
-  return await getAll(db, STORES.PARTS)
+export async function getAllParts(db: IDBPDatabase): Promise<CachedItem[] | undefined> {
+  return await getAll<CachedItem>(db, STORES.PARTS)
 }
 
-export async function getAllExternalParts(db: IDBPDatabase): Promise<CachedExternalItem[]> {
-  return await getAll(db, STORES.EXTERNAL_PARTS)
+export async function getAllExternalParts(db: IDBPDatabase): Promise<CachedExternalItem[] | undefined> {
+  return await getAll<CachedExternalItem>(db, STORES.EXTERNAL_PARTS)
 }
 
-export async function getPart(db: IDBPDatabase, partId: IDBValidKey): Promise<Item> {
-  return await get(db, STORES.PARTS, partId)
+export async function getPart(db: IDBPDatabase, partId: IDBValidKey): Promise<Item | undefined> {
+  return await get<Item>(db, STORES.PARTS, partId)
 }
 
-async function getParts(): CachedItem[] {
+async function getParts(): Promise<CachedItem[]> {
   const search = await getActiveSearch()
   const parts = computed(() => filteredParts.value)
   const fps: CachedItem[] = []

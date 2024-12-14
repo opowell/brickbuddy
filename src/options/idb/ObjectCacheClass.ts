@@ -263,7 +263,7 @@ export default class ObjectCache {
     if (computedColor) {
       return computedColor
     }
-    return this.getObject(this.colors, colorId, async () => await get(this.db, STORES.COLORS, colorId))
+    return this.getObject(this.colors, colorId, async () => await get<Color>(this.db, STORES.COLORS, colorId))
   }
   async getCategory(categoryId: number): Promise<Category | undefined> {
     return this.getObject<Category | undefined>(this.categories, categoryId, async () => await getCategory(this.db, categoryId))

@@ -22,6 +22,12 @@ const categories = computed(() => {
   }
   return homeData.value?.categories
 })
+const items = computed(() => {
+  if (computedCache.value.itemsArray2.value) {
+    return computedCache.value.itemsArray2.value.length
+  }
+  return homeData.value?.parts
+})
 onMounted(async () => {
   if (!liveObjectCache.computedCache.homeData.value) {
     homeData.value = await liveObjectCache.getHomeData()
@@ -38,12 +44,15 @@ onMounted(async () => {
     </p>
     <div v-if="computedHomeData">Cache loaded</div>
     <div v-if="computedCache.categoriesArraySearchFiltered.value">Computed cache loaded: {{ computedCache.categoriesArraySearchFiltered.value.length }}</div>
+    <div v-if="computedCache.externalItemsArray.value">externalItemsArray: {{ computedCache.externalItemsArray.value.length }}</div>
+    <div v-if="computedCache.externalItemsArray2.value">externalItemsArray2: {{ computedCache.externalItemsArray2.value.length }}</div>
+    <div v-if="computedCache.itemsArray2.value">itemsArray2: {{ computedCache.itemsArray2.value.length }}</div>
     <div v-if="!computedHomeData">Loading...</div>
     <div v-else class="cards">
       <CardComponent name="Stores" :count="computedHomeData.stores" :href="Crumbs.stores.href" />
       <CardComponent name="Colors" :count="computedHomeData.colors" :href="Crumbs.colors.href" />
       <CardComponent v-if="categories" name="Categories" :count="categories" :href="Crumbs.categories.href" />
-      <CardComponent name="Parts" :count="computedHomeData.parts" :href="Crumbs.parts.href" />
+      <CardComponent v-if="items" name="Parts" :count="items" :href="Crumbs.parts.href" />
       <CardComponent name="Searches" :count="computedHomeData.searches" :href="Crumbs.searches.href" />
       <CardComponent name="Conditions" :count="computedHomeData.conditions" :href="Crumbs.conditions.href" />
       <CardComponent name="Lists" :count="computedHomeData.lists" :href="Crumbs.lists.href" />

@@ -19,27 +19,32 @@ export async function getItemVariant(
   colorId: string
 ) {
   if (!externalItemId || !colorId) {
-    console.log('no item variant', externalItemId, colorId)
     return
   }
   return await get(db, STORES.PART_VARIANTS, [type, externalItemId, colorId])
 }
 
-export async function getVariantPageVariant(partId: string, colorId: string): Promise<VariantPageVariant> {
+export async function getVariantPageVariant(partId: string, colorId: string): Promise<VariantPageVariant | undefined> {
   const db = await getDbConnection()
   const activeCart = await getActiveCart()
-  const variant: ItemVariant = await get(db, STORES.PART_VARIANTS, [partId, colorId])
-  const invItems: InvItem[] = await getAllFromIndex(
+  const variant = await get<ItemVariant>(db, STORES.PART_VARIANTS, [partId, colorId])
+  if (!variant) {
+    return
+  }
+  const invItems = await getAllFromIndex<InvItem>(
     db,
     INDICES.INV_ITEMS_BY_ITEM_AND_COLOR,
     [variant.itemId, variant.colorId]
   )
+  if (!invItems) {
+    return
+  }
   const uiInvItems: VariantPageInvItem[] = []
   for (let i = 0; i < invItems.length; i++) {
     const invItem: InvItem = invItems[i]
     const store = await get(db, STORES.STORES, invItem.storeId)
     const uiItem: VariantPagePart | undefined = await getVariantPagePart(invItem.itemId)
-    const color: Color | undefined = await getColor(db, invItem.colorId)
+    const color: Color | undefined = await getColor(invItem.colorId)
     if (!uiItem || !color) {
       continue
     }
@@ -51,19 +56,30 @@ export async function getVariantPageVariant(partId: string, colorId: string): Pr
       cartQuantity
     })
   }
+  const color = await getColor(variant.colorId)
+  if (!color) {
+    return
+  }
   const uiPartVariant: VariantPageVariant = {
     ...variant,
-    color: await getColor(db, variant.colorId + ''),
+    color,
     invItems: uiInvItems,
     item: await getUiPart(variant.itemId),
   }
   return uiPartVariant
 }
-export async function getUiPartVariants(db: IDBPDatabase, id: string, objectCache?: ObjectCache): Promise<UiItemVariant[]> {
-  const variants: UiItemVariant[] = await getAllFromIndex(db, INDICES.PART_VARIANTS_BY_PART, id)
+export async function getUiPartVariants(db: IDBPDatabase, id: string): Promise<UiItemVariant[] | undefined> {
+  const variants = await getAllFromIndex<UiItemVariant>(db, INDICES.PART_VARIANTS_BY_PART, id)
+  if (!variants) {
+    return
+  }
   for (let i = 0; i < variants.length; i++) {
     const variant = variants[i]
-    variant.color = await getColor(db, variant.colorId)
+    const color = await getColor(db, variant.colorId)
+    if (!color) {
+      continue
+    }
+    variant.color = color
     variant.invItems = await getAllFromIndex(
       db,
       INDICES.INV_ITEMS_BY_ITEM_AND_COLOR,
