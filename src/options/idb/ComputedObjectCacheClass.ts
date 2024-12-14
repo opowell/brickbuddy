@@ -3,6 +3,7 @@ import STORES, { StoreDefinition } from './stores'
 import { getAll } from './db';
 import { Cart, CategoriesPageCategory, Category, Color, Condition, ExternalCategory, ExternalItem, HomeData, Item, Search, ShopList, Store } from '../types';
 import ObjectCache from './ObjectCacheClass';
+import { reportTime } from '../utils';
 
 interface ExternalItem2 extends ExternalItem {
   externalCategory: ExternalCategory
@@ -136,6 +137,7 @@ export default class ComputedObjectCache {
         }
         ec2.parts.push(ei2)
       })
+      reportTime('categories page')
       return Array.from(categories.values())
     })
     this.itemsMap2 = computed(() => {
@@ -209,15 +211,16 @@ export default class ComputedObjectCache {
       })
     })
     this.categoriesPageCategories = computed(() => {
-      if (!this.categoriesArraySearchFiltered.value) {
-        return
-      }
-      return this.categoriesArraySearchFiltered.value.map(c => {
-        return {
-          ...c,
-          parts: []
-        }
-      })
+      return this.categoriesArraySearchFiltered.value
+      // if (!this.categoriesArraySearchFiltered.value) {
+      //   return
+      // }
+      // return this.categoriesArraySearchFiltered.value.map(c => {
+      //   return {
+      //     ...c,
+      //     parts: []
+      //   }
+      // })
     })
     objectCache.getActiveSearch()
     this.loadColors()

@@ -11,6 +11,7 @@ interface CategoriesPageUniqueCategory {
   id: number | string
   category: CategoriesPageCategory
 }
+// @ts-ignore
 function countUnique(iterable: Iterable) {
   return new Set(iterable).size;
 }
@@ -66,6 +67,12 @@ const uniqueExternalCategories = computed<CategoriesPageUniqueCategory[]>(() => 
   return out
 })
 async function excludeCategory(category: Category) {
+  return await filterCategory(category, true)
+}
+async function includeCategory(category: Category) {
+  return await filterCategory(category, false)
+}
+async function filterCategory(category: Category, isExcluded: boolean) {
   const search = await getActiveSearch()
   if (!search) {
     return
@@ -73,13 +80,10 @@ async function excludeCategory(category: Category) {
   const filter: SearchFilter = {
     searchId: search.id,
     type: 'category',
-    isExcluded: true,
+    isExcluded,
     objectId: category.id
   }
   put(liveObjectCache.db, stores.SEARCH_FILTERS, filter)
-}
-function includeCategory(externalCategory: ExternalCategory, index: number) {
-  // categories.value = categories.value?.splice(index, 1)
 }
 import CategoryButton from '../components/CategoryButton.vue';
 import HomeButton from '../components/HomeButton.vue';
@@ -88,6 +92,7 @@ import ExternalCategoryButton from '../components/ExternalCategoryButton.vue';
 import { getActiveSearch } from '../idb/searches';
 import { put } from '../idb/db';
 import stores from '../idb/stores';
+import { reportTime, startTimer } from '../utils';
 </script>
 
 <template>
@@ -119,7 +124,7 @@ import stores from '../idb/stores';
           </td>
           <td>
             <ExcludeCategoryButton :category="externalCategory.category" @exclude="excludeCategory(externalCategory.category)"/>
-            <IncludeCategoryButton :category="externalCategory.category" @include="includeCategory(externalCategory, index)"/>
+            <IncludeCategoryButton :category="externalCategory.category" @include="includeCategory(externalCategory.category)"/>
           </td>
         </tr>
       </tbody>
