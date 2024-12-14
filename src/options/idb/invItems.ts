@@ -187,6 +187,9 @@ export async function getStorePageInvItem(invItem: InvItem, type: "Lego" | "Bric
   const cheapestPrice = await objectCache.getCheapestPrice(part.itemId, search.priceScoreQuantity, search.priceScoreIgnoreColor, color.id)
   const priceScoreString = getScore([], search.priceScoreQuantity, invItem.price, true, cheapestPrice)
   const cart = await objectCache.getActiveCart()
+  if (!cart) {
+    return
+  }
   const cartQuantity = getCartQuantity(cart, invItem)
   return {
     ...invItem,

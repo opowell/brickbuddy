@@ -4,9 +4,9 @@ import STORES from './stores'
 import INDICES from './indices'
 import { RbColor } from "../types";
 import { DB_NAME } from "./constants";
+import ObjectCacheClass from './ObjectCacheClass'
 
 export let liveObjectCache: ObjectCacheClass
-
 export async function createActiveSearchIfNecessary(db: IDBPDatabase) {
   const activeSearch = await liveObjectCache.getActiveSearch()
   if (activeSearch) {
@@ -269,7 +269,6 @@ export async function importRbPartsToMemory() {
   }
 }
 
-import ObjectCacheClass from './ObjectCacheClass'
 let dbConnection: IDBPDatabase | undefined
 
 export async function getDbConnection(): Promise<IDBPDatabase> {

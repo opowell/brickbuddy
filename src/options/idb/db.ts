@@ -2,7 +2,7 @@ import { IDBPDatabase, IDBPTransaction } from "idb";
 import { StoreDefinition } from "./stores";
 import { IndexDefinition } from "./indices";
 
-export async function getAll(db: IDBPDatabase, storeDefinition: StoreDefinition) {
+export async function getAll<T>(db: IDBPDatabase, storeDefinition: StoreDefinition): Promise<T[] | undefined> {
   return db.getAll(storeDefinition.name)
 }
 
