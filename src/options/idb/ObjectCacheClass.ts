@@ -298,6 +298,7 @@ export default class ObjectCache {
     return this.getObject<InvItem[] | undefined>(this.invItemsByStore, storeId, async () => await getAllFromIndex(this.db, indices.INV_ITEMS_BY_STORE, storeId))
   }
   async getCategoriesPageCategories(): Promise<CategoriesPageCategory[]> {
+    console.log('getCategoriesPageCategories')
     return this.getAllObjects<CategoriesPageCategory>(this.categoriesPageCategories, async () => await getCategoriesPageCategories())
   }
   async getExternalCategoriesByCategoryId(id: number): Promise<ExternalCategory[] | undefined> {

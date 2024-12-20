@@ -1,20 +1,24 @@
 <script setup lang="ts">
-import { getPartsPageParts } from '../idb/parts';
-import type { PartsPagePart } from '../types';
+import { getParts, getPartsPageParts } from '../idb/parts';
+import type { Item, PartsPagePart } from '../types';
 import PartButton from '../components/PartButton.vue';
 const search = ref('')
-const items = computed<PartsPagePart[] | undefined>(() => {
-  if (!cacheLoaded) {
-    return []
-  }
-  return getPartsPageParts.value
+// const items = computed<PartsPagePart[] | undefined>(() => {
+//   if (!cacheLoaded) {
+//     return []
+//   }
+//   return getPartsPageParts.value
+// })
+const items = ref()
+onMounted(async () => {
+  items.value = await getParts()
 })
 const filteredParts = computed(() => {
   if (!items.value) {
     return []
   }
   const itemName = ''
-  return items.value.filter((item) => {
+  return items.value.filter((item: Item) => {
     return itemName.includes(search.value)
   })
 })
@@ -50,14 +54,17 @@ import { cacheLoaded } from '../idb/idb';
       </thead>
       <tbody>
         <tr v-for="item in filteredParts" :key="item.itemId">
-          <td><img v-if="item.image" :src="item.image"></td>
-          <td>
+          <!-- <td><img v-if="item.image" :src="item.image"></td> -->
+          <td>{{  item.name }}</td>
+          <td>{{  item.externalCategoryId }}</td>
+          <td>{{  item.type }}</td>
+          <!-- <td>
             <PartButton :part="item" />
-          </td>
+          </td> -->
           <!-- <td><CategoryButton :category="item.category" /></td> -->
-          <td>CategoryButton :category="item.category"</td>
-          <td>{{ item.variants.length }}</td>
-          <td>{{ item.priceRange }}</td>
+          <!-- <td>CategoryButton :category="item.category"</td> -->
+          <!-- <td>{{ item.variants.length }}</td>
+          <td>{{ item.priceRange }}</td> -->
           <td><QuantityInput :current="0" :max="1000" /></td>
         </tr>
       </tbody>

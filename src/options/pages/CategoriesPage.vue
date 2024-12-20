@@ -17,15 +17,27 @@ function countUnique(iterable: Iterable) {
 }
 const categories = ref<CategoriesPageCategory[] | undefined>(undefined)
 const computedCategories = computed<CategoriesPageCategory[] | undefined>(() => {
-  if (liveObjectCache.computedCache.loaded) {
-    return liveObjectCache.computedCache.categoriesPageCategories.value
-  }
+  // if (liveObjectCache.computedCache.linked.value) {
+  //   return liveObjectCache.computedCache.categoriesPageCategories.value
+  // }
   return categories.value
 })
-onMounted(async () => {
-  if (!liveObjectCache.computedCache.categoriesPageCategories.value) {
-    categories.value = await liveObjectCache.getCategoriesPageCategories()
+const categoryImageMap = computed(() => {
+  if (!liveObjectCache.computedCache.linked) {
+    return
   }
+  return liveObjectCache.computedCache.categoryImageMap.value
+})
+const externalCategoryImageMap = computed(() => {
+  if (!liveObjectCache.computedCache.linked) {
+    return
+  }
+  return liveObjectCache.computedCache.externalCategoryImageMap.value
+})
+onMounted(async () => {
+  // if (!liveObjectCache.computedCache.linked.value) {
+    categories.value = await liveObjectCache.getCategoriesPageCategories()
+  // }
 })
 const uniqueExternalCategories = computed<CategoriesPageUniqueCategory[]>(() => {
   if (!computedCategories.value) {
@@ -40,11 +52,12 @@ const uniqueExternalCategories = computed<CategoriesPageUniqueCategory[]>(() => 
         if (ec.parts.length === 0) {
           return
         }
+        const image = externalCategoryImageMap.value?.get(ec.id)
         out.push({
           isExternal: true,
           externalCategories: [ec],
           numParts: ec.parts.length,
-          image: ec.image,
+          image,
           id: ec.id,
           category
         })
@@ -52,8 +65,7 @@ const uniqueExternalCategories = computed<CategoriesPageUniqueCategory[]>(() => 
     } else {
       // add all ec together
       const numParts = category.externalCategories.reduce((sum, currentValue) => sum + currentValue.parts.length, 0)
-      const imageEc = category.externalCategories.find(ec => ec.image)
-      const image = imageEc ? imageEc.image : undefined
+      const image = categoryImageMap.value?.get(category.id)
       out.push({
         isExternal: false,
         externalCategories: category.externalCategories,

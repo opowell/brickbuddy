@@ -8,7 +8,7 @@ import { HomeData } from '../types';
 
 const homeData = ref<HomeData | undefined>()
 const computedHomeData = computed<HomeData | undefined>(() => {
-  if (liveObjectCache.computedCache.loaded) {
+  if (liveObjectCache.computedCache.linked) {
     return liveObjectCache.computedCache.homeData.value
   }
   return homeData.value
@@ -51,8 +51,8 @@ onMounted(async () => {
     <div v-else class="cards">
       <CardComponent name="Stores" :count="computedHomeData.stores" :href="Crumbs.stores.href" />
       <CardComponent name="Colors" :count="computedHomeData.colors" :href="Crumbs.colors.href" />
-      <CardComponent v-if="categories" name="Categories" :count="categories" :href="Crumbs.categories.href" />
-      <CardComponent v-if="items" name="Parts" :count="items" :href="Crumbs.parts.href" />
+      <CardComponent name="Categories" :count="categories" :href="Crumbs.categories.href" />
+      <CardComponent name="Parts" :count="items" :href="Crumbs.parts.href" />
       <CardComponent name="Searches" :count="computedHomeData.searches" :href="Crumbs.searches.href" />
       <CardComponent name="Conditions" :count="computedHomeData.conditions" :href="Crumbs.conditions.href" />
       <CardComponent name="Lists" :count="computedHomeData.lists" :href="Crumbs.lists.href" />

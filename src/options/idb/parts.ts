@@ -119,9 +119,14 @@ export async function getPart(db: IDBPDatabase, partId: IDBValidKey): Promise<It
   return await get<Item>(db, STORES.PARTS, partId)
 }
 
-async function getParts(): Promise<CachedItem[]> {
+export async function getParts(): Promise<CachedItem[]> {
   const search = await getActiveSearch()
-  const parts = computed(() => filteredParts.value)
+  // const parts = computed(() => filteredParts.value)
+  const parts = await getAllExternalParts(liveObjectCache.db)
+  if (!parts) {
+    return []
+  }
+  return parts
   const fps: CachedItem[] = []
   for (let i = 0; i < parts.value.length; i++) {
     const part = parts.value[i]
@@ -204,13 +209,13 @@ async function getUiPartFromPart(db: IDBPDatabase, part: CategoryPagePart, objec
 export const getPartsPageParts = computed((): PartsPagePart[] => {
   const items: Item[] = getParts()
   const partsPageParts: PartsPagePart[] = []
-  items.forEach((item) => {
-    const partsPagePart = getPartsPagePart.value.get(item.itemId)
-    if (!partsPagePart) {
-      return
-    }
-    partsPageParts.push(partsPagePart)
-  })
+  // items.forEach((item) => {
+  //   const partsPagePart = getPartsPagePart.value.get(item.itemId)
+  //   if (!partsPagePart) {
+  //     return
+  //   }
+  //   partsPageParts.push(partsPagePart)
+  // })
   return partsPageParts.filter(p => p.variants.length > 0)
 })
 

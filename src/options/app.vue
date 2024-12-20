@@ -7,8 +7,8 @@ onMounted(async () => {
   const db = await getDbConnection()
   await loadLiveObjectCache(db)
   await createActiveSearchIfNecessary(db)
-  // await addStore("DopfiBrixKing", "2118718", [], 'Dopfi', 100, db)
-  startFetching()
+  // await addStore("brickina - up to 75%OFF", "875831", [], 'brickina', 100, db)
+  // startFetching()
   return {
     cacheLoaded,
   }
@@ -27,6 +27,27 @@ watch(
     window.scrollTo({ left: 0, top: 0 })
   }
 );
+
+
+// @ts-ignore
+window.getUsage = async function() {
+  if (!navigator.storage || !navigator.storage.estimate) {
+    return
+  }
+  const quota = await navigator.storage.estimate();
+  if (!quota.usage || !quota.quota) {
+    return
+  }
+  const percentageUsed = (quota.usage / quota.quota) * 100;
+  const quotaInGB = (quota.quota / 1024/1024/1024).toFixed(2)
+  const usageInGB = (quota.usage / 1024/1024/1024).toFixed(2)
+  const remaining = Number.parseFloat(quotaInGB) - Number.parseFloat(usageInGB)
+  console.log(`Quota: ${quotaInGB} GB`)
+  console.log(`Usage: ${usageInGB} GB`)
+  console.log(`Usage %: ${percentageUsed}`)
+  console.log(`Remaining: ${remaining} GB`);
+}
+
 
 </script>
 <template>

@@ -31,7 +31,7 @@ const filteredItems = computed<CartPageCartItem[]>(() => {
   if (!selectedStoreId.value) {
     return items.value
   }
-  return items.value.filter((i: CartPageCartItem) => i.storeId === selectedStoreId.value)
+  return items.value.filter(i => i.storeId === selectedStoreId.value)
 })
 import ExternalCategoryButton from '../components/ExternalCategoryButton.vue';
 import ConditionButton from '../components/ConditionButton.vue';
@@ -104,10 +104,10 @@ enum RESULT {
 }
 
 const resultAddingCartMap = ref(new Map<string, RESULT>())
-async function addToBrickLinkCart(store: CartPageStore) {
+async function addToBrickLinkCart(store: CartPageStore, items: CartPageCartItem[], retryIfFail = true) {
   resultAddingCartMap.value.delete(store.store.id)
   addingToBrickLinkMap.value.set(store.store.id, true)
-  const itemArray = encodeURIComponent(JSON.stringify(store.items.map(
+  const itemArray = encodeURIComponent(JSON.stringify(items.map(
     i => {
       return {
         invID: i.invItemId,
@@ -143,6 +143,18 @@ async function addToBrickLinkCart(store: CartPageStore) {
   const responseJson = await response.json()
   if (responseJson.errors === 0) {
     resultAddingCartMap.value.set(store.store.id, RESULT.SUCCESS)
+  } else if (retryIfFail) {
+    // try again without error items
+    const OK_CODE = '0'
+    interface ItemReturnStatus {
+      code: string
+      invID: number
+    }
+    const itemReturnStatuses: ItemReturnStatus[] = responseJson.itemReturnStatus
+    const errorItems = itemReturnStatuses.filter(s => s.code !== OK_CODE)
+    const errorIds = errorItems.map(s => s.invID + '')
+    const okItems = items.filter(item => !errorIds.includes(item.invItemId))
+    return addToBrickLinkCart(store, okItems, false)
   }
   addingToBrickLinkMap.value.set(store.store.id, false)
 }
@@ -175,7 +187,7 @@ async function addToBrickLinkCart(store: CartPageStore) {
             <button
               v-if="store.store.type === StoreType.BrickLink"
               :disabled="store.addingToBrickLink"
-              @click="addToBrickLinkCart(store)"
+              @click="addToBrickLinkCart(store, store.items)"
             >
               {{ store.addingToBrickLink ? 'Adding...' : 'Add' }}
             </button>
@@ -222,7 +234,7 @@ async function addToBrickLinkCart(store: CartPageStore) {
             <StoreButton :store="item.store" />
           </td>
           <td>
-            <PartButton :part="item.part" />
+            <PartButton :part="item.part" />{{ item.invItemId }}
           </td>
           <td><ConditionButton :condition="item.invItem.condition" /></td>
           <td><ColorButton :color="item.color" /></td>
