@@ -378,8 +378,8 @@ export interface ActiveSearch extends Search {
     excluded: number[]
   }
   colors: {
-    included: number[]
-    excluded: number[]
+    included: string[]
+    excluded: string[]
   }
   conditions: {
     included: string[]
@@ -410,8 +410,8 @@ export interface ActiveSearchButtonActiveSearch extends ActiveSearch {
     excludedNames: string[]
   }
   colors: {
-    included: number[]
-    excluded: number[]
+    included: string[]
+    excluded: string[]
     includedNames: string[]
     excludedNames: string[]
   }
@@ -512,6 +512,7 @@ export interface ColorsPageColor extends Color {
 }
 
 export interface Category {
+  excluded?: boolean
   id: number
 }
 
@@ -590,7 +591,7 @@ export interface CategoriesPageExternalCategory extends ExternalCategory {
 
 export interface CategoriesPageCategory extends Category {
   image?: string
-  externalCategories: CategoriesPageExternalCategory[]
+  externalCategories?: CategoriesPageExternalCategory[]
 }
 
 export interface UiCategory extends Category {

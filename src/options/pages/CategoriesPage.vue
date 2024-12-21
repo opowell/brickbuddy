@@ -2,7 +2,8 @@
 import { CategoriesPageCategory, CategoriesPageExternalCategory, Category, ExternalCategory, SearchFilter } from '../types';
 import ExcludeCategoryButton from '../components/ExcludeCategoryButton.vue';
 import IncludeCategoryButton from '../components/IncludeCategoryButton.vue';
-import { liveObjectCache } from '../idb/idb';
+import { getDbConnection, liveObjectCache } from '../idb/idb';
+import ObjectCache from '../idb/ObjectCacheClass';
 interface CategoriesPageUniqueCategory {
   externalCategories: CategoriesPageExternalCategory[]
   isExternal: boolean
@@ -17,9 +18,6 @@ function countUnique(iterable: Iterable) {
 }
 const categories = ref<CategoriesPageCategory[] | undefined>(undefined)
 const computedCategories = computed<CategoriesPageCategory[] | undefined>(() => {
-  // if (liveObjectCache.computedCache.linked.value) {
-  //   return liveObjectCache.computedCache.categoriesPageCategories.value
-  // }
   return categories.value
 })
 const categoryImageMap = computed(() => {
@@ -35,9 +33,9 @@ const externalCategoryImageMap = computed(() => {
   return liveObjectCache.computedCache.externalCategoryImageMap.value
 })
 onMounted(async () => {
-  // if (!liveObjectCache.computedCache.linked.value) {
-    categories.value = await liveObjectCache.getCategoriesPageCategories()
-  // }
+  const db = await getDbConnection()
+  const objectCache = new ObjectCache(db)
+  categories.value = await objectCache.getCategoriesPageCategories2()
 })
 const uniqueExternalCategories = computed<CategoriesPageUniqueCategory[]>(() => {
   if (!computedCategories.value) {
@@ -96,6 +94,8 @@ async function filterCategory(category: Category, isExcluded: boolean) {
     objectId: category.id
   }
   put(liveObjectCache.db, stores.SEARCH_FILTERS, filter)
+  category.excluded = isExcluded
+  put(liveObjectCache.db, stores.CATEGORIES, category)
 }
 import CategoryButton from '../components/CategoryButton.vue';
 import HomeButton from '../components/HomeButton.vue';

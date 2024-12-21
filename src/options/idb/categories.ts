@@ -110,6 +110,26 @@ export async function getExternalCategoryPageExternalCategory(type: 'BrickLink' 
   }
 }
 
+export async function getCategoriesPageCategories2(objectCache: ObjectCache): Promise<CategoriesPageCategory[] | undefined> {
+  const search = await objectCache.getActiveSearch()
+  if (!search) {
+    return
+  }
+  const categories: CategoriesPageCategory[] = []
+  const included = search.categories.included
+  if (included.length > 0) {
+    for (let i = 0; i < included.length; i++) {
+      const category = await objectCache.getCategory(included[i])
+      if (!category) {
+        continue
+      }
+      categories.push(category)
+    }
+    return categories
+      .sort((a, b) => a.id - b.id)
+  }
+}
+
 export async function getCategoriesPageCategories(): Promise<CategoriesPageCategory[] | undefined> {
   const objectCache = liveObjectCache
   const categories = await objectCache.getAllCategories()
@@ -196,7 +216,7 @@ export async function updateCategory(
   await put(db, STORES.CATEGORIES, category)
 }
 
-export async function getCategory(db: IDBPDatabase, id: number): Promise<Category> {
+export async function getCategory(db: IDBPDatabase, id: number): Promise<Category | undefined> {
   return await get(db, STORES.CATEGORIES, id)
 }
 export async function getExternalCategory<T extends ExternalCategory>(db: IDBPDatabase, id: string, type: "BrickLink" | "Lego" | "Rebrickable"): Promise<T> {

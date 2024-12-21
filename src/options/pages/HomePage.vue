@@ -4,33 +4,29 @@ import ActiveSearchButton from '../components/ActiveSearchButton.vue';
 import ActiveCartButton from '../components/ActiveCartButton.vue';
 import { liveObjectCache } from '../idb/idb';
 import CardComponent from '../components/CardComponent.vue';
-import { HomeData } from '../types';
+import { reportTime, startTimer } from '../utils';
 
-const homeData = ref<HomeData | undefined>()
-const computedHomeData = computed<HomeData | undefined>(() => {
-  if (liveObjectCache.computedCache.linked) {
-    return liveObjectCache.computedCache.homeData.value
-  }
-  return homeData.value
-})
-const computedCache = computed(() => {
-  return liveObjectCache.computedCache
-})
-const categories = computed(() => {
-  if (computedCache.value.categoriesArraySearchFiltered.value) {
-    return computedCache.value.categoriesArraySearchFiltered.value.length
-  }
-  return homeData.value?.categories
-})
-const items = computed(() => {
-  if (computedCache.value.itemsArray2.value) {
-    return computedCache.value.itemsArray2.value.length
-  }
-  return homeData.value?.parts
-})
+const stores = ref<number | undefined>()
+const colors = ref<number | undefined>()
+const categories = ref<number | undefined>()
+const parts = ref<number | undefined>()
 onMounted(async () => {
-  if (!liveObjectCache.computedCache.homeData.value) {
-    homeData.value = await liveObjectCache.getHomeData()
+  startTimer('HomePage')
+  colors.value = await liveObjectCache.getHomePageNumColors()
+  stores.value = await liveObjectCache.getHomePageNumStores()
+  categories.value = await liveObjectCache.getHomePageNumCategories()
+  parts.value = await liveObjectCache.getHomePageNumParts()
+})
+const loaded = computed(() => {
+  return (
+    !!stores.value &&
+    !!colors.value &&
+    !!categories.value
+  )
+})
+watch(loaded, () => {
+  if (loaded) {
+    reportTime('HomePage')
   }
 })
 </script>
@@ -42,21 +38,16 @@ onMounted(async () => {
       <ActiveSearchButton />
       <ActiveCartButton />
     </p>
-    <div v-if="computedHomeData">Cache loaded</div>
-    <div v-if="computedCache.categoriesArraySearchFiltered.value">Computed cache loaded: {{ computedCache.categoriesArraySearchFiltered.value.length }}</div>
-    <div v-if="computedCache.externalItemsArray.value">externalItemsArray: {{ computedCache.externalItemsArray.value.length }}</div>
-    <div v-if="computedCache.externalItemsArray2.value">externalItemsArray2: {{ computedCache.externalItemsArray2.value.length }}</div>
-    <div v-if="computedCache.itemsArray2.value">itemsArray2: {{ computedCache.itemsArray2.value.length }}</div>
-    <div v-if="!computedHomeData">Loading...</div>
+    <div v-if="!loaded">Loading...</div>
     <div v-else class="cards">
-      <CardComponent name="Stores" :count="computedHomeData.stores" :href="Crumbs.stores.href" />
-      <CardComponent name="Colors" :count="computedHomeData.colors" :href="Crumbs.colors.href" />
+      <CardComponent name="Stores" :count="stores" :href="Crumbs.stores.href" />
+      <CardComponent name="Colors" :count="colors" :href="Crumbs.colors.href" />
       <CardComponent name="Categories" :count="categories" :href="Crumbs.categories.href" />
-      <CardComponent name="Parts" :count="items" :href="Crumbs.parts.href" />
-      <CardComponent name="Searches" :count="computedHomeData.searches" :href="Crumbs.searches.href" />
-      <CardComponent name="Conditions" :count="computedHomeData.conditions" :href="Crumbs.conditions.href" />
-      <CardComponent name="Lists" :count="computedHomeData.lists" :href="Crumbs.lists.href" />
-      <CardComponent name="Carts" :count="computedHomeData.carts" :href="Crumbs.carts.href" />
+      <CardComponent name="Parts" :count="parts" :href="Crumbs.parts.href" />
+      <!-- <CardComponent name="Searches" :count="homeData.searches" :href="Crumbs.searches.href" />
+      <CardComponent name="Conditions" :count="homeData.conditions" :href="Crumbs.conditions.href" />
+      <CardComponent name="Lists" :count="homeData.lists" :href="Crumbs.lists.href" />
+      <CardComponent name="Carts" :count="homeData.carts" :href="Crumbs.carts.href" /> -->
     </div>
   </div>
 </template>

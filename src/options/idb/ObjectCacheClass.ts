@@ -2,31 +2,16 @@ import { IDBPDatabase } from 'idb';
 import { ActiveSearch, CartItem, CartWithItems, CategoriesPageCategory, Category, Color, ExternalCategory, ExternalCategoryPageExternalPart, ExternalItem, ExternalPartPageExternalPart, ExternalPartPageInvItem, ExternalPartPageItemVariant, HomeData, InvItem, Item, ItemVariant, PartPageCategory, Search, SearchFilter, Store, StorePageInvItemItem, UiColor } from '../types';
 import STORES from './stores'
 import { getFirstActiveCart, getCartItems, getCartQuantity } from './carts';
-import { getExternalCategoriesByCategoryId, getCategoriesPageCategories, getCategory, getExternalCategory, getPartPageCategory, loadExternalPartPrice } from './categories';
+import { getExternalCategoriesByCategoryId, getCategoriesPageCategories, getCategoriesPageCategories2, getCategory, getExternalCategory, getPartPageCategory, loadExternalPartPrice } from './categories';
 import { getInvItemFromId } from './invItems';
-import { getStorePageExternalPart, getStorePagePart } from './parts';
+import { getPart, getStorePageExternalPart, getStorePagePart } from './parts';
 import { getFirstActiveSearch, getSearchFilters } from './searches';
 import { countFromIndex, get, getAll, getAllFromIndex, getFromIndex } from './db';
 import indices from './indices';
-import { cheapestPrice } from '../utils';
+import { cheapestPrice, reportTime, startTimer } from '../utils';
 import { liveObjectCache } from './idb';
 import ComputedObjectCacheClass from './ComputedObjectCacheClass'
-
-interface Filter<T> {
-  included: T[]
-  excluded: T[]
-}
-function getTypeFilters<T extends string | number>(filters: SearchFilter[], type: string): Filter<T> {
-  const matching = filters.filter(f => f.type === type)
-  // @ts-ignore
-  const included: T[] = matching.filter(f => !f.isExcluded).map(f => f.objectId)
-  // @ts-ignore
-  const excluded: T[] = matching.filter(f => !f.isExcluded).map(f => f.objectId)
-  return {
-    included,
-    excluded
-  }
-}
+import { it } from 'node:test';
 
 export default class ObjectCache {
   allCategories: Category[] | undefined
@@ -87,7 +72,7 @@ export default class ObjectCache {
     this.invItemsByStore = new Map<string, InvItem[]>()
     this.stores = new Map<string, Store>()
     this.activeCart = undefined
-    this.computedCache = new ComputedObjectCacheClass(this)
+    // this.computedCache = new ComputedObjectCacheClass(this)
   }
   async getAllCategories() {
     if (!this.allCategories) {
@@ -99,6 +84,118 @@ export default class ObjectCache {
         this.categories.set(c.id, c)
       })
     }
+    return this.allCategories
+  }
+  async getHomePageNumStores(): Promise<number | undefined> {
+    const x = await this.getHomePageNumObjects(
+      'stores',
+      this.getStore,
+      (store: Store) => store.id,
+      this.getAllStoreKeys
+    )
+    return x
+  }
+  async getHomePageNumObjects(
+    filterKey: 'colors' | 'categories' | 'stores' | 'parts',
+    getObject: Function,
+    getObjectKey: Function,
+    getAllKeys: Function,
+    filter?: Function
+  ): Promise<number | undefined> {
+    const search = await this.getActiveSearch()
+    if (!search) {
+      return
+    }
+    let keys = []
+    const included = search[filterKey].included
+    if (included && included.length > 0) {
+      for (let i = 0; i < included.length; i++) {
+        const object = await getObject(included[i])
+        if (!object) {
+          continue
+        }
+        keys.push(getObjectKey(object))
+      }
+    } else {
+      // @ts-ignore
+      const excluded: T[] = search[filterKey].excluded
+      keys = await getAllKeys.bind(this)()
+      keys = keys.filter((key: string | number) => !excluded.includes(key))
+    }
+    if (filter) {
+      const filteredKeys = []
+      for (let i = 0; i < keys.length; i++) {
+        const key = keys[i]
+        if (await filter(key)) {
+          filteredKeys.push(key)
+        }
+      }
+    }
+    return keys.length
+  }
+  async getHomePageNumColors(): Promise<number | undefined> {
+    const x = this.getHomePageNumObjects(
+      'colors',
+      this.getColor,
+      (color: Color) => color.id,
+      this.getAllColorKeys
+    )
+    return x
+  }
+  async getHomePageNumParts(): Promise<number | undefined> {
+    const x = await this.getHomePageNumObjects(
+      'parts',
+      this.getPart,
+      (part: Item) => part.itemId,
+      this.getAllPartKeys,
+      async (key) => {
+        const externalParts = await this.getExternalPartsByPart(key)
+        if (!externalParts) {
+          return false
+        }
+        for (let i = 0; i < externalParts.length; i++) {
+          const externalPart = externalParts[i]
+          const externalCategory = await this.getExternalCategory(externalPart.externalCategoryId, externalPart.type)
+          // 
+        }
+        return true
+      }
+    )
+    return x
+  }
+  async getHomePageNumCategories(): Promise<number | undefined> {
+    const x = await this.getHomePageNumObjects(
+      'categories',
+      this.getCategory,
+      (category: Category) => category.id,
+      this.getAllCategoryKeys
+    )
+    return x
+  }
+  async getAllStoreKeys(): Promise<string[]> {
+    // @ts-ignore
+    return this.db.getAllKeys(STORES.STORES.name)
+  }
+  async getAllPartKeys(): Promise<string[]> {
+    // @ts-ignore
+    return this.db.getAllKeys(STORES.PARTS.name)
+  }
+  async getAllCategoryKeys(): Promise<string[]> {
+    // @ts-ignore
+    return this.db.getAllKeys(STORES.CATEGORIES.name)
+  }
+  async getAllColorKeys(): Promise<string[]> {
+    // @ts-ignore
+    return this.db.getAllKeys(STORES.COLORS.name)
+  }
+  async getAllActiveCategories() {
+    this.allCategories = await getAll(this.db, STORES.CATEGORIES)
+    if (!this.allCategories) {
+      return
+    }
+    this.allCategories.forEach(c => {
+      this.categories.set(c.id, c)
+    })
     return this.allCategories
   }
   async getCheapestPrice(itemId: number, targetQ: number, ignoreColor: boolean, colorId: string) {
@@ -113,11 +210,14 @@ export default class ObjectCache {
     const allMatchingInvItems = new Map<string, InvItem>()
     for (let i = 0; i < matchingParts.length; i++) {
       const matchingPart = matchingParts[i]
-      let matches: InvItem[] = []
+      let matches: InvItem[] | undefined = []
       if (ignoreColor) {
-        matches = await getAllFromIndex(this.db, indices.INV_ITEMS_BY_ITEM, matchingPart.externalItemId)
+        matches = await getAllFromIndex<InvItem>(this.db, indices.INV_ITEMS_BY_ITEM, matchingPart.externalItemId)
       } else {
-        matches = await getAllFromIndex(this.db, indices.INV_ITEMS_BY_ITEM_AND_COLOR, [matchingPart.externalItemId, colorId])
+        matches = await getAllFromIndex<InvItem>(this.db, indices.INV_ITEMS_BY_ITEM_AND_COLOR, [matchingPart.externalItemId, colorId])
+      }
+      if (!matches) {
+        continue
       }
       matches.forEach((match) => allMatchingInvItems.set(match.storeId + '//' + match.invId, match))
     }
@@ -129,7 +229,10 @@ export default class ObjectCache {
     if (this.firstVariantByPart.has(itemId)) {
       return this.firstVariantByPart.get(itemId)
     }
-    const variant: ItemVariant = await getFromIndex(this.db, indices.PART_VARIANTS_BY_PART, itemId)
+    const variant = await getFromIndex<ItemVariant>(this.db, indices.PART_VARIANTS_BY_PART, itemId)
+    if (!variant) {
+      return
+    }
     this.firstVariantByPart.set(itemId, variant)
     return variant
   }
@@ -138,7 +241,10 @@ export default class ObjectCache {
     if (this.partVariantsByPartColor.has(id)) {
       return this.partVariantsByPartColor.get(id)
     }
-    const variants: ItemVariant[] = await getAllFromIndex(this.db, indices.PART_VARIANTS_BY_PART_AND_COLOR, [itemId, colorId])
+    const variants = await getAllFromIndex<ItemVariant>(this.db, indices.PART_VARIANTS_BY_PART_AND_COLOR, [itemId, colorId])
+    if (!variants) {
+      return
+    }
     this.partVariantsByPartColor.set(id, variants)
     return variants
   }
@@ -147,7 +253,10 @@ export default class ObjectCache {
     if (this.partVariantByPartColor.has(id)) {
       return this.partVariantByPartColor.get(id)
     }
-    const variant: ItemVariant = await getFromIndex(this.db, indices.PART_VARIANTS_BY_PART_AND_COLOR, [itemId, colorId])
+    const variant = await getFromIndex<ItemVariant>(this.db, indices.PART_VARIANTS_BY_PART_AND_COLOR, [itemId, colorId])
+    if (!variant) {
+      return
+    }
     this.partVariantByPartColor.set(id, variant)
     return variant
   }
@@ -155,7 +264,10 @@ export default class ObjectCache {
     if (this.externalPartsByPart.has(id)) {
       return this.externalPartsByPart.get(id)
     }
-    const externalItems: ExternalItem[] = await getAllFromIndex(this.db, indices.EXTERNAL_PARTS_BY_PART, id)
+    const externalItems = await getAllFromIndex<ExternalItem>(this.db, indices.EXTERNAL_PARTS_BY_PART, id)
+    if (!externalItems) {
+      return
+    }
     this.externalPartsByPart.set(id, externalItems)
     return externalItems
   }
@@ -209,7 +321,7 @@ export default class ObjectCache {
   }
   async getActiveSearch(): Promise<ActiveSearch> {
     if (!this.activeSearch) {
-      let search = await getFirstActiveSearch(this.db)
+      let search = await getFirstActiveSearch(this)
       if (!search) {
         const newSearch: Search = {
           id: 0,
@@ -256,7 +368,7 @@ export default class ObjectCache {
     return this.getObject(this.stores, storeId, async () => await get(this.db, STORES.STORES, storeId))
   }
   async getColor(colorId: string): Promise<Color | undefined> {
-    const computedColor = this.computedCache.colorsMap.value.get(colorId)
+    const computedColor = this.computedCache?.colorsMap.value.get(colorId)
     if (computedColor) {
       return computedColor
     }
@@ -264,6 +376,9 @@ export default class ObjectCache {
   }
   async getCategory(categoryId: number): Promise<Category | undefined> {
     return this.getObject<Category | undefined>(this.categories, categoryId, async () => await getCategory(this.db, categoryId))
+  }
+  async getPart(itemId: number): Promise<Item | undefined> {
+    return this.getObject<Item | undefined>(this.parts, itemId, async () => await getPart(this.db, itemId))
   }
   async getExternalCategory(categoryId: string, type: "BrickLink" | "Lego" | "Rebrickable"): Promise<ExternalCategory | undefined> {
     return this.getObject<ExternalCategory | undefined>(this.externalCategories, categoryId, async () => await getExternalCategory(this.db, categoryId, type))
@@ -300,6 +415,9 @@ export default class ObjectCache {
   async getCategoriesPageCategories(): Promise<CategoriesPageCategory[]> {
     console.log('getCategoriesPageCategories')
     return this.getAllObjects<CategoriesPageCategory>(this.categoriesPageCategories, async () => await getCategoriesPageCategories())
+  }
+  async getCategoriesPageCategories2(): Promise<CategoriesPageCategory[]> {
+    return await getCategoriesPageCategories2()
   }
   async getExternalCategoriesByCategoryId(id: number): Promise<ExternalCategory[] | undefined> {
     return this.getObject<ExternalCategory[]>(this.externalCategoriesByCategoryId, id, async () => await getExternalCategoriesByCategoryId(id, this))

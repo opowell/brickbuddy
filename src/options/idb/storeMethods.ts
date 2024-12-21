@@ -193,6 +193,7 @@ export async function createInitialStores(db: IDBPDatabase) {
   ], 'UnsortedBrick', 100, db)
   await addStore("bububricks store", "104358", [], 's4x', 100, db)
   await addStore("brickina - up to 75%OFF", "875831", [], 'brickina', 100, db)
+  await addStore("Brick24 - MEGASTORE", "159216", [], 'ChromeBricks', 100, db)
   await addStore("Canarybricks", "372952", [], 'Canarybricks', 100, db)
   await addStore("DopfiBrixKing", "2118718", [], 'Dopfi', 100, db)
   await addStore("Vineyard Bricks e.U.", "1821152", [], 'jgutzwar97', 100, db)
@@ -303,7 +304,7 @@ export async function getAllInvItems(db: IDBPDatabase): Promise<CachedInvItem[]>
 }
 
 export async function getStoresPageStores(): Promise<StoresPageStore[] | undefined> {
-  const search = await getFirstActiveSearch(liveObjectCache.db)
+  const search = await getFirstActiveSearch(liveObjectCache)
   if (!search) {
     return
   }

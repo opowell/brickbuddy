@@ -7,8 +7,8 @@ import { DB_NAME } from "./constants";
 import ObjectCacheClass from './ObjectCacheClass'
 
 export let liveObjectCache: ObjectCacheClass
-export async function createActiveSearchIfNecessary(db: IDBPDatabase) {
-  const activeSearch = await liveObjectCache.getActiveSearch()
+export async function createActiveSearchIfNecessary(objectCache: ObjectCacheClass) {
+  const activeSearch = await objectCache.getActiveSearch()
   if (activeSearch) {
     return
   }
@@ -20,7 +20,7 @@ export async function createActiveSearchIfNecessary(db: IDBPDatabase) {
     priceScoreQuantity: 100,
     priceScoreIgnoreColor: true
   }
-  const id = await put(db, STORES.SEARCHES, newSearch)
+  const id = await put(objectCache.db, STORES.SEARCHES, newSearch)
   if (!id) {
     return
   }

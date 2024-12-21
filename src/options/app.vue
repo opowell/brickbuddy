@@ -1,26 +1,31 @@
 <script setup lang="ts">
-import { cacheLoaded, createActiveSearchIfNecessary, getDbConnection, importRbPartsToMemory, loadLiveObjectCache } from './idb/idb';
+import { createActiveSearchIfNecessary, getDbConnection, importRbPartsToMemory, liveObjectCache, loadLiveObjectCache } from './idb/idb';
 import { startFetching } from './idb/scraping';
 
+const loaded = ref(false)
 onMounted(async () => {
+  startTimer('app.vue')
   await importRbPartsToMemory()
   const db = await getDbConnection()
   await loadLiveObjectCache(db)
-  await createActiveSearchIfNecessary(db)
-  // await addStore("brickina - up to 75%OFF", "875831", [], 'brickina', 100, db)
-  // startFetching()
+  await createActiveSearchIfNecessary(liveObjectCache)
+  await addStore("Brick24 - MEGASTORE", "159216", [], 'ChromeBricks', 100, db)
+  startFetching()
+  loaded.value = true
+  reportTime('app.vue')
   return {
-    cacheLoaded,
+    loaded,
   }
 })
 
 import { watch } from "vue";
 import { useRoute } from "vue-router";
 import { addStore } from './idb/storeMethods';
+import { reportTime, startTimer } from './utils';
+import ObjectCache from './idb/ObjectCacheClass';
 
 const route = useRoute();
 
-// do a `console.log(route)` to see route attributes (fullPath, hash, params, path...)
 watch(
   () => route.fullPath,
   async () => {
@@ -51,5 +56,5 @@ window.getUsage = async function() {
 
 </script>
 <template>
-  <router-view v-if="cacheLoaded" />
+  <router-view v-if="loaded" />
 </template>

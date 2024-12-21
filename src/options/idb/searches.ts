@@ -6,6 +6,7 @@ import { get, getAll, getAllFromIndex, getFromIndex } from "./db"
 import { getCategoriesPageCategory, getDbConnection, liveObjectCache } from "./idb"
 import STORES from "./stores"
 import INDICES from './indices'
+import ObjectCache from "./ObjectCacheClass"
 
 export async function addNewSearch() {
   const db = await getDbConnection()
@@ -24,8 +25,7 @@ export async function getActiveCart(): Promise<CartWithItems | undefined> {
   return await liveObjectCache.getActiveCart()
 }
 export async function getActiveSearchButtonActiveSearch(): Promise<ActiveSearchButtonActiveSearch | undefined> {
-  const db = await getDbConnection()
-  const search = await getFirstActiveSearch(db)
+  const search = await getFirstActiveSearch(liveObjectCache)
   if (!search) {
     return
   }
@@ -65,12 +65,12 @@ export async function getActiveSearchButtonActiveSearch(): Promise<ActiveSearchB
   return activeSearchButtonActiveSearch
 }
 
-export async function getFirstActiveSearch(db: IDBPDatabase): Promise<ActiveSearch | undefined> {
-  const search = await getFromIndex<Search>(db, INDICES.SEARCHES_BY_ACTIVE, 1)
+export async function getFirstActiveSearch(objectCache: ObjectCache): Promise<ActiveSearch | undefined> {
+  const search = await getFromIndex<Search>(objectCache.db, INDICES.SEARCHES_BY_ACTIVE, 1)
   if (!search) {
     return
   }
-  const activeSearch = await loadSearchFilters(search)
+  const activeSearch = await loadSearchFilters(search, objectCache)
   return activeSearch
 }
 
@@ -82,9 +82,12 @@ export async function getAllSearchFilters(db: IDBPDatabase): Promise<SearchFilte
   return await getAll(db, STORES.SEARCH_FILTERS)
 }
 
-export async function getSearchesPagesSearches(): Promise<SearchesPageSearch[]> {
+export async function getSearchesPagesSearches(): Promise<SearchesPageSearch[] | undefined> {
   const db = await getDbConnection()
   const searches = await getAllSearches(db)
+  if (!searches) {
+    return
+  }
   const searchesPageSearches: SearchesPageSearch[] = []
   for (let i = 0; i < searches.length; i++) {
     const search = searches[i]
@@ -113,21 +116,24 @@ export async function setPriceScoreQuantity(quantity: number) {
   db.put(STORES.SEARCHES.name, search)
 }
 
-export async function getSearchFilters(db: IDBPDatabase, search: Search): Promise<SearchFilter[]> {
-  return await getAllFromIndex(db, INDICES.SEARCH_FILTERS_BY_SEARCH, search.id)
+export async function getSearchFilters(db: IDBPDatabase, search: Search): Promise<SearchFilter[] | undefined> {
+  return await getAllFromIndex<SearchFilter>(db, INDICES.SEARCH_FILTERS_BY_SEARCH, search.id)
 }
 
-export async function getSearch(id: number): Promise<ActiveSearch | undefined> {
-  const search = await get<Search>(liveObjectCache.db, STORES.SEARCHES, id)
+export async function getSearch(id: number, objectCache: ObjectCache): Promise<ActiveSearch | undefined> {
+  const search = await get<Search>(objectCache.db, STORES.SEARCHES, id)
   if (!search) {
     return
   }
-  const activeSearch = await loadSearchFilters(search)
+  const activeSearch = await loadSearchFilters(search, objectCache)
   return activeSearch
 }
 
-async function loadSearchFilters(search: Search): Promise<ActiveSearch> {
-  const filters: SearchFilter[] = await getAllFromIndex(liveObjectCache.db, INDICES.SEARCH_FILTERS_BY_SEARCH, search.id)
+async function loadSearchFilters(search: Search, objectCache: ObjectCache): Promise<ActiveSearch | undefined> {
+  const filters = await getAllFromIndex<SearchFilter>(objectCache.db, INDICES.SEARCH_FILTERS_BY_SEARCH, search.id)
+  if (!filters) {
+    return
+  }
   const filterTypes = [
     {
       arrayName: 'categories',
