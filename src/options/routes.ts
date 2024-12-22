@@ -5,6 +5,7 @@ import PartsPage from './pages/PartsPage.vue'
 import SearchesPage from './pages/SearchesPage.vue'
 import ListsPage from './pages/ListsPage.vue'
 import StoresPage from './pages/StoresPage.vue'
+import StoreCountriesPage from './pages/StoreCountriesPage.vue'
 import { LINKS, Routes } from './idb/constants'
 import ItemPage from './pages/ItemPage.vue'
 import ExternalPartPage from './pages/ExternalPartPage.vue'
@@ -28,6 +29,11 @@ export default [
     name: 'stores',
     path: '/stores',
     component: StoresPage
+  },
+  {
+    name: 'storeCountries',
+    path: Routes.storeCountries,
+    component: StoreCountriesPage
   },
   {
     name: 'lists',

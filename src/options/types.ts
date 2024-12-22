@@ -96,6 +96,7 @@ export interface Store {
   priceAdjustment: number
   lastScraped: Date
   type: StoreType
+  countryId: string
 }
 
 export interface BrickLinkItem extends ExternalItem {
@@ -103,6 +104,27 @@ export interface BrickLinkItem extends ExternalItem {
 }
 export interface LegoItem extends ExternalItem {
   type: "Lego"
+}
+
+export interface StoreCountry {
+  id: string
+  name: string
+}
+
+export interface StoreState {
+  id: string
+  name: string
+}
+
+export interface StoreCountriesPageStoreCountry extends StoreCountry {
+  numStores: number
+  excluded: boolean
+}
+
+export interface BrickLinkStorePage {
+  url: string
+  nextScrape: Date
+  scrapeMultiplier: number
 }
 
 export interface LegoCategory extends ExternalCategory {
@@ -360,7 +382,7 @@ export interface CachedItemVariant extends ItemVariant {
 
 export interface SearchFilter {
   searchId: IDBValidKey
-  type: 'category' | 'color' | 'store' | 'condition' | 'externalCategory'
+  type: 'category' | 'color' | 'store' | 'condition' | 'externalCategory' | 'storeCountry'
   objectId: string | number
   isExcluded: boolean
 }

@@ -11,8 +11,8 @@ import { rbPartsBrickLinkId } from "./idb";
 import stores from "./stores";
 import { addMinutes } from "../utils";
 
-async function getColorByBrickLinkId(db: IDBPDatabase, brickLinkId: string): Promise<Color> {
-  return getFromIndex(db, INDICES.COLOR_BY_BRICKLINK_ID, brickLinkId + '')
+async function getColorByBrickLinkId(db: IDBPDatabase, brickLinkId: string): Promise<Color | undefined> {
+  return await getFromIndex(db, INDICES.COLOR_BY_BRICKLINK_ID, brickLinkId + '')
 }
 
 export async function getBrickLinkPrices(db: IDBPDatabase, store: Store) {

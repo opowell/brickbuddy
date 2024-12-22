@@ -2,25 +2,31 @@ import { IDBPDatabase } from "idb"
 import { Store, StoreType } from "../types"
 import { getBrickLinkPrices } from "./getBrickLinkPrices"
 import { getLegoPrices } from "./getLegoPrices"
-import { getDbConnection, liveObjectCache } from "./idb"
-import { getAllFromIndex } from "./db"
+import { getDbConnection, importBrickLinkStores, liveObjectCache } from "./idb"
+import { getFromIndex } from "./db"
 import INDICES from './indices'
 let stopFetch: boolean = false
+let stopStoresFetch: boolean = false
 export const fetchingStoreInventory = ref(false)
+export const fetchingStores = ref(false)
 export function stopFetching() {
   fetchingStoreInventory.value = false
   stopFetch = true
+}
+export function stopFetchingStores() {
+  fetchingStores.value = false
+  stopStoresFetch = true
 }
 let fetchPricesInterval: NodeJS.Timeout
 let fetchStoresInterval: NodeJS.Timeout
 
 async function getPrices() {
   const db = await getDbConnection()
-  const blStore: Store = await getBrickLinkFetchStore(db)
+  const blStore = await getBrickLinkFetchStore(db)
   if (blStore) {
     getBrickLinkPrices(db, blStore)
   }
-  const legoStore: Store = await getLegoFetchStore(db)
+  const legoStore = await getLegoFetchStore(db)
   if (legoStore) {
     getLegoPrices(db, legoStore)
   }
@@ -39,42 +45,49 @@ export async function startFetching() {
       return
     }
     getPrices()
-  }, 15000 + Math.floor(Math.random() * 5000))
-  // fetchStoresInterval = setInterval(() => {
-  //   if (stopFetch && fetchStoresInterval) {
-  //     clearInterval(fetchStoresInterval)
-  //     return
-  //   }
-  //   getStores()
-  // }, 65000 + Math.floor(Math.random() * 5000))
+  }, 25000 + Math.floor(Math.random() * 5000))
+}
+export async function startFetchingStores() {
+  if (fetchingStores.value) {
+    return
+  }
+  stopStoresFetch = false
+  fetchingStores.value = true
+  const db = await getDbConnection()
+  await importBrickLinkStores(db)
+  fetchStoresInterval = setInterval(() => {
+    if (stopStoresFetch && fetchStoresInterval) {
+      clearInterval(fetchStoresInterval)
+      return
+    }
+    importBrickLinkStores(db)
+  }, 150000 + Math.floor(Math.random() * 5000))
 }
 
-async function getBrickLinkFetchStore(db: IDBPDatabase): Promise<Store> {
+async function getBrickLinkFetchStore(db: IDBPDatabase): Promise<Store | undefined> {
   const oneYearAgo = new Date()
   const oneYearAhead = new Date()
   oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1)
   oneYearAhead.setFullYear(oneYearAhead.getFullYear() + 1)
 
-  const stores = await getAllFromIndex(
+  const store = await getFromIndex<Store>(
     db,
     INDICES.STORES_BY_TYPE_AND_LAST_SCRAPED,
-    IDBKeyRange.bound([StoreType.BrickLink, oneYearAgo], [StoreType.BrickLink, oneYearAhead]),
-    1
+    IDBKeyRange.bound([StoreType.BrickLink, oneYearAgo], [StoreType.BrickLink, oneYearAhead])
   )
-  return stores[0]
+  return store
 }
 
-async function getLegoFetchStore(db: IDBPDatabase): Promise<Store> {
+async function getLegoFetchStore(db: IDBPDatabase): Promise<Store | undefined> {
   const oneYearAgo = new Date()
   oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
 
-  const stores = await getAllFromIndex(
+  const store = await getFromIndex<Store>(
     db,
     INDICES.STORES_BY_TYPE_AND_LAST_SCRAPED,
-    IDBKeyRange.bound([StoreType.Lego, oneYearAgo], [StoreType.Lego, new Date()]),
-    1
+    IDBKeyRange.bound([StoreType.Lego, oneYearAgo], [StoreType.Lego, new Date()])
   )
-  return stores[0]
+  return store
 }
 
 const partDetails: any[] = []

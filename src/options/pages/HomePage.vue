@@ -7,6 +7,7 @@ import CardComponent from '../components/CardComponent.vue';
 import { reportTime, startTimer } from '../utils';
 
 const stores = ref<number | undefined>()
+const storeCountries = ref<number | undefined>()
 const colors = ref<number | undefined>()
 const categories = ref<number | undefined>()
 const parts = ref<number | undefined>()
@@ -14,6 +15,7 @@ onMounted(async () => {
   startTimer('HomePage')
   colors.value = await liveObjectCache.getHomePageNumColors()
   stores.value = await liveObjectCache.getHomePageNumStores()
+  storeCountries.value = await liveObjectCache.getHomePageNumStoreCountries()
   categories.value = await liveObjectCache.getHomePageNumCategories()
   parts.value = await liveObjectCache.getHomePageNumParts()
 })
@@ -40,6 +42,7 @@ watch(loaded, () => {
     </p>
     <div v-if="!loaded">Loading...</div>
     <div v-else class="cards">
+      <CardComponent name="Countries" :count="storeCountries" :href="Crumbs.storeCountries.href" />
       <CardComponent name="Stores" :count="stores" :href="Crumbs.stores.href" />
       <CardComponent name="Colors" :count="colors" :href="Crumbs.colors.href" />
       <CardComponent name="Categories" :count="categories" :href="Crumbs.categories.href" />

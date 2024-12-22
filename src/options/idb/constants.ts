@@ -38,6 +38,7 @@ export const Routes = {
   activeSearch: '/active-search',
   carts: '/carts',
   stores: '/stores',
+  storeCountries: '/store-countries',
   colors: '/colors',
   conditions: '/conditions',
   brickLinkCategories: '/brick-link-categories',
@@ -83,6 +84,7 @@ export const Hrefs = {
   activeCart: Routes.activeCart,
   activeSearch: Routes.activeSearch,
   stores: Routes.stores,
+  storeCountries: Routes.storeCountries,
   conditions: Routes.conditions,
   colors: Routes.colors,
   brickLinkCategories: Routes.brickLinkCategories,
@@ -134,6 +136,10 @@ export const Crumbs = {
   stores: {
     title: 'Stores',
     href: Hrefs.stores
+  },
+  storeCountries: {
+    title: 'Store Countries',
+    href: Hrefs.storeCountries
   },
   conditions: {
     title: 'Conditions',

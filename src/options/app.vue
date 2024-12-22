@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { createActiveSearchIfNecessary, getDbConnection, importRbPartsToMemory, liveObjectCache, loadLiveObjectCache } from './idb/idb';
-import { startFetching } from './idb/scraping';
+import { startFetching, startFetchingStores } from './idb/scraping';
 
 const loaded = ref(false)
 onMounted(async () => {
@@ -9,7 +9,7 @@ onMounted(async () => {
   const db = await getDbConnection()
   await loadLiveObjectCache(db)
   await createActiveSearchIfNecessary(liveObjectCache)
-  await addStore("Brick24 - MEGASTORE", "159216", [], 'ChromeBricks', 100, db)
+  startFetchingStores()
   startFetching()
   loaded.value = true
   reportTime('app.vue')
@@ -22,7 +22,6 @@ import { watch } from "vue";
 import { useRoute } from "vue-router";
 import { addStore } from './idb/storeMethods';
 import { reportTime, startTimer } from './utils';
-import ObjectCache from './idb/ObjectCacheClass';
 
 const route = useRoute();
 
@@ -52,7 +51,6 @@ window.getUsage = async function() {
   console.log(`Usage %: ${percentageUsed}`)
   console.log(`Remaining: ${remaining} GB`);
 }
-
 
 </script>
 <template>

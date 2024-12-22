@@ -2,15 +2,26 @@
 import { StoreType, type StoresPageStore } from '../types';
 import StoreButton from '../components/StoreButton.vue';
 import { addNewStore, getStoresPageStores } from '../idb/storeMethods'
-import { stopFetching, startFetching } from '../idb/scraping'
-const scrapingOn = ref(true)
+import { stopFetching, startFetching, startFetchingStores, stopFetchingStores, fetchingStoreInventory, fetchingStores } from '../idb/scraping'
+function startScrapingBLStores() {
+  setBLStoreScraping(true)
+}
+function stopScrapingBLStores() {
+  setBLStoreScraping(false)
+}
+function setBLStoreScraping(value: boolean) {
+  if (value) {
+    startFetchingStores()
+  } else {
+    stopFetchingStores()
+  }
+}
 function setScraping(value: boolean) {
   if (value) {
     startFetching()
   } else {
     stopFetching()
   }
-  scrapingOn.value = value
 }
 const stores = ref<StoresPageStore[] | undefined>()
 onMounted(async () => {
@@ -34,16 +45,23 @@ async function importStores() {
     <ActiveCartButton />
     <ActiveSearchButton />
     <h4 v-if="stores">Stores ({{ stores.length }})</h4>
-    <h4>Scraping: {{ scrapingOn ? 'On' : 'Off' }}</h4>
+    <h4>Scraping: </h4>
     <div><button @click="importStores">Import from BrickLink</button></div>
     <div>
-      <button @click="setScraping(true)" :disabled="scrapingOn">Start</button>
-      <button @click="setScraping(false)" :disabled="!scrapingOn">Stop</button>
+      <span>BL stores: {{ fetchingStores ? 'On' : 'Off' }}</span>
+      <button @click="startScrapingBLStores" :disabled="fetchingStores">Start</button>
+      <button @click="stopScrapingBLStores" :disabled="!fetchingStores">Stop</button>
+    </div>
+    <div>
+      <span>Inventory: {{ fetchingStoreInventory ? 'On' : 'Off' }}</span>
+      <button @click="setScraping(true)" :disabled="fetchingStoreInventory">Start</button>
+      <button @click="setScraping(false)" :disabled="!fetchingStoreInventory">Stop</button>
     </div>
     <div>Search:<input v-model="search"></div>
     <table>
       <thead>
         <tr>
+          <th>Country</th>
           <th>Type</th>
           <th>Name</th>
           <th>Inventory</th>
@@ -54,6 +72,7 @@ async function importStores() {
       </thead>
       <tbody>
         <tr v-for="store in stores" :key="store.id">
+          <td><button>{{ store.countryId }}</button></td>
           <td>{{ store.type === StoreType.BrickLink ? 'BrickLink' : 'Lego' }}</td>
           <td>
             <StoreButton :store="store" />

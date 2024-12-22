@@ -1,22 +1,23 @@
 import { IDBPDatabase } from 'idb';
-import { ActiveSearch, CartItem, CartWithItems, CategoriesPageCategory, Category, Color, ExternalCategory, ExternalCategoryPageExternalPart, ExternalItem, ExternalPartPageExternalPart, ExternalPartPageInvItem, ExternalPartPageItemVariant, HomeData, InvItem, Item, ItemVariant, PartPageCategory, Search, SearchFilter, Store, StorePageInvItemItem, UiColor } from '../types';
+import { ActiveSearch, CartItem, CartWithItems, CategoriesPageCategory, Category, Color, ExternalCategory, ExternalCategoryPageExternalPart, ExternalItem, ExternalPartPageExternalPart, ExternalPartPageInvItem, ExternalPartPageItemVariant, HomeData, InvItem, Item, ItemVariant, PartPageCategory, Search, SearchFilter, Store, StoreCountry, StorePageInvItemItem, UiColor } from '../types';
 import STORES from './stores'
 import { getFirstActiveCart, getCartItems, getCartQuantity } from './carts';
 import { getExternalCategoriesByCategoryId, getCategoriesPageCategories, getCategoriesPageCategories2, getCategory, getExternalCategory, getPartPageCategory, loadExternalPartPrice } from './categories';
 import { getInvItemFromId } from './invItems';
 import { getPart, getStorePageExternalPart, getStorePagePart } from './parts';
 import { getFirstActiveSearch, getSearchFilters } from './searches';
-import { countFromIndex, get, getAll, getAllFromIndex, getFromIndex } from './db';
+import { count, countFromIndex, get, getAll, getAllFromIndex, getFromIndex } from './db';
 import indices from './indices';
 import { cheapestPrice, reportTime, startTimer } from '../utils';
 import { liveObjectCache } from './idb';
 import ComputedObjectCacheClass from './ComputedObjectCacheClass'
-import { it } from 'node:test';
 
 export default class ObjectCache {
   allCategories: Category[] | undefined
+  allStoreCountries: StoreCountry[] | undefined
   colors: Map<string, UiColor>
   categories: Map<number, Category>
+  storeCountries: Map<string, StoreCountry>
   categoriesPageCategories: Map<string, CategoriesPageCategory>
   cheapestPrices: Map<string, number>
   externalCategories: Map<string, ExternalCategory>
@@ -43,7 +44,7 @@ export default class ObjectCache {
   invItemsByExternalPartColor: Map<string, InvItem[]>
   invItems: Map<string, InvItem>
   db: IDBPDatabase
-  computedCache: ComputedObjectCacheClass
+  // computedCache: ComputedObjectCacheClass
   constructor(db: IDBPDatabase) {
     this.db = db
     this.activeSearchRef = ref()
@@ -62,6 +63,7 @@ export default class ObjectCache {
     this.externalPartsByExternalCategory = new Map<string, ExternalItem[]>()
     this.colors = new Map<string, UiColor>()
     this.categories = new Map<number, Category>()
+    this.storeCountries = new Map<string, StoreCountry>()
     this.categoriesPageCategories = new Map<string, CategoriesPageCategory>()
     this.externalCategoriesByCategoryId = new Map<string, ExternalCategory[]>()
     this.externalCategories = new Map<string, ExternalCategory>()
@@ -73,6 +75,18 @@ export default class ObjectCache {
     this.stores = new Map<string, Store>()
     this.activeCart = undefined
     // this.computedCache = new ComputedObjectCacheClass(this)
+  }
+  async getStoreCountries() {
+    if (!this.allStoreCountries) {
+      this.allStoreCountries = await getAll<StoreCountry>(this.db, STORES.STORE_COUNTRIES)
+      if (!this.allStoreCountries) {
+        return
+      }
+      this.allStoreCountries.forEach(c => {
+        this.storeCountries.set(c.id, c)
+      })
+    }
+    return this.allStoreCountries
   }
   async getAllCategories() {
     if (!this.allCategories) {
@@ -94,6 +108,9 @@ export default class ObjectCache {
       this.getAllStoreKeys
     )
     return x
+  }
+  async getHomePageNumStoreCountries(): Promise<number | undefined> {
+    return await count(this.db, STORES.STORE_COUNTRIES)
   }
   async getHomePageNumObjects(
     filterKey: 'colors' | 'categories' | 'stores' | 'parts',
@@ -416,8 +433,8 @@ export default class ObjectCache {
     console.log('getCategoriesPageCategories')
     return this.getAllObjects<CategoriesPageCategory>(this.categoriesPageCategories, async () => await getCategoriesPageCategories())
   }
-  async getCategoriesPageCategories2(): Promise<CategoriesPageCategory[]> {
-    return await getCategoriesPageCategories2()
+  async getCategoriesPageCategories2(): Promise<CategoriesPageCategory[] | undefined> {
+    return await getCategoriesPageCategories2(this)
   }
   async getExternalCategoriesByCategoryId(id: number): Promise<ExternalCategory[] | undefined> {
     return this.getObject<ExternalCategory[]>(this.externalCategoriesByCategoryId, id, async () => await getExternalCategoriesByCategoryId(id, this))

@@ -18,13 +18,13 @@ export async function getFromIndex<T>(
   index: IndexDefinition,
   query: IDBKeyRange | IDBValidKey
 ): Promise<T | undefined> {
-  return await db.getFromIndex(index.store, index.name, query)
+  return await db.getFromIndex(index.store.name, index.name, query)
 }
 export async function get<T>(db: IDBPDatabase, store: StoreDefinition, query: IDBKeyRange | IDBValidKey): Promise<T | undefined> {
   return await db.get(store.name, query)
 }
 export async function countFromIndex(db: IDBPDatabase, index: IndexDefinition, query?: IDBKeyRange | IDBValidKey | null | undefined) {
-  return await db.countFromIndex(index.store, index.name, query)
+  return await db.countFromIndex(index.store.name, index.name, query)
 }
 export async function put(db: IDBPDatabase, storeDef: StoreDefinition, value: any) {
   try {
@@ -33,13 +33,20 @@ export async function put(db: IDBPDatabase, storeDef: StoreDefinition, value: an
     console.log(value, e)
   }
 }
+export async function dbDelete(db: IDBPDatabase, storeDef: StoreDefinition, keyPath: IDBValidKey) {
+  try {
+    return await db.delete(storeDef.name, keyPath)
+  } catch (e) {
+    console.log(keyPath, e)
+  }
+}
 
 export async function getAllFromIndex<T>(db: IDBPDatabase, index: IndexDefinition, query?: IDBKeyRange | IDBValidKey | null | undefined, count?: number): Promise<T[] | undefined> {
-  return db.getAllFromIndex(index.store, index.name, query, count)
+  return db.getAllFromIndex(index.store.name, index.name, query, count)
 }
 
 export function createIndex(transaction: IDBPTransaction<unknown, string[], "versionchange">, index: IndexDefinition) {
-  const store = transaction.objectStore(index.store)
+  const store = transaction.objectStore(index.store.name)
   store.createIndex(index.name, index.keyPath)
 }
 export function createStore(db: IDBPDatabase, storeDefinition: StoreDefinition) {

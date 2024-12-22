@@ -1,4 +1,4 @@
-import { CachedExternalCategory, CategoriesPageCategory, CategoriesPageExternalCategory, Category, ExternalCategory, RebrickableItem, Search, SearchFilter } from './../types';
+import { BrickLinkStorePage, CachedExternalCategory, CategoriesPageCategory, CategoriesPageExternalCategory, Category, ExternalCategory, RebrickableItem, Search, SearchFilter, Store, StoreType } from './../types';
 import { IDBPDatabase, openDB } from "idb";
 import STORES from './stores'
 import INDICES from './indices'
@@ -86,68 +86,155 @@ export async function getDbCreateInitialStores() {
 }
 import rbColors from '../rebrickable-colors.json'
 
+async function getBrickLinkStorePage(db: IDBPDatabase): Promise<BrickLinkStorePage | undefined> {
+  const yearsAgo = new Date()
+  const yearsAhead = new Date()
+  yearsAgo.setFullYear(yearsAgo.getFullYear() - 100)
+  yearsAhead.setFullYear(yearsAhead.getFullYear() + 100)
+  return getFromIndex<BrickLinkStorePage>(
+    db,
+    INDICES.BRICK_LINK_STORE_PAGES_BY_NEXT_SCRAPE,
+    IDBKeyRange.bound([yearsAgo], [yearsAhead])
+  )
+}
 export async function importBrickLinkStores(db: IDBPDatabase) {
-  const pages = [
-    '0-9', 'A', 'B', 'C', 'D', 'E',
-    'F', 'G', 'H', 'I', 'J', 'K',
-    'L', 'M', 'N', 'O', 'P', 'Q',
-    'R', 'S', 'T', 'U', 'V', 'W',
-    'X', 'Y', 'Z'
-  ]
-  for (let i = 0; i < pages.length; i++) {
-    const page = pages[i]
-    const response = await fetch("https://www.bricklink.com/browseStores.asp?wordLetter=" + page, {
-      "headers": {
-        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-        "accept-language": "en,de;q=0.9,es;q=0.8,en-US;q=0.7",
-        "cache-control": "no-cache",
-        "pragma": "no-cache",
-        "priority": "u=0, i",
-        "sec-ch-ua": "\"Google Chrome\";v=\"131\", \"Chromium\";v=\"131\", \"Not_A Brand\";v=\"24\"",
-        "sec-ch-ua-mobile": "?0",
-        "sec-ch-ua-platform": "\"macOS\"",
-        "sec-fetch-dest": "document",
-        "sec-fetch-mode": "navigate",
-        "sec-fetch-site": "none",
-        "sec-fetch-user": "?1",
-        "upgrade-insecure-requests": "1"
-      },
-      "referrerPolicy": "strict-origin-when-cross-origin",
-      "body": null,
-      "method": "GET",
-      "mode": "cors",
-      "credentials": "include"
-    })
-    let html = await response.text()
-    const INSTANT_CHECKOUT = ' <a href="https://www.bricklink.com/help.asp?helpID=2466"><I class="fas fa-bolt icon-instant-checkout"></I></a>'
-    html = html.replaceAll(INSTANT_CHECKOUT, '')
-    const SLUG_START = '<A HREF=\'store.asp?p='
-    const SLUG_END = '\'>'
-    const NAME_END = '</A>'
-    let nextIndex = html.indexOf(SLUG_START)
-    while (nextIndex !== -1) {
-      await sleep(Math.random()*5000)
-      const startOfSlug = nextIndex + SLUG_START.length
-      const endOfSlug = html.indexOf(SLUG_END, startOfSlug)
-      const startOfName = endOfSlug + SLUG_END.length
-      const endOfName = html.indexOf(NAME_END, startOfName)
-      const slug = html.substring(startOfSlug, endOfSlug)
-      const name = html.substring(startOfName, endOfName)
-      if (
-        startOfSlug === -1 ||
-        endOfSlug === -1 ||
-        startOfName === -1 ||
-        endOfName === -1
-      ) {
-        break
-      }
-      nextIndex = html.indexOf(SLUG_START, endOfName)
-      await importBrickLinkStore(db, slug, name)
+  let page = await getBrickLinkStorePage(db)
+  if (!page) {
+    const oneYearAhead = new Date()
+    oneYearAhead.setFullYear(oneYearAhead.getFullYear() + 1)
+    page = {
+      url: "https://www.bricklink.com/browse.asp",
+      nextScrape: oneYearAhead,
+      scrapeMultiplier: 1
     }
+    await addBrickLinkStorePage(db, page)
   }
+  let score = await fetchBrickLinkPage(page.url, db)
+  if (score > 0) {
+    score *= page.scrapeMultiplier
+  } else {
+    score /= page.scrapeMultiplier
+  }
+  addMinutes(page.nextScrape, -score)
+  page.scrapeMultiplier = score > 0 ? (page.scrapeMultiplier * 2) : (page.scrapeMultiplier / 2) 
+  page.scrapeMultiplier = Math.max(0.00001, page.scrapeMultiplier)
+  page.scrapeMultiplier = Math.min(100000, page.scrapeMultiplier)
+  await updateBrickLinkStorePage(db, page)
 }
 
-async function importBrickLinkStore(db: IDBPDatabase, slug: string, name: string) {
+async function addBrickLinkStorePage(db: IDBPDatabase, page: BrickLinkStorePage) {
+  if (await get(db, STORES.BRICK_LINK_STORE_PAGES, page.url)) {
+    return
+  }
+  console.log('addBrickLinkStorePage', page.url)
+  return await updateBrickLinkStorePage(db, page)
+}
+async function updateBrickLinkStorePage(db: IDBPDatabase, page: BrickLinkStorePage) {
+  return await put(db, STORES.BRICK_LINK_STORE_PAGES, page)
+}
+
+async function fetchBrickLinkPage(url: string, db: IDBPDatabase) {
+  const response = await fetch(url, {
+    "headers": {
+      "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+      "accept-language": "en,de;q=0.9,es;q=0.8,en-US;q=0.7",
+      "cache-control": "no-cache",
+      "pragma": "no-cache",
+      "priority": "u=0, i",
+      "sec-ch-ua": "\"Google Chrome\";v=\"131\", \"Chromium\";v=\"131\", \"Not_A Brand\";v=\"24\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"macOS\"",
+      "sec-fetch-dest": "document",
+      "sec-fetch-mode": "navigate",
+      "sec-fetch-site": "none",
+      "sec-fetch-user": "?1",
+      "upgrade-insecure-requests": "1"
+    },
+    "referrerPolicy": "strict-origin-when-cross-origin",
+    "body": null,
+    "method": "GET",
+    "mode": "cors",
+    "credentials": "include"
+  })
+  let html = await response.text()
+  const storeScore = await parseStoreLinks(html, db)
+  const linksScore = await parsePageLinks(html, db)
+  return storeScore + linksScore
+}
+
+async function parseStoreLinks(html: string, db: IDBPDatabase): Promise<number> {
+  console.log('parseStoreLinks')
+  let score = 0
+  const INSTANT_CHECKOUT = ' <a href="https://www.bricklink.com/help.asp?helpID=2466"><I class="fas fa-bolt icon-instant-checkout"></I></a>'
+  html = html.replaceAll(INSTANT_CHECKOUT, '')
+  html = html.replaceAll('</a>', '</A>')
+  const SLUG_START = 'store.asp?p='
+  const SLUG_END = '\'>'
+  const NAME_END = '</A>'
+  let nextIndex = html.indexOf(SLUG_START)
+  while (nextIndex !== -1) {
+    const startOfSlug = nextIndex + SLUG_START.length
+    const endOfSlug = html.indexOf(SLUG_END, startOfSlug)
+    const startOfName = endOfSlug + SLUG_END.length
+    const endOfName = html.indexOf(NAME_END, startOfName)
+    const slug = html.substring(startOfSlug, endOfSlug)
+    const name = html.substring(startOfName, endOfName)
+    if (
+      startOfSlug === -1 ||
+      endOfSlug === -1 ||
+      startOfName === -1 ||
+      endOfName === -1
+    ) {
+      break
+    }
+    nextIndex = html.indexOf(SLUG_START, endOfName)
+    const added = await importBrickLinkStore(db, slug, name)
+    if (added) {
+      score++
+    }
+  }
+  return score - 20
+}
+async function parsePageLinks(html: string, db: IDBPDatabase): Promise<number> {
+  console.log('parsePageLinks')
+  let score = 0
+  const LINK_START = '<a href=\'/browseStores.asp'
+  const LINK_END = '\'>'
+  let nextIndex = html.indexOf(LINK_START)
+  while (nextIndex !== -1) {
+    const endOfLink = html.indexOf(LINK_END, nextIndex + LINK_START.length)
+    const link = html.substring(nextIndex + LINK_START.length, endOfLink)
+    if (
+      nextIndex === -1 ||
+      endOfLink === -1
+    ) {
+      break
+    }
+    nextIndex = html.indexOf(LINK_START, endOfLink)
+    if (link === '?viewClosed=Y') {
+      continue
+    }
+    const key = await addBrickLinkStorePage(db, {
+      url: "https://www.bricklink.com/browseStores.asp" + link,
+      nextScrape: new Date(),
+      scrapeMultiplier: 1
+    })
+    if (!!key) {
+      score++
+    }
+  }
+  return score - 20
+}
+
+async function getBrickLinkStoreBySlug(db: IDBPDatabase, slug: string): Promise<Store | undefined> {
+  return await getFromIndex<Store>(db, indices.STORES_BY_TYPE_AND_SLUG, [StoreType.BrickLink, slug])
+}
+
+async function importBrickLinkStore(db: IDBPDatabase, slug: string, name: string): Promise<boolean> {
+  const existingStore = await getBrickLinkStoreBySlug(db, slug)
+  if (existingStore) {
+    return false
+  }
   const storePage = await fetch("https://store.bricklink.com/" + slug, {
     "headers": {
       "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
@@ -171,13 +258,27 @@ async function importBrickLinkStore(db: IDBPDatabase, slug: string, name: string
     "credentials": "include"
   })
   let storeHtml = await storePage.text()
+  const countryId = extractValue(storeHtml, 'countryID: \t\t\'', '\',')
+  if (!countryId) {
+    return false
+  }
+  const storeCountry = await get(db, STORES.STORE_COUNTRIES, countryId)
+  if (!storeCountry) {
+    const countryName = extractValue(storeHtml, 'countryName: \t\'', '\',')
+    if (countryName) {
+      const response = await addStoreCountry(db, countryId, countryName)
+      if (!response) {
+        return false
+      }
+    }
+  }
   const id = extractValue(storeHtml, 'id: \t\t\t', ',')
   if (!id) {
-    return
+    return false
   }
-  await addStore(name, id, [], slug, 100, db)
+  const result = await addStore(name, id, [], slug, 100, db, StoreType.BrickLink, countryId)
+  return !!result
 }
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 function extractValue(str: string, start: string, end: string): string | undefined {
   const startIndex = str.indexOf(start)
@@ -215,7 +316,7 @@ async function createInitialColors(db: IDBPDatabase) {
 }
 
 import rbCategories from '../rbCategories.json'
-import { createIndex, createStore, put } from './db';
+import { createIndex, createStore, get, getFromIndex, put } from './db';
 import { addColor } from './colors';
 import { addShopListDb } from './lists';
 import { addStore, createInitialStores } from './storeMethods';
@@ -254,6 +355,10 @@ async function createInitialData(db: IDBPDatabase) {
 }
 
 import rbParts from '../rbPartMappings.json'
+import stores from './stores';
+import { addMinutes } from '../utils';
+import indices from './indices';
+import { addStoreCountry } from './storeCountries';
 interface RbPart {
   part_cat_id: number;
   name: string;

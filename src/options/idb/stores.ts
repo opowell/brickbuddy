@@ -4,6 +4,7 @@ export interface StoreDefinition {
   autoIncrement?: boolean
 }
 const stores: {
+  BRICK_LINK_STORE_PAGES: StoreDefinition
   CARTS: StoreDefinition
   CART_ITEMS: StoreDefinition
   CATEGORIES: StoreDefinition
@@ -16,10 +17,15 @@ const stores: {
   PARTS: StoreDefinition
   SEARCHES: StoreDefinition
   SEARCH_FILTERS: StoreDefinition
+  STORE_COUNTRIES: StoreDefinition
   LISTS: StoreDefinition
   LIST_ITEMS: StoreDefinition
   STORES: StoreDefinition
 } = {
+  BRICK_LINK_STORE_PAGES: {
+    name: 'brickLinkStorePages',
+    keyPath: 'url'
+  },
   CARTS: {
     name: 'carts',
     keyPath: 'id',
@@ -81,6 +87,10 @@ const stores: {
   SEARCH_FILTERS: {
     name: 'searchFilters',
     keyPath: ['searchId', 'type', 'objectId'],
+  },
+  STORE_COUNTRIES: {
+    name: 'storeCountries',
+    keyPath: 'id'
   },
   STORES: {
     name: 'stores',
