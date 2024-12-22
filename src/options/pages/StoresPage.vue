@@ -3,8 +3,6 @@ import { StoreType, type StoresPageStore } from '../types';
 import StoreButton from '../components/StoreButton.vue';
 import { addNewStore, getStoresPageStores } from '../idb/storeMethods'
 import { stopFetching, startFetching } from '../idb/scraping'
-const newStoreId = ref('')
-const newStoreName = ref('')
 const scrapingOn = ref(true)
 function setScraping(value: boolean) {
   if (value) {
@@ -23,6 +21,11 @@ const search = ref('')
 import HomeButton from '../components/HomeButton.vue';
 import ActiveSearchButton from '../components/ActiveSearchButton.vue';
 import ActiveCartButton from '../components/ActiveCartButton.vue';
+import { importBrickLinkStores, liveObjectCache } from '../idb/idb'
+
+async function importStores() {
+  return await importBrickLinkStores(liveObjectCache.db)
+}
 </script>
 
 <template>
@@ -32,7 +35,7 @@ import ActiveCartButton from '../components/ActiveCartButton.vue';
     <ActiveSearchButton />
     <h4 v-if="stores">Stores ({{ stores.length }})</h4>
     <h4>Scraping: {{ scrapingOn ? 'On' : 'Off' }}</h4>
-    <div><button>Import from BrickLink</button></div>
+    <div><button @click="importStores">Import from BrickLink</button></div>
     <div>
       <button @click="setScraping(true)" :disabled="scrapingOn">Start</button>
       <button @click="setScraping(false)" :disabled="!scrapingOn">Stop</button>

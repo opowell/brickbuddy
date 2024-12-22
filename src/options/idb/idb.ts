@@ -86,7 +86,7 @@ export async function getDbCreateInitialStores() {
 }
 import rbColors from '../rebrickable-colors.json'
 
-async function importBrickLinkStores(db: IDBPDatabase) {
+export async function importBrickLinkStores(db: IDBPDatabase) {
   const pages = [
     '0-9', 'A', 'B', 'C', 'D', 'E',
     'F', 'G', 'H', 'I', 'J', 'K',
@@ -118,46 +118,77 @@ async function importBrickLinkStores(db: IDBPDatabase) {
       "mode": "cors",
       "credentials": "include"
     })
-    const html = await response.text()
-    let index = 0
-    const stores = []
-    while (index !== -1) {
-      const nextIndex = html.indexOf('<a href="store.asp?p=')
-      const startOfSlug = nextIndex + '<a href="store.asp?p='.length
-      const endOfSlug = html.indexOf('"', startOfSlug)
-      const startOfName = endOfSlug + '">'.length
-      const endOfName = html.indexOf(' </a>', startOfName)
+    let html = await response.text()
+    const INSTANT_CHECKOUT = ' <a href="https://www.bricklink.com/help.asp?helpID=2466"><I class="fas fa-bolt icon-instant-checkout"></I></a>'
+    html = html.replaceAll(INSTANT_CHECKOUT, '')
+    const SLUG_START = '<A HREF=\'store.asp?p='
+    const SLUG_END = '\'>'
+    const NAME_END = '</A>'
+    let nextIndex = html.indexOf(SLUG_START)
+    while (nextIndex !== -1) {
+      await sleep(Math.random()*5000)
+      const startOfSlug = nextIndex + SLUG_START.length
+      const endOfSlug = html.indexOf(SLUG_END, startOfSlug)
+      const startOfName = endOfSlug + SLUG_END.length
+      const endOfName = html.indexOf(NAME_END, startOfName)
       const slug = html.substring(startOfSlug, endOfSlug)
       const name = html.substring(startOfName, endOfName)
-      const storePage = await fetch("https://store.bricklink.com/" + slug, {
-        "headers": {
-          "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-          "accept-language": "en,de;q=0.9,es;q=0.8,en-US;q=0.7",
-          "cache-control": "no-cache",
-          "pragma": "no-cache",
-          "priority": "u=0, i",
-          "sec-ch-ua": "\"Google Chrome\";v=\"131\", \"Chromium\";v=\"131\", \"Not_A Brand\";v=\"24\"",
-          "sec-ch-ua-mobile": "?0",
-          "sec-ch-ua-platform": "\"macOS\"",
-          "sec-fetch-dest": "document",
-          "sec-fetch-mode": "navigate",
-          "sec-fetch-site": "same-origin",
-          "sec-fetch-user": "?1",
-          "upgrade-insecure-requests": "1"
-        },
-        "referrerPolicy": "no-referrer-when-downgrade",
-        "body": null,
-        "method": "GET",
-        "mode": "cors",
-        "credentials": "include"
-      })
-      const storeHtml = await storePage.text()
-      const startProps = storeHtml.indexOf('StoreFront.store = ') + 'StoreFront.store = '.length
-      const endProps = storeHtml.indexOf(';', startProps)
-      const props = JSON.parse(storeHtml.substring(startProps, endProps))
-      // await addStore(name, id, [], slug, 100, db)
+      if (
+        startOfSlug === -1 ||
+        endOfSlug === -1 ||
+        startOfName === -1 ||
+        endOfName === -1
+      ) {
+        break
+      }
+      nextIndex = html.indexOf(SLUG_START, endOfName)
+      await importBrickLinkStore(db, slug, name)
     }
   }
+}
+
+async function importBrickLinkStore(db: IDBPDatabase, slug: string, name: string) {
+  const storePage = await fetch("https://store.bricklink.com/" + slug, {
+    "headers": {
+      "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+      "accept-language": "en,de;q=0.9,es;q=0.8,en-US;q=0.7",
+      "cache-control": "no-cache",
+      "pragma": "no-cache",
+      "priority": "u=0, i",
+      "sec-ch-ua": "\"Google Chrome\";v=\"131\", \"Chromium\";v=\"131\", \"Not_A Brand\";v=\"24\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"macOS\"",
+      "sec-fetch-dest": "document",
+      "sec-fetch-mode": "navigate",
+      "sec-fetch-site": "same-origin",
+      "sec-fetch-user": "?1",
+      "upgrade-insecure-requests": "1"
+    },
+    "referrerPolicy": "no-referrer-when-downgrade",
+    "body": null,
+    "method": "GET",
+    "mode": "cors",
+    "credentials": "include"
+  })
+  let storeHtml = await storePage.text()
+  const id = extractValue(storeHtml, 'id: \t\t\t', ',')
+  if (!id) {
+    return
+  }
+  await addStore(name, id, [], slug, 100, db)
+}
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+function extractValue(str: string, start: string, end: string): string | undefined {
+  const startIndex = str.indexOf(start)
+  if (startIndex === -1) {
+    return
+  }
+  const endIndex = str.indexOf(end, startIndex + start.length)
+  if (endIndex === -1) {
+    return
+  }
+  return str.substring(startIndex + start.length, endIndex).trim()
 }
 async function createInitialColors(db: IDBPDatabase) {
   for (let i = 0; i < rbColors.length; i++) {
@@ -187,7 +218,7 @@ import rbCategories from '../rbCategories.json'
 import { createIndex, createStore, put } from './db';
 import { addColor } from './colors';
 import { addShopListDb } from './lists';
-import { createInitialStores } from './storeMethods';
+import { addStore, createInitialStores } from './storeMethods';
 async function importRbCategories(db: IDBPDatabase) {
   for (let i = 0; i < rbCategories.length; i++) {
     const rbCategory = rbCategories[i]

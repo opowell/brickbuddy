@@ -12,6 +12,7 @@ export function stopFetching() {
   stopFetch = true
 }
 let fetchPricesInterval: NodeJS.Timeout
+let fetchStoresInterval: NodeJS.Timeout
 
 async function getPrices() {
   const db = await getDbConnection()
@@ -26,7 +27,6 @@ async function getPrices() {
 }
 
 export async function startFetching() {
-  console.log('startFetching')
   if (fetchingStoreInventory.value) {
     return
   }
@@ -40,6 +40,13 @@ export async function startFetching() {
     }
     getPrices()
   }, 15000 + Math.floor(Math.random() * 5000))
+  // fetchStoresInterval = setInterval(() => {
+  //   if (stopFetch && fetchStoresInterval) {
+  //     clearInterval(fetchStoresInterval)
+  //     return
+  //   }
+  //   getStores()
+  // }, 65000 + Math.floor(Math.random() * 5000))
 }
 
 async function getBrickLinkFetchStore(db: IDBPDatabase): Promise<Store> {

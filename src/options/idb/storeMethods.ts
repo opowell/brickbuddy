@@ -22,12 +22,15 @@ export async function addStore(
   db: IDBPDatabase,
   type: StoreType = StoreType.BrickLink
 ) {
-  const existingStore: Store = await get(db, STORES.STORES, id)
+  const existingStore = await get<Store>(db, STORES.STORES, id)
+  if (existingStore) {
+    return
+  }
   const newStore: Store = {
     id,
     name,
-    fetchPageIndex: existingStore?.fetchPageIndex || 1,
-    fetchMaxPageIndex: existingStore?.fetchMaxPageIndex || 10,
+    fetchPageIndex: 1,
+    fetchMaxPageIndex: 10,
     priceAdjustment,
     shippingCosts,
     slug,

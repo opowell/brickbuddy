@@ -7,7 +7,7 @@ import { addInvItem } from "./invItems";
 import { getLegoItem, addLegoItem } from "./parts";
 import { updateStore } from "./storeMethods";
 
-async function getColorByLegoId(db: IDBPDatabase, legoId: string | number): Promise<Color> {
+async function getColorByLegoId(db: IDBPDatabase, legoId: string | number): Promise<Color | undefined> {
   legoId = legoId.toString()
   return getFromIndex(db, INDICES.COLOR_BY_LEGO_ID, legoId)
 }
