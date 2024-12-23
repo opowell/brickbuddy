@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import HomeButton from '../components/HomeButton.vue';
-import { getSearchesPagesSearches, addNewSearch } from '../idb/searches';
-import type { SearchesPageSearch } from '../types'
-const searches = ref<SearchesPageSearch[] | undefined>(undefined)
+import HomeButton from "../components/HomeButton.vue";
+import { getSearchesPagesSearches, addNewSearch } from "../idb/searches";
+import type { SearchesPageSearch } from "../types";
+const searches = ref<SearchesPageSearch[] | undefined>(undefined);
 onMounted(async () => {
-  searches.value = await getSearchesPagesSearches()
-})
+  searches.value = await getSearchesPagesSearches();
+});
 </script>
 
 <template>
@@ -29,8 +29,6 @@ onMounted(async () => {
       </tbody>
     </table>
     <h4>Add</h4>
-    <button @click="addNewSearch">
-      Add
-    </button>
+    <button @click="addNewSearch">Add</button>
   </div>
 </template>

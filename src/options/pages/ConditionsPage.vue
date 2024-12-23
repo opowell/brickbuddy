@@ -1,44 +1,44 @@
 <script setup lang="ts">
-import ExcludeConditionButton from '../components/ExcludeConditionButton.vue';
-const conditions = ref<ConditionsPageCondition[] | undefined>(undefined)
+import ExcludeConditionButton from "../components/ExcludeConditionButton.vue";
+const conditions = ref<ConditionsPageCondition[] | undefined>(undefined);
 function excludeCondition(index: number) {
-  conditions.value?.splice(index, 1)
+  conditions.value?.splice(index, 1);
 }
-const search = ref<ActiveSearch | undefined>(undefined)
+const search = ref<ActiveSearch | undefined>(undefined);
 onMounted(async () => {
-  conditions.value = await getConditionsPageConditions()
-  search.value = getActiveSearch()
-})
+  conditions.value = await getConditionsPageConditions();
+  search.value = getActiveSearch();
+});
 const availableConditions = computed(() => {
   if (!conditions.value) {
-    return []
+    return [];
   }
   return conditions.value.filter((condition) => {
     if (!search.value) {
-      return true
+      return true;
     }
     if (search.value.conditions.ids.length === 0) {
-      return true
+      return true;
     }
     if (search.value.conditions.excluded) {
-      return !search.value.conditions.ids.includes(condition.id)
+      return !search.value.conditions.ids.includes(condition.id);
     }
-    return search.value.conditions.ids.includes(condition.id)
-  })
-})
-import ActiveSearchButton from '../components/ActiveSearchButton.vue';
-import ConditionButton from '../components/ConditionButton.vue';
-import HomeButton from '../components/HomeButton.vue';
-import { getActiveSearch } from '../idb/searches';
-import { ActiveSearch, ConditionsPageCondition } from '../types';
-import { getConditionsPageConditions } from '../idb/condition';
+    return search.value.conditions.ids.includes(condition.id);
+  });
+});
+import ActiveSearchButton from "../components/ActiveSearchButton.vue";
+import ConditionButton from "../components/ConditionButton.vue";
+import HomeButton from "../components/HomeButton.vue";
+import { getActiveSearch } from "../idb/searches";
+import { ActiveSearch, ConditionsPageCondition } from "../types";
+import { getConditionsPageConditions } from "../idb/condition";
 </script>
 
 <template>
   <div>
     <HomeButton />
     <ActiveSearchButton />
-    <h4>Conditions {{ '(' + availableConditions.length + ')' }}</h4>
+    <h4>Conditions {{ "(" + availableConditions.length + ")" }}</h4>
     <table>
       <thead>
         <tr>
@@ -56,7 +56,10 @@ import { getConditionsPageConditions } from '../idb/condition';
             {{ condition.numInvItems }}
           </td>
           <td>
-            <ExcludeConditionButton :condition="condition.id" @exclude="excludeCondition(index)"/>
+            <ExcludeConditionButton
+              :condition="condition.id"
+              @exclude="excludeCondition(index)"
+            />
           </td>
         </tr>
       </tbody>

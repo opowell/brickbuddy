@@ -1,12 +1,10 @@
 <script setup lang="ts">
-import { Crumbs } from '../idb/constants';
-import { useRouter } from 'vue-router'
+import { Crumbs } from "../idb/constants";
+import { useRouter } from "vue-router";
 
-const router = useRouter()
+const router = useRouter();
 </script>
 
 <template>
-  <button @click="router.push(Crumbs.searches.href)">
-    Searches
-  </button>
+  <button @click="router.push(Crumbs.searches.href)">Searches</button>
 </template>

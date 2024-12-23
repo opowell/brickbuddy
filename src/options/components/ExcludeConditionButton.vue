@@ -1,21 +1,19 @@
 <script setup lang="ts">
-import { PropType } from 'vue'
-import { excludeCondition } from '../idb/condition';
+import { PropType } from "vue";
+import { excludeCondition } from "../idb/condition";
 const { condition } = defineProps({
-  condition: String as PropType<string>
-})
-const emits = defineEmits(['exclude'])
+  condition: String as PropType<string>,
+});
+const emits = defineEmits(["exclude"]);
 function exclude() {
   if (!condition) {
-    return
+    return;
   }
-  excludeCondition(condition)
-  emits('exclude')
+  excludeCondition(condition);
+  emits("exclude");
 }
 </script>
 
 <template>
-  <button v-if="condition" @click="exclude">
-    Exclude
-  </button>
+  <button v-if="condition" @click="exclude">Exclude</button>
 </template>

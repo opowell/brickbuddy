@@ -1,4 +1,4 @@
-import { number } from "mathjs"
+import { number } from 'mathjs'
 
 export interface Cart {
   id: number
@@ -83,7 +83,7 @@ export interface HomeData {
 }
 export enum StoreType {
   BrickLink = 'BrickLink',
-  Lego = 'Lego'
+  Lego = 'Lego',
 }
 export interface Store {
   fullyFetched?: boolean
@@ -100,10 +100,10 @@ export interface Store {
 }
 
 export interface BrickLinkItem extends ExternalItem {
-  type: "BrickLink"
+  type: 'BrickLink'
 }
 export interface LegoItem extends ExternalItem {
-  type: "Lego"
+  type: 'Lego'
 }
 
 export interface StoreCountry {
@@ -119,6 +119,7 @@ export interface StoreState {
 export interface StoreCountriesPageStoreCountry extends StoreCountry {
   numStores: number
   excluded: boolean
+  included: boolean
 }
 
 export interface BrickLinkStorePage {
@@ -133,9 +134,7 @@ export interface LegoCategory extends ExternalCategory {
 export interface Item {
   itemId: number
 }
-export interface PartPageCategory extends Category {
-
-}
+export interface PartPageCategory extends Category {}
 export interface PartButtonPart extends Item {
   itemId: number
   externalParts: ExternalItem[]
@@ -143,7 +142,7 @@ export interface PartButtonPart extends Item {
 export interface RebrickableItem extends ExternalItem {
   legoPartIds: string[] | undefined
   brickLinkIds: string[] | undefined
-  type: "Rebrickable"
+  type: 'Rebrickable'
 }
 export interface ExternalItem {
   externalCategoryId: string
@@ -275,8 +274,7 @@ export interface UiInvItem extends InvItem {
   colorName: string
 }
 
-export interface PartsPageVariantInvItem extends InvItem {
-}
+export interface PartsPageVariantInvItem extends InvItem {}
 
 export interface StorePageExternalPart extends ExternalItem {
   category: ExternalCategory
@@ -323,7 +321,7 @@ export interface ShopList {
 }
 
 export interface CachedList extends ShopList {
-  listItems: CachedListItem[]  
+  listItems: CachedListItem[]
 }
 export interface ShopListItem {
   id?: number
@@ -341,12 +339,10 @@ export interface CachedListItem extends ShopListItem {
 }
 
 export interface CachedItem extends Item {
-  externalParts: CachedExternalItem[];
+  externalParts: CachedExternalItem[]
 }
 
-export interface CachedSearchFilter extends SearchFilter {
-
-}
+export interface CachedSearchFilter extends SearchFilter {}
 
 export interface CachedSearch extends Search {
   externalCategories: {
@@ -382,7 +378,13 @@ export interface CachedItemVariant extends ItemVariant {
 
 export interface SearchFilter {
   searchId: IDBValidKey
-  type: 'category' | 'color' | 'store' | 'condition' | 'externalCategory' | 'storeCountry'
+  type:
+    | 'category'
+    | 'color'
+    | 'store'
+    | 'condition'
+    | 'externalCategory'
+    | 'storeCountry'
   objectId: string | number
   isExcluded: boolean
 }
@@ -416,9 +418,7 @@ export interface ActiveSearch extends Search {
     excluded: number[]
   }
 }
-export interface CartPageCart extends CartWithItems {
-
-}
+export interface CartPageCart extends CartWithItems {}
 export interface ActiveCartButtonCart extends Cart {
   totalCost: number
   totalItems: number
@@ -467,17 +467,15 @@ export interface ActiveSearchPageCondition {
   numInvItems: number
 }
 export interface SearchPageSearch extends ActiveSearch {
-  includedConditionObjects: ActiveSearchPageCondition[] 
-  excludedConditionObjects: ActiveSearchPageCondition[] 
-  includedCategoryObjects: CategoriesPageCategory[] 
-  excludedCategoryObjects: CategoriesPageCategory[] 
-  colorObjects: UiColor[] 
-  partObjects: ActiveSearchPagePart[] 
+  includedConditionObjects: ActiveSearchPageCondition[]
+  excludedConditionObjects: ActiveSearchPageCondition[]
+  includedCategoryObjects: CategoriesPageCategory[]
+  excludedCategoryObjects: CategoriesPageCategory[]
+  colorObjects: UiColor[]
+  partObjects: ActiveSearchPagePart[]
   storeObjects: ActiveSearchPageStore[]
 }
-export interface SearchesPageSearch extends Search {
-
-}
+export interface SearchesPageSearch extends Search {}
 export interface UiListItem extends ShopListItem {
   item?: UiItem
   colorNames?: Color[]
@@ -498,19 +496,17 @@ export interface Color {
   legoId?: string
 }
 
-export interface CachedColor extends Color {
-
-}
+export interface CachedColor extends Color {}
 
 export interface RbColor {
   Img: string
   ID: number
   Name: string
   RGB: string
-  "Num Parts": number
-  "Num Sets": number
-  "First Year": number | null
-  "Last Year": number | null
+  'Num Parts': number
+  'Num Sets': number
+  'First Year': number | null
+  'Last Year': number | null
   LEGO: string
   LDraw: string
   BrickLink: string
@@ -544,11 +540,11 @@ export interface CachedCategory extends Category {
 }
 
 export interface BrickLinkCategory extends ExternalCategory {
-  type: "BrickLink"
+  type: 'BrickLink'
 }
 
 export interface RebrickableCategory extends ExternalCategory {
-  type: "Rebrickable"
+  type: 'Rebrickable'
 }
 
 export interface CategoryWithExternals extends Category {
@@ -592,7 +588,6 @@ export interface ExternalCategoryPageExternalPart extends ExternalItem {
   numInvItems: number
 }
 
-
 export interface CategoryPagePart extends Item {
   variants: any
   numInvItems: number
@@ -624,4 +619,3 @@ export interface UiCategory extends Category {
 export interface UiShopList extends ShopList {
   items: ShopListItem[]
 }
-

@@ -1,14 +1,10 @@
 <script setup lang="ts">
-import type { UiShopList } from '../types'
-import HomeButton from '../components/HomeButton.vue';
-const newListName = ref('')
-const lists = ref([])
-function open(list: UiShopList) {
-
-}
-function add(name: string) {
-
-}
+import type { UiShopList } from "../types";
+import HomeButton from "../components/HomeButton.vue";
+const newListName = ref("");
+const lists = ref([]);
+function open(list: UiShopList) {}
+function add(name: string) {}
 </script>
 
 <template>
@@ -36,9 +32,7 @@ function add(name: string) {
       </tbody>
     </table>
     <h4>Add</h4>
-    <div>Name:<input v-model="newListName" type="text"></div>
-    <button @click="add(newListName)">
-      Add
-    </button>
+    <div>Name:<input v-model="newListName" type="text" /></div>
+    <button @click="add(newListName)">Add</button>
   </div>
 </template>

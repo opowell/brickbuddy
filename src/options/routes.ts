@@ -23,96 +23,96 @@ export default [
   {
     name: 'home',
     path: '/',
-    component: HomePage
+    component: HomePage,
   },
   {
     name: 'stores',
     path: '/stores',
-    component: StoresPage
+    component: StoresPage,
   },
   {
     name: 'storeCountries',
     path: Routes.storeCountries,
-    component: StoreCountriesPage
+    component: StoreCountriesPage,
   },
   {
     name: 'lists',
     path: '/lists',
-    component: ListsPage
+    component: ListsPage,
   },
   {
     name: 'carts',
     path: '/carts',
-    component: CartsPage
+    component: CartsPage,
   },
   {
     name: 'colors',
     path: '/colors',
-    component: ColorsPage
+    component: ColorsPage,
   },
   {
     name: 'part',
     path: '/' + LINKS.PART + '/:id',
-    component: ItemPage
+    component: ItemPage,
   },
   {
     name: 'category',
     path: '/' + LINKS.CATEGORY + '/:id',
-    component: CategoryPage
+    component: CategoryPage,
   },
   {
     name: 'color',
     path: '/' + LINKS.COLOR + '/:id',
-    component: ColorPage
+    component: ColorPage,
   },
   {
     name: 'partVariant',
     path: '/' + LINKS.PART + '/:partId/' + LINKS.PART_VARIANT + '/:colorId',
-    component: ItemVariantPage
+    component: ItemVariantPage,
   },
   {
     name: 'store',
     path: '/' + LINKS.STORE + '/:type/:id',
-    component: StorePage
+    component: StorePage,
   },
   {
     name: 'externalCategory',
     path: '/' + LINKS.EXTERNAL_CATEGORY + '/:type/:id',
-    component: ExternalCategoryPage
+    component: ExternalCategoryPage,
   },
   {
     name: 'externalPart',
     path: '/' + LINKS.EXTERNAL_PART + '/:type/:id',
-    component: ExternalPartPage
+    component: ExternalPartPage,
   },
   {
     name: 'categories',
     path: Routes.categories,
-    component: CategoriesPage
+    component: CategoriesPage,
   },
   {
     name: 'conditions',
     path: Routes.conditions,
-    component: ConditionsPage
+    component: ConditionsPage,
   },
   {
     name: 'parts',
     path: '/parts',
-    component: PartsPage
+    component: PartsPage,
   },
   {
     name: 'searches',
     path: Routes.searches,
-    component: SearchesPage
+    component: SearchesPage,
   },
   {
     name: 'search',
     path: '/' + LINKS.SEARCH + '/:id',
-    component: ActiveSearchPage
+    component: ActiveSearchPage,
   },
   {
     name: 'cart',
     path: '/' + LINKS.CART + '/:id',
-    component: CartPage
+    component: CartPage,
   },
 ]

@@ -45,19 +45,21 @@ async function importStores() {
     <ActiveCartButton />
     <ActiveSearchButton />
     <h4 v-if="stores">Stores ({{ stores.length }})</h4>
-    <h4>Scraping: </h4>
+    <h4>Scraping:</h4>
     <div><button @click="importStores">Import from BrickLink</button></div>
     <div>
-      <span>BL stores: {{ fetchingStores ? 'On' : 'Off' }}</span>
+      <span>BL stores: {{ fetchingStores ? "On" : "Off" }}</span>
       <button @click="startScrapingBLStores" :disabled="fetchingStores">Start</button>
       <button @click="stopScrapingBLStores" :disabled="!fetchingStores">Stop</button>
     </div>
     <div>
-      <span>Inventory: {{ fetchingStoreInventory ? 'On' : 'Off' }}</span>
+      <span>Inventory: {{ fetchingStoreInventory ? "On" : "Off" }}</span>
       <button @click="setScraping(true)" :disabled="fetchingStoreInventory">Start</button>
-      <button @click="setScraping(false)" :disabled="!fetchingStoreInventory">Stop</button>
+      <button @click="setScraping(false)" :disabled="!fetchingStoreInventory">
+        Stop
+      </button>
     </div>
-    <div>Search:<input v-model="search"></div>
+    <div>Search:<input v-model="search" /></div>
     <table>
       <thead>
         <tr>
@@ -72,27 +74,26 @@ async function importStores() {
       </thead>
       <tbody>
         <tr v-for="store in stores" :key="store.id">
-          <td><button>{{ store.countryId }}</button></td>
-          <td>{{ store.type === StoreType.BrickLink ? 'BrickLink' : 'Lego' }}</td>
+          <td>
+            <button>{{ store.countryId }}</button>
+          </td>
+          <td>{{ store.type === StoreType.BrickLink ? "BrickLink" : "Lego" }}</td>
           <td>
             <StoreButton :store="store" />
           </td>
           <td>
             {{ store.numInvItems }}
           </td>
+          <td>{{ store.fetchPageIndex }} / {{ store.fetchMaxPageIndex }}</td>
           <td>
-            {{ store.fetchPageIndex }} / {{ store.fetchMaxPageIndex }}
+            {{ store.fetchPercent.toFixed(1) }}
           </td>
-          <td>
-          {{  store.fetchPercent.toFixed(1) }}</td>
           <td>
             {{ store.lastScraped.toISOString() }}
           </td>
         </tr>
       </tbody>
     </table>
-    <button @click="addNewStore">
-      Add new
-    </button>
+    <button @click="addNewStore">Add new</button>
   </div>
 </template>

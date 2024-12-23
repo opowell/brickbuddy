@@ -1,58 +1,62 @@
 <script setup lang="ts">
-import { Crumbs } from '../idb/constants';
-import { useRouter } from 'vue-router'
-import { ActiveSearchButtonActiveSearch } from '../types';
-import { formatInteger } from '../utils';
-import { getActiveSearchButtonActiveSearch } from '../idb/searches'
-const router = useRouter()
-const activeSearch = ref<ActiveSearchButtonActiveSearch | undefined>(undefined)
+import { Crumbs } from "../idb/constants";
+import { useRouter } from "vue-router";
+import { ActiveSearchButtonActiveSearch } from "../types";
+import { formatInteger } from "../utils";
+import { getActiveSearchButtonActiveSearch } from "../idb/searches";
+const router = useRouter();
+const activeSearch = ref<ActiveSearchButtonActiveSearch | undefined>(undefined);
 onMounted(async () => {
-  activeSearch.value = await getActiveSearchButtonActiveSearch()
-})
+  activeSearch.value = await getActiveSearchButtonActiveSearch();
+});
 const showButton = computed(() => {
   if (!activeSearch.value) {
-    return false
+    return false;
   }
-  return text.value.length > 0
-})
+  return text.value.length > 0;
+});
 function capitalizeFirstLetter(val: string) {
-    return String(val).charAt(0).toUpperCase() + String(val).slice(1);
+  return String(val).charAt(0).toUpperCase() + String(val).slice(1);
 }
 const text = computed(() => {
-  const search = activeSearch.value
+  const search = activeSearch.value;
   if (!search) {
-    return ''
+    return "";
   }
   const texts: string[] = [
-    'Price score: quantity: ' + formatInteger(search.priceScoreQuantity),
-  ]
+    "Price score: quantity: " + formatInteger(search.priceScoreQuantity),
+  ];
   if (search.priceScoreIgnoreColor) {
-    texts.push('ignore color')
+    texts.push("ignore color");
   }
-  const fields = ['categories', 'colors', 'parts', 'conditions']
-  fields.forEach(field => {
+  const fields = ["categories", "colors", "parts", "conditions"];
+  fields.forEach((field) => {
     // @ts-ignore
-    const searchField: { includedNames: string[], excludedNames: string[] } = search[field]
+    const searchField: { includedNames: string[]; excludedNames: string[] } =
+      search[field];
     if (!searchField) {
-      return
+      return;
     }
-    if (searchField.includedNames.length === 0 && searchField.excludedNames.length === 0) {
-      return
+    if (
+      searchField.includedNames.length === 0 &&
+      searchField.excludedNames.length === 0
+    ) {
+      return;
     }
-    let searchText = capitalizeFirstLetter(field) + ': '
+    let searchText = capitalizeFirstLetter(field) + ": ";
     if (searchField.includedNames.length > 0) {
-      searchText += searchField.includedNames.length + ' included'
+      searchText += searchField.includedNames.length + " included";
     }
     if (searchField.excludedNames.length > 0) {
       if (searchField.includedNames.length > 0) {
-        searchText += ', '
+        searchText += ", ";
       }
-      searchText += searchField.excludedNames.length + ' excluded'
+      searchText += searchField.excludedNames.length + " excluded";
     }
-    texts.push(searchText)
-  })
-  return 'Search: ' + texts.join('; ')
-})
+    texts.push(searchText);
+  });
+  return "Search: " + texts.join("; ");
+});
 </script>
 
 <template>

@@ -1,16 +1,36 @@
-import { IDBPDatabase } from "idb"
-import { UiItemVariant, ItemVariant, InvItem, UiInvItem, UiItem, Color, VariantPageVariant, VariantPageInvItem, VariantPagePart, ObjectCache, PartPageVariant, Item, PartsPageVariant, ExternalItem, CachedExternalItem, CachedItemVariant } from "../types"
-import { getCartQuantity } from "./carts"
-import { getColor, colors } from "./colors"
-import { get, getAllFromIndex } from "./db"
-import { cacheLoaded, getDbConnection, liveObjectCache } from "./idb"
-import INDICES from "./indices"
-import { getPartPageVariantInvItems, getPartsPageVariantInvItems } from "./invItems"
-import ObjectCacheClass from "./ObjectCacheClass"
-import { getUiPart, getVariantPagePart } from "./parts"
-import { getActiveCart } from "./searches"
+import { IDBPDatabase } from 'idb'
+import {
+  UiItemVariant,
+  ItemVariant,
+  InvItem,
+  UiInvItem,
+  UiItem,
+  Color,
+  VariantPageVariant,
+  VariantPageInvItem,
+  VariantPagePart,
+  ObjectCache,
+  PartPageVariant,
+  Item,
+  PartsPageVariant,
+  ExternalItem,
+  CachedExternalItem,
+  CachedItemVariant,
+} from '../types'
+import { getCartQuantity } from './carts'
+import { getColor, colors } from './colors'
+import { get, getAllFromIndex } from './db'
+import { cacheLoaded, getDbConnection, liveObjectCache } from './idb'
+import INDICES from './indices'
+import {
+  getPartPageVariantInvItems,
+  getPartsPageVariantInvItems,
+} from './invItems'
+import ObjectCacheClass from './ObjectCacheClass'
+import { getUiPart, getVariantPagePart } from './parts'
+import { getActiveCart } from './searches'
 import STORES from './stores'
-import { addShopListItem } from "./lists"
+import { addShopListItem } from './lists'
 
 export async function getItemVariant(
   db: IDBPDatabase,
@@ -24,10 +44,16 @@ export async function getItemVariant(
   return await get(db, STORES.PART_VARIANTS, [type, externalItemId, colorId])
 }
 
-export async function getVariantPageVariant(partId: string, colorId: string): Promise<VariantPageVariant | undefined> {
+export async function getVariantPageVariant(
+  partId: string,
+  colorId: string
+): Promise<VariantPageVariant | undefined> {
   const db = await getDbConnection()
   const activeCart = await getActiveCart()
-  const variant = await get<ItemVariant>(db, STORES.PART_VARIANTS, [partId, colorId])
+  const variant = await get<ItemVariant>(db, STORES.PART_VARIANTS, [
+    partId,
+    colorId,
+  ])
   if (!variant) {
     return
   }
@@ -43,7 +69,9 @@ export async function getVariantPageVariant(partId: string, colorId: string): Pr
   for (let i = 0; i < invItems.length; i++) {
     const invItem: InvItem = invItems[i]
     const store = await get(db, STORES.STORES, invItem.storeId)
-    const uiItem: VariantPagePart | undefined = await getVariantPagePart(invItem.itemId)
+    const uiItem: VariantPagePart | undefined = await getVariantPagePart(
+      invItem.itemId
+    )
     const color: Color | undefined = await getColor(invItem.colorId)
     if (!uiItem || !color) {
       continue
@@ -53,7 +81,7 @@ export async function getVariantPageVariant(partId: string, colorId: string): Pr
       ...invItem,
       store,
       item: uiItem,
-      cartQuantity
+      cartQuantity,
     })
   }
   const color = await getColor(variant.colorId)
@@ -68,8 +96,15 @@ export async function getVariantPageVariant(partId: string, colorId: string): Pr
   }
   return uiPartVariant
 }
-export async function getUiPartVariants(db: IDBPDatabase, id: string): Promise<UiItemVariant[] | undefined> {
-  const variants = await getAllFromIndex<UiItemVariant>(db, INDICES.PART_VARIANTS_BY_PART, id)
+export async function getUiPartVariants(
+  db: IDBPDatabase,
+  id: string
+): Promise<UiItemVariant[] | undefined> {
+  const variants = await getAllFromIndex<UiItemVariant>(
+    db,
+    INDICES.PART_VARIANTS_BY_PART,
+    id
+  )
   if (!variants) {
     return
   }
@@ -88,15 +123,20 @@ export async function getUiPartVariants(db: IDBPDatabase, id: string): Promise<U
   }
   return variants
 }
-export async function getPartPageVariants(id: number): Promise<PartPageVariant[] | undefined> {
+export async function getPartPageVariants(
+  id: number
+): Promise<PartPageVariant[] | undefined> {
   const partPageVariants: PartPageVariant[] = []
   const externalItems = await liveObjectCache.getExternalPartsByPart(id)
   if (!externalItems) {
     return
   }
   for (let j = 0; j < externalItems.length; j++) {
-    const externalItem = externalItems[j]    
-    const variants = await liveObjectCache.getVariantsByExternalPart(externalItem.externalItemId, externalItem.type)
+    const externalItem = externalItems[j]
+    const variants = await liveObjectCache.getVariantsByExternalPart(
+      externalItem.externalItemId,
+      externalItem.type
+    )
     if (!variants) {
       continue
     }
@@ -105,7 +145,7 @@ export async function getPartPageVariants(id: number): Promise<PartPageVariant[]
       const partPageVariant = {
         ...variant,
         color: await liveObjectCache.getColor(variant.colorId),
-        invItems: await getPartPageVariantInvItems(variant)
+        invItems: await getPartPageVariantInvItems(variant),
       }
       partPageVariants.push(partPageVariant)
     }
@@ -113,9 +153,11 @@ export async function getPartPageVariants(id: number): Promise<PartPageVariant[]
   return partPageVariants
 }
 
-export const getExternalPartsByPart = computed<Map<number, CachedExternalItem[]>>(() => {
+export const getExternalPartsByPart = computed<
+  Map<number, CachedExternalItem[]>
+>(() => {
   const map = new Map<number, CachedExternalItem[]>()
-  objectCache.value.externalParts.forEach(ep => {
+  objectCache.value.externalParts.forEach((ep) => {
     let value = map.get(ep.itemId)
     if (!value) {
       value = []
@@ -125,47 +167,53 @@ export const getExternalPartsByPart = computed<Map<number, CachedExternalItem[]>
   })
   return map
 })
-export const getPartsPageVariants = computed<Map<number, PartsPageVariant[]>>(() => {
-  const parts = objectCache.value.parts
-  const map = new Map<number, PartsPageVariant[]>()
-  parts.forEach(item => {
-    const externalParts = item.externalParts
-    if (!externalParts) {
-      return
-    }
-    const partsPageVariants: PartsPageVariant[] = []
-    for (let i = 0; i < externalParts.length; i++) {
-      const externalPart = externalParts[i]
-      const variants = variantsByTypePart.value.get(externalPart.type + externalPart.externalItemId)
-      if (!variants) {
-        continue
+export const getPartsPageVariants = computed<Map<number, PartsPageVariant[]>>(
+  () => {
+    const parts = objectCache.value.parts
+    const map = new Map<number, PartsPageVariant[]>()
+    parts.forEach((item) => {
+      const externalParts = item.externalParts
+      if (!externalParts) {
+        return
       }
-      for (let i = 0; i < variants.length; i++) {
-        const variant = variants[i]
-        const invItems = getPartsPageVariantInvItems.value.get(variant.itemId + variant.colorId)
-        if (!invItems || invItems.length === 0) {
+      const partsPageVariants: PartsPageVariant[] = []
+      for (let i = 0; i < externalParts.length; i++) {
+        const externalPart = externalParts[i]
+        const variants = variantsByTypePart.value.get(
+          externalPart.type + externalPart.externalItemId
+        )
+        if (!variants) {
           continue
         }
-        const color = colorsMap.value.get(variant.colorId)
-        if (!color) {
-          continue
+        for (let i = 0; i < variants.length; i++) {
+          const variant = variants[i]
+          const invItems = getPartsPageVariantInvItems.value.get(
+            variant.itemId + variant.colorId
+          )
+          if (!invItems || invItems.length === 0) {
+            continue
+          }
+          const color = colorsMap.value.get(variant.colorId)
+          if (!color) {
+            continue
+          }
+          partsPageVariants.push({
+            ...variant,
+            item: externalPart,
+            color,
+            invItems,
+          })
         }
-        partsPageVariants.push({
-          ...variant,
-          item: externalPart,
-          color,
-          invItems
-        })
       }
-    }
-    map.set(item.itemId, partsPageVariants)
-  })
-  return map
-})
+      map.set(item.itemId, partsPageVariants)
+    })
+    return map
+  }
+)
 
 const variantsByTypePart = computed<Map<string, CachedItemVariant[]>>(() => {
   const map = new Map<string, CachedItemVariant[]>()
-  objectCache.value.variants.forEach(v => {
+  objectCache.value.variants.forEach((v) => {
     let value = map.get(v.type + v.itemId)
     if (!value) {
       value = []
@@ -190,4 +238,3 @@ export async function itemVariantPageAddToList(item: object) {
     db
   )
 }
-

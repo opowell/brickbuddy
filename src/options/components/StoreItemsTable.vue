@@ -80,7 +80,6 @@ async function updateCartQuantity(item: StoreItemsTableInvItem, newQuantity: num
   }
   emits('refreshCartButton')
 }
-
 </script>
 
 <template>
@@ -100,14 +99,20 @@ async function updateCartQuantity(item: StoreItemsTableInvItem, newQuantity: num
     </thead>
     <tbody>
       <tr v-for="(invItem, index) in viewedItems" :key="index">
-        <PartVariantButton  v-if="!hideVariant" :part="invItem.item" :variant="invItem.variant">
-          <img v-if="invItem.variant" :src="invItem.variant.image">
+        <PartVariantButton
+          v-if="!hideVariant"
+          :part="invItem.item"
+          :variant="invItem.variant"
+        >
+          <img v-if="invItem.variant" :src="invItem.variant.image" />
         </PartVariantButton>
         <td>
           <StoreButton :store="invItem.store" />
         </td>
         <td v-if="showColor"><ColorButton :color="invItem.variant.color" /></td>
-        <td v-if="search && search.conditions.excluded.length < 1"><ConditionButton :condition="invItem.condition" /></td>
+        <td v-if="search && search.conditions.excluded.length < 1">
+          <ConditionButton :condition="invItem.condition" />
+        </td>
         <td>{{ formatAmount(invItem.price) }}</td>
         <td>{{ invItem.priceScore }}</td>
         <td>{{ formatInteger(invItem.quantity) }}</td>

@@ -56,12 +56,8 @@ const partsView = ref('images')
 
 <template>
   <div v-if="list">
-    <button @click="$emit('goHome')">
-      Home
-    </button>
-    <button @click="$emit('goShopLists')">
-      Shopping Lists
-    </button>
+    <button @click="$emit('goHome')">Home</button>
+    <button @click="$emit('goShopLists')">Shopping Lists</button>
     <h4>{{ list.name }}</h4>
     <h4>Parts ({{ list.items.length }})</h4>
     <table>
@@ -77,7 +73,10 @@ const partsView = ref('images')
         </tr>
       </thead>
       <tbody>
-        <tr v-for="item in list.items" :key="`${ item.itemId }-${ item.condition }-${ item.colors}`">
+        <tr
+          v-for="item in list.items"
+          :key="`${item.itemId}-${item.condition}-${item.colors}`"
+        >
           <td>{{ item.itemId }}</td>
           <td>
             <button @click="$emit('goItem', item.item)">
@@ -95,45 +94,49 @@ const partsView = ref('images')
     <h4>Add</h4>
     <div>
       View parts:
-      <button @click="partsView = 'images'" :disabled="partsView === 'images'">Images</button>
-      <button @click="partsView = 'table'" :disabled="partsView === 'table'">Table</button>
+      <button @click="partsView = 'images'" :disabled="partsView === 'images'">
+        Images
+      </button>
+      <button @click="partsView = 'table'" :disabled="partsView === 'table'">
+        Table
+      </button>
     </div>
-    <div>Item name:<input v-model="filterString"></div>
-    <div>Item Id:<input v-model="newListItemItemId" type="text"></div>
+    <div>Item name:<input v-model="filterString" /></div>
+    <div>Item Id:<input v-model="newListItemItemId" type="text" /></div>
     <div>
       Condition:<select v-model="newListItemCondition">
-        <option value="New">
-          New
-        </option>
-        <option value="Any">
-          Any
-        </option>
-        <option value="Used">
-          Used
-        </option>
+        <option value="New">New</option>
+        <option value="Any">Any</option>
+        <option value="Used">Used</option>
       </select>
     </div>
-    <div>Min quantity:<input v-model="newListItemMinQuantity" type="number"></div>
-    <div>Max quantity:<input v-model="newListItemMaxQuantity" type="number"></div>
-    <div>Max price:<input v-model="newListItemMaxPrice" type="number"></div>
-    <div>Colors:<input v-model="newListItemColors" type="number"></div>
-    <button @click="addNewListItem">
-      Add
-    </button>
+    <div>Min quantity:<input v-model="newListItemMinQuantity" type="number" /></div>
+    <div>Max quantity:<input v-model="newListItemMaxQuantity" type="number" /></div>
+    <div>Max price:<input v-model="newListItemMaxPrice" type="number" /></div>
+    <div>Colors:<input v-model="newListItemColors" type="number" /></div>
+    <button @click="addNewListItem">Add</button>
     <div v-if="partsView === 'images'" class="parts">
       <template v-if="filteredParts.length === 1">
-        <div v-for="variant in filteredParts[0].variants" :key="variant.colorId" class="part">
-          <img @click="newListItemColors = variant.colorId" :src="variant.image" :title="variant.color.name + ' (' + variant.colorId + ')'">
+        <div
+          v-for="variant in filteredParts[0].variants"
+          :key="variant.colorId"
+          class="part"
+        >
+          <img
+            @click="newListItemColors = variant.colorId"
+            :src="variant.image"
+            :title="variant.color.name + ' (' + variant.colorId + ')'"
+          />
           <span>{{ variant.colorId }}</span>
         </div>
       </template>
-      <div
-        v-else
-        v-for="item in filteredParts"
-        :key="item.itemId"
-        class="part"
-      >
-        <img @click="newListItemItemId = item.itemId" v-if="item.variants.length" :src="item.variants[0].image" :title="item.itemName + ' (' + item.itemId + ')'">
+      <div v-else v-for="item in filteredParts" :key="item.itemId" class="part">
+        <img
+          @click="newListItemItemId = item.itemId"
+          v-if="item.variants.length"
+          :src="item.variants[0].image"
+          :title="item.itemName + ' (' + item.itemId + ')'"
+        />
         <span>{{ item.itemId }}</span>
         <span>{{ item.itemName }}</span>
       </div>
@@ -150,7 +153,7 @@ const partsView = ref('images')
       </thead>
       <tbody>
         <tr v-for="item in filteredParts" :key="item.itemId">
-          <td><img v-if="item.variants.length" :src="item.variants[0].image"></td>
+          <td><img v-if="item.variants.length" :src="item.variants[0].image" /></td>
           <td>{{ item.itemId }}</td>
           <td>
             <button @click="$emit('goItem', item)">

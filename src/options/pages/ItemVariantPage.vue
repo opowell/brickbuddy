@@ -68,39 +68,31 @@ function refreshCartButton() {
     <ActiveSearchButton />
     <ActiveCartButton ref="cartButton" />
     <h4>{{ variant.item.itemName }}, {{ variant.color.name }}</h4>
-    <img :src="variant.image">
+    <img :src="variant.image" />
     <h4>Add to shopping list</h4>
     <div>
       List:<select v-model="addToListId">
-        <option
-          v-for="list in lists"
-          :key="list.id"
-          :value="list.id"
-        >
+        <option v-for="list in lists" :key="list.id" :value="list.id">
           {{ list.name }}
         </option>
       </select>
       <div v-if="search && search.conditions.excluded.length < 1">
         Condition:<select v-model="addToListCondition">
-          <option value="New">
-            New
-          </option>
-          <option value="Any">
-            Any
-          </option>
-          <option value="Used">
-            Used
-          </option>
+          <option value="New">New</option>
+          <option value="Any">Any</option>
+          <option value="Used">Used</option>
         </select>
       </div>
-      <div>Min quantity:<input v-model="addToListMinQ" type="number"></div>
-      <div>Max quantity:<input v-model="addToListMaxQ" type="number"></div>
-      <div>Max price:<input v-model="addToListMaxP" type="number"></div>
+      <div>Min quantity:<input v-model="addToListMinQ" type="number" /></div>
+      <div>Max quantity:<input v-model="addToListMaxQ" type="number" /></div>
+      <div>Max price:<input v-model="addToListMaxP" type="number" /></div>
     </div>
-    <button @click="$emit('addToList', addToListItem)">
-      Add
-    </button>
-    <StoreItemsTable :items="variant.invItems" hide-variant @refresh-cart-button="refreshCartButton" />
+    <button @click="$emit('addToList', addToListItem)">Add</button>
+    <StoreItemsTable
+      :items="variant.invItems"
+      hide-variant
+      @refresh-cart-button="refreshCartButton"
+    />
     <h4>Shopping lists</h4>
     <table>
       <thead>

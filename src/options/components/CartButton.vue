@@ -1,19 +1,19 @@
 <script setup lang="ts">
-import { Cart } from '../types';
-import { Crumbs } from '../idb/constants';
-import { useRouter } from 'vue-router'
-import {PropType} from 'vue'
-import NameIdLabel from './NameIdLabel.vue';
+import { Cart } from "../types";
+import { Crumbs } from "../idb/constants";
+import { useRouter } from "vue-router";
+import { PropType } from "vue";
+import NameIdLabel from "./NameIdLabel.vue";
 const { cart } = defineProps({
-  cart: Object as PropType<Cart>
-})
-const router = useRouter()
+  cart: Object as PropType<Cart>,
+});
+const router = useRouter();
 const href = computed(() => {
   if (!cart) {
-    return
+    return;
   }
-  return Crumbs.cart(cart.id).href
-})
+  return Crumbs.cart(cart.id).href;
+});
 </script>
 
 <template>

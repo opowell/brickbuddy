@@ -33,23 +33,13 @@ watch(listId, () => {
 
 <template>
   <div v-if="search">
-    <button @click="$emit('goHome')">
-      Home
-    </button>
-    <button @click="$emit('goSearches')">
-      Searches
-    </button>
+    <button @click="$emit('goHome')">Home</button>
+    <button @click="$emit('goSearches')">Searches</button>
     <h4>Search</h4>
-    <button @click="analyse">
-      Analyse
-    </button>
+    <button @click="analyse">Analyse</button>
     <div>
       List:<select v-model="listId">
-        <option
-          v-for="list in lists"
-          :key="list.id"
-          :value="list.id"
-        >
+        <option v-for="list in lists" :key="list.id" :value="list.id">
           {{ list.name }}
         </option>
       </select>
@@ -66,9 +56,7 @@ watch(listId, () => {
         <tbody>
           <tr v-for="store in search.stores" :key="store.id">
             <td>
-              <button @click="$emit('removeStore', store)">
-                x
-              </button>
+              <button @click="$emit('removeStore', store)">x</button>
             </td>
             <td>
               <button @click="$emit('goStore', store)">
@@ -79,17 +67,11 @@ watch(listId, () => {
         </tbody>
       </table>
       <select v-model="addStoreId">
-        <option
-          v-for="store in stores"
-          :key="store.id"
-          :value="store.id"
-        >
+        <option v-for="store in stores" :key="store.id" :value="store.id">
           {{ store.name }}
         </option>
       </select>
-      <button @click="$emit('addStore', addStoreId)">
-        Add
-      </button>
+      <button @click="$emit('addStore', addStoreId)">Add</button>
     </div>
     <table v-if="search.shopList">
       <thead>
@@ -103,7 +85,8 @@ watch(listId, () => {
       <tbody>
         <tr v-for="item in search.shopList.items" :key="item.itemId">
           <td>
-            {{ item.minQuantity }}-{{ item.maxQuantity }}x {{ item.itemId }} / {{ item.condition }} / {{ item.colors }} - EURc {{ item.maxPrice }}
+            {{ item.minQuantity }}-{{ item.maxQuantity }}x {{ item.itemId }} /
+            {{ item.condition }} / {{ item.colors }} - EURc {{ item.maxPrice }}
           </td>
         </tr>
       </tbody>

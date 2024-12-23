@@ -1,18 +1,18 @@
-import * as math from "mathjs"
+import * as math from 'mathjs'
 export async function toDataURL(url: string): Promise<string> {
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     var xhr = new XMLHttpRequest()
-    xhr.onload = function() {
+    xhr.onload = function () {
       var reader = new FileReader()
-      reader.onloadend = function() {
+      reader.onloadend = function () {
         // @ts-ignore
         resolve(reader.result)
       }
-      reader.readAsDataURL(xhr.response);
-    };
-    xhr.open('GET', url);
-    xhr.responseType = 'blob';
-    xhr.send();
+      reader.readAsDataURL(xhr.response)
+    }
+    xhr.open('GET', url)
+    xhr.responseType = 'blob'
+    xhr.send()
   })
 }
 
@@ -20,18 +20,20 @@ export async function getUsage() {
   if (!navigator.storage || !navigator.storage.estimate) {
     return
   }
-  const quota = await navigator.storage.estimate();
+  const quota = await navigator.storage.estimate()
   if (!quota.usage || !quota.quota) {
     return
   }
-  const percentageUsed = (quota.usage / quota.quota) * 100;
-  const quotaInGB = (quota.quota / 1024/1024/1024).toFixed(2)
-  const usageInGB = (quota.usage / 1024/1024/1024).toFixed(2)
-  const remaining = formatInteger(Number.parseFloat(quotaInGB) - Number.parseFloat(usageInGB))
+  const percentageUsed = (quota.usage / quota.quota) * 100
+  const quotaInGB = (quota.quota / 1024 / 1024 / 1024).toFixed(2)
+  const usageInGB = (quota.usage / 1024 / 1024 / 1024).toFixed(2)
+  const remaining = formatInteger(
+    Number.parseFloat(quotaInGB) - Number.parseFloat(usageInGB)
+  )
   console.log(`Quota: ${quotaInGB} GB`)
   console.log(`Usage: ${usageInGB} GB`)
   console.log(`Usage %: ${percentageUsed}`)
-  console.log(`Remaining: ${remaining} GB`);
+  console.log(`Remaining: ${remaining} GB`)
   return quota
 }
 
@@ -49,12 +51,12 @@ export function formatFloat(x: number) {
     return x.toFixed(0)
   }
   if (x < 10000) {
-    return (x/1000).toFixed(1) + 'k'
+    return (x / 1000).toFixed(1) + 'k'
   }
   if (x < 1000000) {
-    return (x/1000).toFixed(0) + 'k'
+    return (x / 1000).toFixed(0) + 'k'
   }
-  return (x/1000000).toFixed(1) + 'm'
+  return (x / 1000000).toFixed(1) + 'm'
 }
 export function formatAmount(x: number | string) {
   if (typeof x !== 'number') {
@@ -74,25 +76,25 @@ export function formatAmount(x: number | string) {
     return x.toFixed(1)
   }
   if (x < 1000000) {
-    return (x/1000).toFixed(1) + 'k'
+    return (x / 1000).toFixed(1) + 'k'
   }
-  return (x/1000000).toFixed(1) + 'm'
+  return (x / 1000000).toFixed(1) + 'm'
 }
 export function formatInteger(x: number) {
   if (x < 1000) {
     return x
   }
   if (x < 10000) {
-    return (x/1000).toFixed(1) + 'k'
+    return (x / 1000).toFixed(1) + 'k'
   }
   if (x < 1000000) {
-    return (x/1000).toFixed(0) + 'k'
+    return (x / 1000).toFixed(0) + 'k'
   }
-  return (x/1000000).toFixed(1) + 'm'
+  return (x / 1000000).toFixed(1) + 'm'
 }
 
 export function cheapestPrice(
-  items: { price: number | string, quantity: number }[],
+  items: { price: number | string; quantity: number }[],
   targetQ: number,
   sort: boolean = false
 ) {
@@ -110,7 +112,10 @@ export function cheapestPrice(
   for (let i = 0; i < sortedItems.length; i++) {
     const item = sortedItems[i]
     const toTake = Math.min(item.quantity, targetQ - quantity)
-    const price = typeof item.price === 'number' ? item.price : Number.parseFloat(item.price)
+    const price =
+      typeof item.price === 'number'
+        ? item.price
+        : Number.parseFloat(item.price)
     try {
       quantity += toTake
       cost += price * toTake
@@ -125,7 +130,7 @@ export function cheapestPrice(
 }
 
 export function addMinutes(date: Date, minutes: number) {
-  date.setTime(date.getTime() + (minutes*60*1000))
+  date.setTime(date.getTime() + minutes * 60 * 1000)
 }
 
 let timeStart = new Map<string, number>()
@@ -143,7 +148,7 @@ export function reportTime(x: string) {
 }
 
 export function getScore(
-  items: { price: number | string, quantity: number }[],
+  items: { price: number | string; quantity: number }[],
   targetQ: number,
   actualPrice: number | string,
   sort: boolean = false,
@@ -152,7 +157,10 @@ export function getScore(
   if (cheapP === undefined) {
     cheapP = cheapestPrice(items, targetQ, sort)
   }
-  const priceScore = math.divide(math.bignumber(actualPrice), math.bignumber(cheapP))
+  const priceScore = math.divide(
+    math.bignumber(actualPrice),
+    math.bignumber(cheapP)
+  )
   const percent = math.multiply(100, math.subtract(priceScore, 1))
   let sign = ''
   if (math.larger(percent, 0)) {

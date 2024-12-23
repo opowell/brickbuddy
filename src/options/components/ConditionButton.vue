@@ -1,17 +1,17 @@
 <script setup lang="ts">
-import { Crumbs } from '../idb/constants';
-import { useRouter } from 'vue-router'
-import {PropType} from 'vue'
+import { Crumbs } from "../idb/constants";
+import { useRouter } from "vue-router";
+import { PropType } from "vue";
 const { condition } = defineProps({
-  condition: String as PropType<string>
-})
-const router = useRouter()
+  condition: String as PropType<string>,
+});
+const router = useRouter();
 const href = computed(() => {
   if (!condition) {
-    return
+    return;
   }
-  return Crumbs.condition(condition).href
-})
+  return Crumbs.condition(condition).href;
+});
 </script>
 
 <template>

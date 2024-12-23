@@ -1,14 +1,58 @@
-import { IDBPDatabase } from "idb"
-import { BrickLinkItem, CachedExternalCategory, CachedExternalItem, CachedItem, CategoryPagePart, ExternalCategory, ExternalItem, ExternalPartPageExternalPart, InvItem, Item, ItemVariant, LegoItem, ObjectCache, PartPagePart, PartPageVariant, PartPageVariantInvItem, PartsPagePart, RebrickableItem, StorePageExternalPart, StorePageInvItemItem, StorePageItemVariant, StorePageVariant, UiItem, UiItemVariant, VariantPagePart } from "../types"
-import { countFromIndex, get, getAll, getAllFromIndex, getFromIndex, put } from "./db"
+import { IDBPDatabase } from 'idb'
+import {
+  BrickLinkItem,
+  CachedExternalCategory,
+  CachedExternalItem,
+  CachedItem,
+  CategoryPagePart,
+  ExternalCategory,
+  ExternalItem,
+  ExternalPartPageExternalPart,
+  InvItem,
+  Item,
+  ItemVariant,
+  LegoItem,
+  ObjectCache,
+  PartPagePart,
+  PartPageVariant,
+  PartPageVariantInvItem,
+  PartsPagePart,
+  RebrickableItem,
+  StorePageExternalPart,
+  StorePageInvItemItem,
+  StorePageItemVariant,
+  StorePageVariant,
+  UiItem,
+  UiItemVariant,
+  VariantPagePart,
+} from '../types'
+import {
+  countFromIndex,
+  get,
+  getAll,
+  getAllFromIndex,
+  getFromIndex,
+  put,
+} from './db'
 import STORES from './stores'
-import { toDataURL } from "../utils"
-import { getExternalPartsByPart, getItemVariant, getPartPageVariants, getPartsPageVariants, getUiPartVariants } from "./variants"
-import { getDbConnection, liveObjectCache, rbPartsBrickLinkId, rbPartsLegoId } from "./idb"
-import INDICES from "./indices"
-import { getPartPageInvItems } from "./invItems"
-import ObjectCacheClass from "./ObjectCacheClass"
-import { getActiveSearch, searchAllowsPart } from "./searches"
+import { toDataURL } from '../utils'
+import {
+  getExternalPartsByPart,
+  getItemVariant,
+  getPartPageVariants,
+  getPartsPageVariants,
+  getUiPartVariants,
+} from './variants'
+import {
+  getDbConnection,
+  liveObjectCache,
+  rbPartsBrickLinkId,
+  rbPartsLegoId,
+} from './idb'
+import INDICES from './indices'
+import { getPartPageInvItems } from './invItems'
+import ObjectCacheClass from './ObjectCacheClass'
+import { getActiveSearch, searchAllowsPart } from './searches'
 
 export async function addBrickLinkItem(
   colorId: string,
@@ -24,7 +68,7 @@ async function putVariant(db: IDBPDatabase, variant: ItemVariant) {
 }
 
 async function putRebrickableItem(db: IDBPDatabase, item: RebrickableItem) {
-  item.type = "Rebrickable"
+  item.type = 'Rebrickable'
   return await db.put(STORES.EXTERNAL_PARTS.name, item)
 }
 async function putBrickLinkItem(db: IDBPDatabase, item: BrickLinkItem) {
@@ -33,30 +77,39 @@ async function putBrickLinkItem(db: IDBPDatabase, item: BrickLinkItem) {
   if (existingItem) {
     newItem = {
       ...existingItem,
-      ...item
+      ...item,
     }
   }
   return await db.put(STORES.EXTERNAL_PARTS.name, newItem)
 }
-async function putBrickLinkCategory(db: IDBPDatabase, id: string, name: string, categoryId: number) {
+async function putBrickLinkCategory(
+  db: IDBPDatabase,
+  id: string,
+  name: string,
+  categoryId: number
+) {
   return await db.put(STORES.EXTERNAL_CATEGORIES.name, {
     name,
     categoryId,
-    type: 'BrickLink'
+    type: 'BrickLink',
   })
 }
 async function putLegoItem(db: IDBPDatabase, item: LegoItem) {
   return await db.put(STORES.EXTERNAL_PARTS.name, item)
 }
-async function storeRebrickableItem(db: IDBPDatabase, item: RebrickableItem, brickLinkCategoryId: string = 'unknown') {
+async function storeRebrickableItem(
+  db: IDBPDatabase,
+  item: RebrickableItem,
+  brickLinkCategoryId: string = 'unknown'
+) {
   await putRebrickableItem(db, item)
   if (item.brickLinkIds) {
     for (let i = 0; i < item.brickLinkIds.length; i++) {
       const blItem: BrickLinkItem = {
         externalItemId: item.brickLinkIds[i],
         itemId: item.itemId,
-        type: "BrickLink",
-        externalCategoryId: brickLinkCategoryId
+        type: 'BrickLink',
+        externalCategoryId: brickLinkCategoryId,
       }
       await putBrickLinkItem(db, blItem)
     }
@@ -66,19 +119,33 @@ async function storeRebrickableItem(db: IDBPDatabase, item: RebrickableItem, bri
       const legoItem: LegoItem = {
         externalItemId: item.legoPartIds[i],
         itemId: item.itemId,
-        type: "Lego",
-        externalCategoryId: 'unknown' // TODO
+        type: 'Lego',
+        externalCategoryId: 'unknown', // TODO
       }
       await putLegoItem(db, legoItem)
     }
   }
 }
-export async function getBrickLinkItem(db: IDBPDatabase, brickLinkId: string, brickLinkCategoryId?: string): Promise<BrickLinkItem | undefined> {
-  let blItem: BrickLinkItem = await getFromIndex(db, INDICES.EXTERNAL_PARTS_BY_TYPE_AND_EXTERNAL_ID, ['BrickLink', brickLinkId])
+export async function getBrickLinkItem(
+  db: IDBPDatabase,
+  brickLinkId: string,
+  brickLinkCategoryId?: string
+): Promise<BrickLinkItem | undefined> {
+  let blItem: BrickLinkItem = await getFromIndex(
+    db,
+    INDICES.EXTERNAL_PARTS_BY_TYPE_AND_EXTERNAL_ID,
+    ['BrickLink', brickLinkId]
+  )
   if (!blItem) {
-    const rebrickableItem: RebrickableItem | undefined = rbPartsBrickLinkId.get(brickLinkId)
+    const rebrickableItem: RebrickableItem | undefined =
+      rbPartsBrickLinkId.get(brickLinkId)
     if (!rebrickableItem) {
-      console.log('no item', brickLinkId, rebrickableItem, Object.keys(rbPartsBrickLinkId).includes(brickLinkId))
+      console.log(
+        'no item',
+        brickLinkId,
+        rebrickableItem,
+        Object.keys(rbPartsBrickLinkId).includes(brickLinkId)
+      )
       return
     }
     const itemId = await put(db, STORES.PARTS, {})
@@ -88,12 +155,24 @@ export async function getBrickLinkItem(db: IDBPDatabase, brickLinkId: string, br
     rebrickableItem.itemId = itemId
     await storeRebrickableItem(db, rebrickableItem, brickLinkCategoryId)
   }
-  return await getFromIndex(db, INDICES.EXTERNAL_PARTS_BY_TYPE_AND_EXTERNAL_ID, ['BrickLink', brickLinkId])
+  return await getFromIndex(
+    db,
+    INDICES.EXTERNAL_PARTS_BY_TYPE_AND_EXTERNAL_ID,
+    ['BrickLink', brickLinkId]
+  )
 }
-export async function getLegoItem(db: IDBPDatabase, legoId: string): Promise<LegoItem | undefined> {
-  let blItem = await getFromIndex<LegoItem>(db, INDICES.EXTERNAL_PARTS_BY_TYPE_AND_EXTERNAL_ID, ['Lego', legoId])
+export async function getLegoItem(
+  db: IDBPDatabase,
+  legoId: string
+): Promise<LegoItem | undefined> {
+  let blItem = await getFromIndex<LegoItem>(
+    db,
+    INDICES.EXTERNAL_PARTS_BY_TYPE_AND_EXTERNAL_ID,
+    ['Lego', legoId]
+  )
   if (!blItem) {
-    const rebrickableItem: RebrickableItem | undefined = rbPartsLegoId.get(legoId)
+    const rebrickableItem: RebrickableItem | undefined =
+      rbPartsLegoId.get(legoId)
     if (!rebrickableItem) {
       return
     }
@@ -104,18 +183,29 @@ export async function getLegoItem(db: IDBPDatabase, legoId: string): Promise<Leg
     rebrickableItem.itemId = itemId
     await storeRebrickableItem(db, rebrickableItem)
   }
-  return await getFromIndex(db, INDICES.EXTERNAL_PARTS_BY_TYPE_AND_EXTERNAL_ID, ['Lego', legoId])
+  return await getFromIndex(
+    db,
+    INDICES.EXTERNAL_PARTS_BY_TYPE_AND_EXTERNAL_ID,
+    ['Lego', legoId]
+  )
 }
 
-export async function getAllParts(db: IDBPDatabase): Promise<CachedItem[] | undefined> {
+export async function getAllParts(
+  db: IDBPDatabase
+): Promise<CachedItem[] | undefined> {
   return await getAll<CachedItem>(db, STORES.PARTS)
 }
 
-export async function getAllExternalParts(db: IDBPDatabase): Promise<CachedExternalItem[] | undefined> {
+export async function getAllExternalParts(
+  db: IDBPDatabase
+): Promise<CachedExternalItem[] | undefined> {
   return await getAll<CachedExternalItem>(db, STORES.EXTERNAL_PARTS)
 }
 
-export async function getPart(db: IDBPDatabase, partId: IDBValidKey): Promise<Item | undefined> {
+export async function getPart(
+  db: IDBPDatabase,
+  partId: IDBValidKey
+): Promise<Item | undefined> {
   return await get<Item>(db, STORES.PARTS, partId)
 }
 
@@ -127,49 +217,53 @@ export async function getParts(): Promise<CachedItem[]> {
     return []
   }
   return parts
-  const fps: CachedItem[] = []
-  for (let i = 0; i < parts.value.length; i++) {
-    const part = parts.value[i]
-    let partAllowed = true
-    for (let j = 0; j < part.externalParts.length; j++) {
-      const externalPart = part.externalParts[j]
-      const externalCategory = externalPart.externalCategory
-      if (!externalCategory) {
-        continue
-      }
-      if (search) {
-        if (search.categories) {
-          const categoryId = externalCategory.categoryId
-          if (search.categories.excluded.includes(categoryId)) {
-            partAllowed = false
-            break
-          }
-          if (search.categories.included.length > 0) {
-            if (!search.categories.included.includes(categoryId)) {
-              partAllowed = false
-              break
-            }
-          }
-        }
-      }
-    }
-    if (partAllowed) {
-      fps.push(part)
-    }
-  }
-  // console.log('parts', fps)
-  return fps
+  // const fps: CachedItem[] = []
+  // for (let i = 0; i < parts.value.length; i++) {
+  //   const part = parts.value[i]
+  //   let partAllowed = true
+  //   for (let j = 0; j < part.externalParts.length; j++) {
+  //     const externalPart = part.externalParts[j]
+  //     const externalCategory = externalPart.externalCategory
+  //     if (!externalCategory) {
+  //       continue
+  //     }
+  //     if (search) {
+  //       if (search.categories) {
+  //         const categoryId = externalCategory.categoryId
+  //         if (search.categories.excluded.includes(categoryId)) {
+  //           partAllowed = false
+  //           break
+  //         }
+  //         if (search.categories.included.length > 0) {
+  //           if (!search.categories.included.includes(categoryId)) {
+  //             partAllowed = false
+  //             break
+  //           }
+  //         }
+  //       }
+  //     }
+  //   }
+  //   if (partAllowed) {
+  //     fps.push(part)
+  //   }
+  // }
+  // // console.log('parts', fps)
+  // return fps
 }
 
-export const externalPartPageExternalPartMap = computed<Map<string, ExternalPartPageExternalPart>>(() => {
+export const externalPartPageExternalPartMap = computed<
+  Map<string, ExternalPartPageExternalPart>
+>(() => {
   const map = new Map<string, ExternalPartPageExternalPart>()
-  objectCache.value.externalParts.forEach(ep => {
+  objectCache.value.externalParts.forEach((ep) => {
     map.set(ep.type + ep.externalItemId, ep)
   })
   return map
 })
 
-export async function getPartPagePart(id: number): Promise<PartPagePart | undefined> {
+export async function getPartPagePart(
+  id: number
+): Promise<PartPagePart | undefined> {
   const externalParts = await liveObjectCache.getExternalPartsByPart(id)
   if (!externalParts) {
     return
@@ -186,28 +280,39 @@ export async function getPartPagePart(id: number): Promise<PartPagePart | undefi
     itemId: id,
     variants,
     invItems,
-    externalParts
+    externalParts,
   }
 }
 
-async function getExternalParts(db: IDBPDatabase, id: number): Promise<ExternalItem[]> {
-  return await getAllFromIndex(db, INDICES.EXTERNAL_PARTS_BY_PART, id)
+async function getExternalParts(
+  db: IDBPDatabase,
+  id: number
+): Promise<ExternalItem[] | undefined> {
+  return await getAllFromIndex<ExternalItem>(
+    db,
+    INDICES.EXTERNAL_PARTS_BY_PART,
+    id
+  )
 }
 
-async function getUiPartFromPart(db: IDBPDatabase, part: CategoryPagePart, objectCache?: ObjectCache): Promise<UiItem | undefined> {
+async function getUiPartFromPart(
+  db: IDBPDatabase,
+  part: CategoryPagePart,
+  objectCache?: ObjectCache
+): Promise<UiItem | undefined> {
   if (!part) {
     console.log('getUiPartFromPart: error, no part', part)
     return
   }
-  const variants: UiItemVariant[] = await getUiPartVariants(db, part.externalItemId, objectCache)
+  const variants = await getUiPartVariants(db, part.externalItemId, objectCache)
   return {
     ...part,
-    variants
+    variants,
   }
 }
 
 export const getPartsPageParts = computed((): PartsPagePart[] => {
-  const items: Item[] = getParts()
+  const items = getParts()
   const partsPageParts: PartsPagePart[] = []
   // items.forEach((item) => {
   //   const partsPagePart = getPartsPagePart.value.get(item.itemId)
@@ -216,17 +321,17 @@ export const getPartsPageParts = computed((): PartsPagePart[] => {
   //   }
   //   partsPageParts.push(partsPagePart)
   // })
-  return partsPageParts.filter(p => p.variants.length > 0)
+  return partsPageParts.filter((p) => p.variants.length > 0)
 })
 
 export const getPartsPagePart = computed(() => {
   const map = new Map<number, PartsPagePart>()
-  objectCache.value.parts.forEach(part => {
+  liveObjectCache.parts.forEach((part) => {
     const variants = getPartsPageVariants.value.get(part.itemId)
     if (!variants) {
       return
     }
-    const firstVariant = variants.find(v => v.image)
+    const firstVariant = variants.find((v) => v.image)
     const externalParts = getExternalPartsByPart.value.get(part.itemId)
     if (!externalParts) {
       return
@@ -235,10 +340,10 @@ export const getPartsPagePart = computed(() => {
     if (firstVariant) {
       image = firstVariant.image
     }
-    let minPrice: number | undefined = undefined
+    let minPrice: number | undefined = undefined
     let maxPrice: number | undefined = undefined
-    variants.forEach(v => {
-      v.invItems.forEach(ii => {
+    variants.forEach((v) => {
+      v.invItems.forEach((ii) => {
         const priceNumber = Number.parseFloat(ii.price)
         if (minPrice === undefined || priceNumber < minPrice) {
           minPrice = priceNumber
@@ -259,7 +364,7 @@ export const getPartsPagePart = computed(() => {
       variants,
       externalParts,
       image,
-      priceRange
+      priceRange,
     })
   })
   return map
@@ -268,11 +373,21 @@ export const getPartsPagePart = computed(() => {
 interface PartsPageExternalItem extends ExternalItem {
   category: ExternalCategory
 }
-async function getPartsPageExternalItems(objectCache: ObjectCacheClass, itemId: number): Promise<PartsPageExternalItem[]> {
-  return getAllFromIndex(objectCache.db, INDICES.EXTERNAL_PARTS_BY_PART, itemId)
+async function getPartsPageExternalItems(
+  objectCache: ObjectCacheClass,
+  itemId: number
+): Promise<PartsPageExternalItem[] | undefined> {
+  return getAllFromIndex<PartsPageExternalItem>(
+    objectCache.db,
+    INDICES.EXTERNAL_PARTS_BY_PART,
+    itemId
+  )
 }
 
-export async function getStorePagePart(id: string, objectCache?: ObjectCacheClass): Promise<StorePageInvItemItem | undefined> {
+export async function getStorePagePart(
+  id: string,
+  objectCache?: ObjectCacheClass
+): Promise<StorePageInvItemItem | undefined> {
   console.log(id)
   const db = await getDbConnection()
   const part: Item = await get(db, STORES.PARTS, id)
@@ -282,7 +397,11 @@ export async function getStorePagePart(id: string, objectCache?: ObjectCacheClas
   if (!objectCache) {
     objectCache = new ObjectCacheClass(db)
   }
-  const variants: ItemVariant[] = await getAllFromIndex(db, INDICES.PART_VARIANTS_BY_PART, part.itemId)
+  const variants: ItemVariant[] = await getAllFromIndex(
+    db,
+    INDICES.PART_VARIANTS_BY_PART,
+    part.itemId
+  )
   const storePageVariants: StorePageVariant[] = []
   for (let i = 0; i < variants.length; i++) {
     const variant = variants[i]
@@ -291,36 +410,49 @@ export async function getStorePagePart(id: string, objectCache?: ObjectCacheClas
       continue
     }
     const invItems: InvItem[] = await getAllFromIndex(
-        db,
-        INDICES.INV_ITEMS_BY_ITEM_AND_COLOR,
-        [variant.itemId, variant.colorId]
-      )
+      db,
+      INDICES.INV_ITEMS_BY_ITEM_AND_COLOR,
+      [variant.itemId, variant.colorId]
+    )
     storePageVariants.push({
       ...variant,
       color,
-      invItems
+      invItems,
     })
   }
   const externalParts = await getPartsPageExternalItems(objectCache, part)
   for (let i = 0; i < externalParts.length; i++) {
     const externalPart = externalParts[i]
     if (externalPart.externalCategoryId) {
-      externalPart.category = await getExternalCategory(objectCache, externalPart.externalCategoryId, externalPart.type)
+      externalPart.category = await getExternalCategory(
+        objectCache,
+        externalPart.externalCategoryId,
+        externalPart.type
+      )
     }
   }
   return {
     ...part,
     variants,
-    externalParts
+    externalParts,
   }
 }
 
-export async function getStorePageExternalPart(invItem: InvItem, type: 'BrickLink' | 'Lego'): Promise<StorePageInvItemItem | undefined> {
-  const externalPart = await liveObjectCache.getExternalPart(type, invItem.itemId)
+export async function getStorePageExternalPart(
+  invItem: InvItem,
+  type: 'BrickLink' | 'Lego'
+): Promise<StorePageInvItemItem | undefined> {
+  const externalPart = await liveObjectCache.getExternalPart(
+    type,
+    invItem.itemId
+  )
   if (!externalPart) {
     return
   }
-  const variants = await liveObjectCache.getVariantsByExternalPart(externalPart.externalItemId, type)
+  const variants = await liveObjectCache.getVariantsByExternalPart(
+    externalPart.externalItemId,
+    type
+  )
   if (!variants) {
     return
   }
@@ -343,74 +475,100 @@ export async function getStorePageExternalPart(invItem: InvItem, type: 'BrickLin
     storePageItemVariants.push({
       ...variant,
       color,
-      invItems
+      invItems,
     })
   }
-  const externalParts = await liveObjectCache.getExternalPartsByPart(externalPart.itemId)
+  const externalParts = await liveObjectCache.getExternalPartsByPart(
+    externalPart.itemId
+  )
   if (!externalParts) {
     return
   }
   const storePageExternalParts: StorePageExternalPart[] = []
   for (let i = 0; i < externalParts.length; i++) {
     const e = externalParts[i]
-    const category = await liveObjectCache.getExternalCategory(externalPart.externalCategoryId, externalPart.type)
+    const category = await liveObjectCache.getExternalCategory(
+      externalPart.externalCategoryId,
+      externalPart.type
+    )
     if (!category) {
       continue
     }
     storePageExternalParts.push({
       ...e,
-      category
+      category,
     })
   }
   return {
     ...externalPart,
     variants: storePageItemVariants,
-    externalParts: storePageExternalParts
+    externalParts: storePageExternalParts,
   }
 }
 
-export const getExternalCategory = computed<Map<string, CachedExternalCategory>>(() => {
+export const getExternalCategory = computed<
+  Map<string, CachedExternalCategory>
+>(() => {
   const map = new Map<string, CachedExternalCategory>()
-  objectCache.value.externalCategories.forEach(ec => {
+  liveObjectCache.externalCategories.forEach((ec) => {
     map.set(ec.type + ec.id, ec)
   })
   return map
 })
 
-export async function updatePart(
-  db: IDBPDatabase,
-  part: Item
-) {
+export async function updatePart(db: IDBPDatabase, part: Item) {
   await db.put(STORES.PARTS.name, part)
 }
 
-async function getExternalCategoriesByCategory(db: IDBPDatabase, id: number): Promise<ExternalCategory[]> {
-  return await getAllFromIndex(db, INDICES.EXTERNAL_CATEGORIES_BY_CATEGORY, id)
+async function getExternalCategoriesByCategory(
+  db: IDBPDatabase,
+  id: number
+): Promise<ExternalCategory[] | undefined> {
+  return await getAllFromIndex<ExternalCategory>(
+    db,
+    INDICES.EXTERNAL_CATEGORIES_BY_CATEGORY,
+    id
+  )
 }
 
-async function getExternalPartsByTypeAndCategory(db: IDBPDatabase, externalCategory: ExternalCategory): Promise<ExternalItem[]> {
-  return await getAllFromIndex(db, INDICES.EXTERNAL_PARTS_BY_TYPE_AND_CATEGORY, [externalCategory.type, externalCategory.id])
+async function getExternalPartsByTypeAndCategory(
+  db: IDBPDatabase,
+  externalCategory: ExternalCategory
+): Promise<ExternalItem[] | undefined> {
+  return await getAllFromIndex<ExternalItem>(
+    db,
+    INDICES.EXTERNAL_PARTS_BY_TYPE_AND_CATEGORY,
+    [externalCategory.type, externalCategory.id]
+  )
 }
 
-export async function getCategoryPageParts(id: number): Promise<CategoryPagePart[] | undefined> {
-  const search = getActiveSearch()
+export async function getCategoryPageParts(
+  id: number
+): Promise<CategoryPagePart[] | undefined> {
+  const search = await getActiveSearch()
   if (!search) {
     return
   }
-  const externalCategories = await liveObjectCache.getExternalCategoriesByCategoryId(id)
+  const externalCategories =
+    await liveObjectCache.getExternalCategoriesByCategoryId(id)
   if (!externalCategories) {
     return
   }
   const externalParts: ExternalItem[] = []
   for (let i = 0; i < externalCategories.length; i++) {
     const externalCategory = externalCategories[i]
-    const parts = await liveObjectCache.getExternalPartsInExternalCategory(externalCategory.type, externalCategory.id)
+    const parts = await liveObjectCache.getExternalPartsInExternalCategory(
+      externalCategory.type,
+      externalCategory.id
+    )
     if (!parts) {
       continue
     }
     externalParts.push(...parts)
   }
-  const filteredExternalParts = externalParts.filter(part => searchAllowsPart(liveObjectCache.db, search, part))
+  const filteredExternalParts = externalParts.filter((part) =>
+    searchAllowsPart(liveObjectCache.db, search, part)
+  )
   const itemsMap = new Map<number, ExternalItem[]>()
   for (let i = 0; i < filteredExternalParts.length; i++) {
     const fp = filteredExternalParts[i]
@@ -425,42 +583,58 @@ export async function getCategoryPageParts(id: number): Promise<CategoryPagePart
     map.push(fp)
   }
   const items: CategoryPagePart[] = []
-  itemsMap.forEach((value, key) => items.push({
-    itemId: key,
-    externalParts: value,
-    numInvItems: 0,
-    numVariants: 0
-  }))
+  itemsMap.forEach((value, key) =>
+    items.push({
+      itemId: key,
+      externalParts: value,
+      numInvItems: 0,
+      numVariants: 0,
+    })
+  )
   for (let i = 0; i < items.length; i++) {
     const item = items[i]
     for (let j = 0; j < item.externalParts.length; j++) {
       const externalPart = item.externalParts[j]
-      const numInvItems = await liveObjectCache.getNumInvItemsByPart(externalPart.externalItemId, externalPart.type)
+      const numInvItems = await liveObjectCache.getNumInvItemsByPart(
+        externalPart.externalItemId,
+        externalPart.type
+      )
       if (numInvItems === undefined) {
         continue
       }
-      const numVariants = await liveObjectCache.getNumVariantsByPart(externalPart.externalItemId, externalPart.type)
+      const numVariants = await liveObjectCache.getNumVariantsByPart(
+        externalPart.externalItemId,
+        externalPart.type
+      )
       if (numVariants === undefined) {
         continue
       }
       item.numInvItems += numInvItems
       item.numVariants += numVariants
-      const firstVariant = await liveObjectCache.getFirstVariantByPart(externalPart.externalItemId)
+      const firstVariant = await liveObjectCache.getFirstVariantByPart(
+        externalPart.externalItemId
+      )
       item.image = firstVariant?.image
     }
   }
   return items
 }
 
-export async function getUiPart(id: string, objectCache?: ObjectCache): Promise<UiItem | undefined> {
+export async function getUiPart(
+  id: string,
+  objectCache?: ObjectCache
+): Promise<UiItem | undefined> {
   const db = await getDbConnection()
-  const part: Item = await get(db, STORES.PARTS, id)
+  const part = await get<Item>(db, STORES.PARTS, id)
   const uiPart = await getUiPartFromPart(db, part, objectCache)
   return uiPart
 }
-export async function getVariantPagePart(id: string, objectCache?: ObjectCache): Promise<VariantPagePart | undefined> {
+export async function getVariantPagePart(
+  id: string,
+  objectCache?: ObjectCache
+): Promise<VariantPagePart | undefined> {
   const db = await getDbConnection()
-  const part: Item = await getPart(db, id)
+  const part = await getPart(db, id)
   const uiPart = await getUiPartFromPart(db, part, objectCache)
   return uiPart
 }
@@ -483,25 +657,44 @@ async function addItem(
   item.type = type
   await db.put(STORES.EXTERNAL_PARTS.name, item)
 
-  let variant: ItemVariant = await getItemVariant(db, type, item.externalItemId, colorId)
+  let variant: ItemVariant = await getItemVariant(
+    db,
+    type,
+    item.externalItemId,
+    colorId
+  )
   if (!variant) {
     const image: string = await toDataURL('https:' + imageUrl)
     variant = {
       itemId: item.externalItemId,
       colorId,
       image,
-      type
+      type,
     }
     await putVariant(db, variant)
   }
 }
 
-export async function getNumPartsInCategory(db: IDBPDatabase, id: number): Promise<number> {
-  const externalCategories: ExternalCategory[] = await getAllFromIndex(db, INDICES.EXTERNAL_CATEGORIES_BY_CATEGORY, id)
+export async function getNumPartsInCategory(
+  db: IDBPDatabase,
+  id: number
+): Promise<number | undefined> {
+  const externalCategories = await getAllFromIndex<ExternalCategory>(
+    db,
+    INDICES.EXTERNAL_CATEGORIES_BY_CATEGORY,
+    id
+  )
+  if (!externalCategories) {
+    return
+  }
   let count = 0
   for (let i = 0; i < externalCategories.length; i++) {
     const category = externalCategories[i]
-    count += await countFromIndex(db, INDICES.EXTERNAL_PARTS_BY_TYPE_AND_CATEGORY, [category.type, category.id])
+    count += await countFromIndex(
+      db,
+      INDICES.EXTERNAL_PARTS_BY_TYPE_AND_CATEGORY,
+      [category.type, category.id]
+    )
   }
   return count
 }
@@ -510,7 +703,7 @@ async function addItemNoVariant(
   db: IDBPDatabase,
   categoryId: string,
   itemId: string,
-  itemName: string,
+  itemName: string
 ) {
   const existingItem = await get(db, STORES.PARTS, itemId)
   let newItem: Item = {
@@ -521,7 +714,7 @@ async function addItemNoVariant(
   if (existingItem) {
     newItem = {
       ...existingItem,
-      ...newItem
+      ...newItem,
     }
   }
   await put(db, STORES.PARTS, newItem)

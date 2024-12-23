@@ -24,7 +24,7 @@ const stores: {
 } = {
   BRICK_LINK_STORE_PAGES: {
     name: 'brickLinkStorePages',
-    keyPath: 'url'
+    keyPath: 'url',
   },
   CARTS: {
     name: 'carts',
@@ -38,12 +38,12 @@ const stores: {
   CATEGORIES: {
     name: 'categories',
     keyPath: 'id',
-    autoIncrement: true
+    autoIncrement: true,
   },
   COLORS: {
     name: 'colors',
     keyPath: 'id',
-    autoIncrement: true
+    autoIncrement: true,
   },
   EXTERNAL_CATEGORIES: {
     name: 'externalCategories',
@@ -55,7 +55,7 @@ const stores: {
   },
   EXTERNAL_PARTS: {
     name: 'externalParts',
-    keyPath: ['type', 'externalItemId']
+    keyPath: ['type', 'externalItemId'],
   },
   INVENTORY_ITEMS: {
     name: 'inventoryItems',
@@ -64,25 +64,25 @@ const stores: {
   LISTS: {
     name: 'lists',
     keyPath: 'id',
-    autoIncrement: true
+    autoIncrement: true,
   },
   LIST_ITEMS: {
     name: 'listItems',
-    keyPath: ['listId', 'itemId', 'colors']
+    keyPath: ['listId', 'itemId', 'colors'],
   },
   PART_VARIANTS: {
     name: 'partVariants',
-    keyPath: ['type', 'itemId', 'colorId']
+    keyPath: ['type', 'itemId', 'colorId'],
   },
   PARTS: {
     name: 'parts',
     keyPath: 'itemId',
-    autoIncrement: true
+    autoIncrement: true,
   },
   SEARCHES: {
     name: 'searches',
     keyPath: 'id',
-    autoIncrement: true
+    autoIncrement: true,
   },
   SEARCH_FILTERS: {
     name: 'searchFilters',
@@ -90,7 +90,7 @@ const stores: {
   },
   STORE_COUNTRIES: {
     name: 'storeCountries',
-    keyPath: 'id'
+    keyPath: 'id',
   },
   STORES: {
     name: 'stores',

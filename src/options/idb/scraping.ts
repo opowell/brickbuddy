@@ -1,9 +1,9 @@
-import { IDBPDatabase } from "idb"
-import { Store, StoreType } from "../types"
-import { getBrickLinkPrices } from "./getBrickLinkPrices"
-import { getLegoPrices } from "./getLegoPrices"
-import { getDbConnection, importBrickLinkStores, liveObjectCache } from "./idb"
-import { getFromIndex } from "./db"
+import { IDBPDatabase } from 'idb'
+import { Store, StoreType } from '../types'
+import { getBrickLinkPrices } from './getBrickLinkPrices'
+import { getLegoPrices } from './getLegoPrices'
+import { getDbConnection, importBrickLinkStores, liveObjectCache } from './idb'
+import { getFromIndex } from './db'
 import INDICES from './indices'
 let stopFetch: boolean = false
 let stopStoresFetch: boolean = false
@@ -39,13 +39,16 @@ export async function startFetching() {
   stopFetch = false
   fetchingStoreInventory.value = true
   getPrices()
-  fetchPricesInterval = setInterval(() => {
-    if (stopFetch && fetchPricesInterval) {
-      clearInterval(fetchPricesInterval)
-      return
-    }
-    getPrices()
-  }, 25000 + Math.floor(Math.random() * 5000))
+  fetchPricesInterval = setInterval(
+    () => {
+      if (stopFetch && fetchPricesInterval) {
+        clearInterval(fetchPricesInterval)
+        return
+      }
+      getPrices()
+    },
+    25000 + Math.floor(Math.random() * 5000)
+  )
 }
 export async function startFetchingStores() {
   if (fetchingStores.value) {
@@ -55,16 +58,21 @@ export async function startFetchingStores() {
   fetchingStores.value = true
   const db = await getDbConnection()
   await importBrickLinkStores(db)
-  fetchStoresInterval = setInterval(() => {
-    if (stopStoresFetch && fetchStoresInterval) {
-      clearInterval(fetchStoresInterval)
-      return
-    }
-    importBrickLinkStores(db)
-  }, 150000 + Math.floor(Math.random() * 5000))
+  fetchStoresInterval = setInterval(
+    () => {
+      if (stopStoresFetch && fetchStoresInterval) {
+        clearInterval(fetchStoresInterval)
+        return
+      }
+      importBrickLinkStores(db)
+    },
+    150000 + Math.floor(Math.random() * 5000)
+  )
 }
 
-async function getBrickLinkFetchStore(db: IDBPDatabase): Promise<Store | undefined> {
+async function getBrickLinkFetchStore(
+  db: IDBPDatabase
+): Promise<Store | undefined> {
   const oneYearAgo = new Date()
   const oneYearAhead = new Date()
   oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1)
@@ -73,19 +81,25 @@ async function getBrickLinkFetchStore(db: IDBPDatabase): Promise<Store | undefin
   const store = await getFromIndex<Store>(
     db,
     INDICES.STORES_BY_TYPE_AND_LAST_SCRAPED,
-    IDBKeyRange.bound([StoreType.BrickLink, oneYearAgo], [StoreType.BrickLink, oneYearAhead])
+    IDBKeyRange.bound(
+      [StoreType.BrickLink, oneYearAgo],
+      [StoreType.BrickLink, oneYearAhead]
+    )
   )
   return store
 }
 
 async function getLegoFetchStore(db: IDBPDatabase): Promise<Store | undefined> {
   const oneYearAgo = new Date()
-  oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+  oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1)
 
   const store = await getFromIndex<Store>(
     db,
     INDICES.STORES_BY_TYPE_AND_LAST_SCRAPED,
-    IDBKeyRange.bound([StoreType.Lego, oneYearAgo], [StoreType.Lego, new Date()])
+    IDBKeyRange.bound(
+      [StoreType.Lego, oneYearAgo],
+      [StoreType.Lego, new Date()]
+    )
   )
   return store
 }
@@ -109,26 +123,30 @@ export async function startPartScraping() {
   }, 30000)
 }
 async function scrapePartDetails() {
-  const response = await fetch(`https://rebrickable.com/api/v3/lego/parts/?inc_part_details=1&inc_color_details=0&page_size=1000&page=${partDetailsScrapePage}&key=ec4ddb3b958aaa4edf379059e5f87d2e`, {
-    "headers": {
-      "accept": "application/json",
-      "accept-language": "en,de;q=0.9,es;q=0.8,en-US;q=0.7",
-      "cache-control": "no-cache",
-      "pragma": "no-cache",
-      "priority": "u=1, i",
-      "sec-ch-ua": "\"Chromium\";v=\"130\", \"Google Chrome\";v=\"130\", \"Not?A_Brand\";v=\"99\"",
-      "sec-ch-ua-mobile": "?0",
-      "sec-ch-ua-platform": "\"macOS\"",
-      "sec-fetch-dest": "empty",
-      "sec-fetch-mode": "cors",
-      "sec-fetch-site": "cross-site"
-    },
-    "referrerPolicy": "strict-origin-when-cross-origin",
-    "body": null,
-    "method": "GET",
-    "mode": "cors",
-    "credentials": "omit"
-  });
+  const response = await fetch(
+    `https://rebrickable.com/api/v3/lego/parts/?inc_part_details=1&inc_color_details=0&page_size=1000&page=${partDetailsScrapePage}&key=ec4ddb3b958aaa4edf379059e5f87d2e`,
+    {
+      headers: {
+        accept: 'application/json',
+        'accept-language': 'en,de;q=0.9,es;q=0.8,en-US;q=0.7',
+        'cache-control': 'no-cache',
+        pragma: 'no-cache',
+        priority: 'u=1, i',
+        'sec-ch-ua':
+          '"Chromium";v="130", "Google Chrome";v="130", "Not?A_Brand";v="99"',
+        'sec-ch-ua-mobile': '?0',
+        'sec-ch-ua-platform': '"macOS"',
+        'sec-fetch-dest': 'empty',
+        'sec-fetch-mode': 'cors',
+        'sec-fetch-site': 'cross-site',
+      },
+      referrerPolicy: 'strict-origin-when-cross-origin',
+      body: null,
+      method: 'GET',
+      mode: 'cors',
+      credentials: 'omit',
+    }
+  )
   partDetailsScrapePage++
   const json = await response.json()
   partDetailsMaxPage = Math.ceil(json.count / 1000) + 1
@@ -147,4 +165,3 @@ export async function getStorePrices(store: Store) {
       break
   }
 }
-

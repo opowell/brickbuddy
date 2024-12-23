@@ -1,48 +1,52 @@
 <script setup lang="ts">
-import { SearchFilter, StoreCountriesPageStoreCountry, StoreCountry } from '../types';
-const storeCountries = ref<StoreCountriesPageStoreCountry[] | undefined>()
+import { SearchFilter, StoreCountriesPageStoreCountry, StoreCountry } from "../types";
+const storeCountries = ref<StoreCountriesPageStoreCountry[] | undefined>();
 onMounted(async () => {
-  storeCountries.value = await getStoreCountriesPageStoreCountries()
-})
+  storeCountries.value = await getStoreCountriesPageStoreCountries();
+});
 
-import HomeButton from '../components/HomeButton.vue';
-import ActiveSearchButton from '../components/ActiveSearchButton.vue';
-import ActiveCartButton from '../components/ActiveCartButton.vue';
-import { getStoreCountriesPageStoreCountries } from '../idb/storeCountries';
-import { getActiveSearch } from '../idb/searches';
-import { liveObjectCache } from '../idb/idb';
-import stores from '../idb/stores';
-import { dbDelete, put } from '../idb/db';
+import HomeButton from "../components/HomeButton.vue";
+import ActiveSearchButton from "../components/ActiveSearchButton.vue";
+import ActiveCartButton from "../components/ActiveCartButton.vue";
+import { getStoreCountriesPageStoreCountries } from "../idb/storeCountries";
+import { getActiveSearch } from "../idb/searches";
+import { liveObjectCache } from "../idb/idb";
+import stores from "../idb/stores";
+import { dbDelete, put } from "../idb/db";
 
 function include(country: StoreCountriesPageStoreCountry) {
-  return filter(country, false)
+  return filter(country, false);
 }
 function exclude(country: StoreCountriesPageStoreCountry) {
-  return filter(country, true)
+  return filter(country, true);
 }
 async function clear(country: StoreCountriesPageStoreCountry) {
-  const search = await getActiveSearch()
+  const search = await getActiveSearch();
   if (!search) {
-    return
+    return;
   }
-  dbDelete(liveObjectCache.db, stores.SEARCH_FILTERS, [search.id, 'storeCountry', country.id])
-  country.excluded = false
-  country.included = false
+  dbDelete(liveObjectCache.db, stores.SEARCH_FILTERS, [
+    search.id,
+    "storeCountry",
+    country.id,
+  ]);
+  country.excluded = false;
+  country.included = false;
 }
 async function filter(country: StoreCountriesPageStoreCountry, isExcluded: boolean) {
-  const search = await getActiveSearch()
+  const search = await getActiveSearch();
   if (!search) {
-    return
+    return;
   }
   const filter: SearchFilter = {
     searchId: search.id,
-    type: 'storeCountry',
+    type: "storeCountry",
     isExcluded,
-    objectId: country.id
-  }
-  put(liveObjectCache.db, stores.SEARCH_FILTERS, filter)
-  country.excluded = isExcluded
-  country.included = !isExcluded
+    objectId: country.id,
+  };
+  put(liveObjectCache.db, stores.SEARCH_FILTERS, filter);
+  country.excluded = isExcluded;
+  country.included = !isExcluded;
 }
 </script>
 
@@ -69,18 +73,18 @@ async function filter(country: StoreCountriesPageStoreCountry, isExcluded: boole
             <button>{{ country.numStores }}</button>
           </td>
           <td>
-            <button
-              :disabled="country.included"
-              @click="include(country)"
-            >Include</button>
-            <button 
-              :disabled="country.excluded"
-              @click="exclude(country)"
-            >Exclude</button>
+            <button :disabled="country.included" @click="include(country)">
+              Include
+            </button>
+            <button :disabled="country.excluded" @click="exclude(country)">
+              Exclude
+            </button>
             <button
               :disabled="!country.excluded && !country.included"
               @click="clear(country)"
-            >Clear</button>
+            >
+              Clear
+            </button>
           </td>
         </tr>
       </tbody>

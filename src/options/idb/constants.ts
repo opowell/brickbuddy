@@ -1,4 +1,4 @@
-import { StoreType } from "../types"
+import { StoreType } from '../types'
 
 export const DB_NAME = 'brickbuddy'
 
@@ -16,7 +16,7 @@ export const PAGES = {
   COLOR: 'color',
   SEARCH: 'search',
   PART_VARIANT: 'partVariant',
-  STORES: 'stores'
+  STORES: 'stores',
 }
 
 export const LINKS = {
@@ -29,7 +29,7 @@ export const LINKS = {
   CART: 'cart',
   EXTERNAL_CATEGORY: 'externalCategory',
   CATEGORY: 'category',
-  CONDITION: 'condition'
+  CONDITION: 'condition',
 }
 
 export const Routes = {
@@ -50,7 +50,9 @@ export const Routes = {
     return '/' + LINKS.CATEGORY + '/' + encodeURIComponent(id)
   },
   externalCategory(id: string, type: string) {
-    return '/' + LINKS.EXTERNAL_CATEGORY + '/' + type + '/' + encodeURIComponent(id)
+    return (
+      '/' + LINKS.EXTERNAL_CATEGORY + '/' + type + '/' + encodeURIComponent(id)
+    )
   },
   cart(id: number) {
     return '/' + LINKS.CART + '/' + id
@@ -68,10 +70,21 @@ export const Routes = {
     return '/' + LINKS.PART + '/' + encodeURIComponent(id)
   },
   partVariant(itemId: string, colorId: string) {
-    return '/' + LINKS.PART + '/' + encodeURIComponent(itemId) + '/' + LINKS.PART_VARIANT + '/' + encodeURIComponent(colorId)
+    return (
+      '/' +
+      LINKS.PART +
+      '/' +
+      encodeURIComponent(itemId) +
+      '/' +
+      LINKS.PART_VARIANT +
+      '/' +
+      encodeURIComponent(colorId)
+    )
   },
   store(type: StoreType, id: string) {
-    return '/' + LINKS.STORE + '/' + type.toString() + '/' + encodeURIComponent(id)
+    return (
+      '/' + LINKS.STORE + '/' + type.toString() + '/' + encodeURIComponent(id)
+    )
   },
   search(id: number) {
     return '/' + LINKS.SEARCH + '/' + encodeURIComponent(id)
@@ -121,112 +134,112 @@ export const Hrefs = {
   },
   store(type: StoreType, id: string) {
     return Routes.store(type, id)
-  }
+  },
 }
 
 export const Crumbs = {
   home: {
     title: 'Home',
-    href: Hrefs.home
+    href: Hrefs.home,
   },
   carts: {
     title: 'Carts',
-    href: Hrefs.carts
+    href: Hrefs.carts,
   },
   stores: {
     title: 'Stores',
-    href: Hrefs.stores
+    href: Hrefs.stores,
   },
   storeCountries: {
     title: 'Store Countries',
-    href: Hrefs.storeCountries
+    href: Hrefs.storeCountries,
   },
   conditions: {
     title: 'Conditions',
-    href: Hrefs.conditions
+    href: Hrefs.conditions,
   },
   searches: {
     title: 'Searches',
-    href: Hrefs.searches
+    href: Hrefs.searches,
   },
   colors: {
     title: 'Colors',
-    href: Hrefs.colors
+    href: Hrefs.colors,
   },
   brickLinkCategories: {
     title: 'BrickLink Categories',
-    href: Hrefs.brickLinkCategories
+    href: Hrefs.brickLinkCategories,
   },
   categories: {
     title: 'Categories',
-    href: Hrefs.categories
+    href: Hrefs.categories,
   },
   parts: {
     title: 'Parts',
-    href: Hrefs.parts
+    href: Hrefs.parts,
   },
   lists: {
     title: 'Shopping Lists',
-    href: Hrefs.lists
+    href: Hrefs.lists,
   },
   search(id: number) {
     return {
       title: 'Search',
-      href: Hrefs.search(id)
+      href: Hrefs.search(id),
     }
   },
   cart(id: number) {
     return {
       title: 'Cart',
-      href: Hrefs.cart(id)
+      href: Hrefs.cart(id),
     }
   },
   condition(id: string) {
     return {
       id,
-      href: Hrefs.condition(id)
+      href: Hrefs.condition(id),
     }
   },
   externalCategory(title: string | undefined, id: string, type: string) {
     return {
       title,
-      href: Hrefs.externalCategory(id, type)
+      href: Hrefs.externalCategory(id, type),
     }
   },
   category(title: string | undefined, id: number) {
     return {
       title,
-      href: Hrefs.category(id)
+      href: Hrefs.category(id),
     }
   },
   color(title: string, id: string) {
     return {
       title,
-      href: Hrefs.color(id)
+      href: Hrefs.color(id),
     }
   },
   part(title: string, id: number) {
     return {
       title,
-      href: Hrefs.part(id)
+      href: Hrefs.part(id),
     }
   },
   externalPart(title: string, id: string, type: string) {
     return {
       title,
-      href: Hrefs.externalPart(id, type)
+      href: Hrefs.externalPart(id, type),
     }
   },
   partVariant(title: string | undefined, itemId: string, colorId: string) {
     return {
       title,
-      href: Hrefs.partVariant(itemId, colorId)
+      href: Hrefs.partVariant(itemId, colorId),
     }
   },
   store(type: StoreType, id: string) {
     return {
       title: 'store',
-      href: Hrefs.store(type, id)
+      href: Hrefs.store(type, id),
     }
   },
 }

@@ -1,13 +1,30 @@
-import { IDBPDatabase } from "idb";
-import { Category, Color, ExternalCategory, Item, LegoCategory, LegoItem, Store } from "../types";
+import { IDBPDatabase } from 'idb'
+import {
+  Category,
+  Color,
+  ExternalCategory,
+  Item,
+  LegoCategory,
+  LegoItem,
+  Store,
+} from '../types'
 import INDICES from './indices'
-import { addCategory, getCategory, getLegoCategory, putExternalCategory, updateCategory } from "./categories";
-import { getFromIndex } from "./db";
-import { addInvItem } from "./invItems";
-import { getLegoItem, addLegoItem } from "./parts";
-import { updateStore } from "./storeMethods";
+import {
+  addCategory,
+  getCategory,
+  getLegoCategory,
+  putExternalCategory,
+  updateCategory,
+} from './categories'
+import { getFromIndex } from './db'
+import { addInvItem } from './invItems'
+import { getLegoItem, addLegoItem } from './parts'
+import { updateStore } from './storeMethods'
 
-async function getColorByLegoId(db: IDBPDatabase, legoId: string | number): Promise<Color | undefined> {
+async function getColorByLegoId(
+  db: IDBPDatabase,
+  legoId: string | number
+): Promise<Color | undefined> {
   legoId = legoId.toString()
   return getFromIndex(db, INDICES.COLOR_BY_LEGO_ID, legoId)
 }
@@ -15,38 +32,47 @@ async function getColorByLegoId(db: IDBPDatabase, legoId: string | number): Prom
 export async function getLegoPrices(db: IDBPDatabase, store: Store) {
   let referrer = `https://www.lego.com/de-at/pick-and-build/pick-a-brick`
   if (store.fetchPageIndex > 0) {
-    referrer = `https://www.lego.com/de-at/pick-and-build/pick-a-brick?perPage=400&page=${(store.fetchPageIndex - 1)}`
+    referrer = `https://www.lego.com/de-at/pick-and-build/pick-a-brick?perPage=400&page=${store.fetchPageIndex - 1}`
   }
-  const response = await fetch("https://www.lego.com/api/graphql/PickABrickQuery", {
-  "headers": {
-    "accept": "*/*",
-    "accept-language": "en,de;q=0.9,es;q=0.8,en-US;q=0.7",
-    "authorization": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7InB1YiI6e30sInB2dCI6Im1EdVRHbjVnK1Z5QmRUSXFjYzVMck8vZ3krY1J0ak5sRk1UNDJ2c0tQbEVGSWtpVzRMajlEdDcvY013dXhPb2JoZEdYL2VQVTZoRHprOGRvcUVSMVpKYkpuVG1hVXc2N3FsQWVEb1k4aGhWdUEvaG9nbmI4ZTR2L250M213VEdjSnpnQ0YrWEJ2MUlSWHdFaERDQVhWdnM0bm9yWXFSM1c3S1lDQlp4N0kwcTBwTndTN2kralVzdGdwQUZQNDdiSHBiOXJGNWFTRzZseXhHK2JKYVo2SGhaQkZOcFJXMDBvU3dJSGE5ZUpsSUEwMTV5cWJGUno2bGZabGVMKzJ0SEpONVZWaXZGR0pnUEpoMmh2M0ErcVZXeWRhY1hIallmWG1xM0pzQis5UnVCdlRlTWZlYlMzNHZUcW5rSW92NU5nYnhsdVdyc3ByeDQyS3lwVTFuY3VyNkxVRHdiVmtwZG5qTjViMVF3ZUhDMS9hWlA4eFhja1QvbFF3N0pMbjZtZzdBQ1U4dnZIQjdoOEpoa1pqeU1pOHNtczdDMGxueE01RGY5b0xHRkZVVURMWnhPd1dyVktZaEJFSTZjRnNWbkJDNWNrYWFFb0NDQldDakpmZGZ3cXFhRFBmdWJST2tKeXlTbVB0OTZhd1g4S0FSWld6dWg2SzVaTVpCSVBSMWR2REVnU1FROGJ5dnpCRWhJUlA2RmhBV0FFaFNFbjFpV3paV2JXRXZTYTZld1h6NXFlaE9tUFB4ZU03OEpDdzl0dy45TGlDWm84ZWNDMlRqdjZpWUtmeldRPT0ifSwiaWF0IjoxNzMxNjEzMzU4LCJleHAiOjE3MzE3MTAzMDV9.GB0127Vp1jLB0td_1oqGVbWqz4Zt6UCfdp7FzHuSg4c",
-    "cache-control": "no-cache",
-    "content-type": "application/json",
-    "fff-id": "bd5c1ce7-6264-4eec-a618-4dec41f906bb",
-    "lid": "",
-    "pragma": "no-cache",
-    "priority": "u=1, i",
-    "sec-ch-ua": "\"Chromium\";v=\"130\", \"Google Chrome\";v=\"130\", \"Not?A_Brand\";v=\"99\"",
-    "sec-ch-ua-mobile": "?0",
-    "sec-ch-ua-platform": "\"macOS\"",
-    "sec-fetch-dest": "empty",
-    "sec-fetch-mode": "same-origin",
-    "sec-fetch-site": "same-origin",
-    "session-cookie-id": "kNoxYpurj83OrKAbg8rL_",
-    "true-client-ip": "84.115.218.253",
-    "visitor-guid": "4e4e1708-febe-4697-8ee4-584ebac7b9d0",
-    "x-lego-request-id": "1fc77bfc-f260-4f41-8412-f10203787f31-app-shop-c-b806cc0b",
-    "x-locale": "de-AT"
-  },
-  "referrer": referrer,
-  "referrerPolicy": "strict-origin-when-cross-origin",
-  "body": "{\"operationName\":\"PickABrickQuery\",\"variables\":{\"input\":{\"perPage\":400,\"page\":" + store.fetchPageIndex + "}},\"query\":\"query PickABrickQuery($input: ElementQueryInput!, $sku: String) {\\n  searchElements(input: $input) {\\n    results {\\n      ...ElementLeaf\\n      __typename\\n    }\\n    facets {\\n      ...FacetData\\n      __typename\\n    }\\n    set {\\n      id\\n      type\\n      name\\n      imageUrl\\n      instructionsUrl\\n      pieces\\n      inStock\\n      price {\\n        formattedAmount\\n        __typename\\n      }\\n      __typename\\n    }\\n    total\\n    count\\n    __typename\\n  }\\n}\\n\\nfragment FacetData on Facet {\\n  id\\n  key\\n  name\\n  labels {\\n    count\\n    key\\n    name\\n    children {\\n      count\\n      key\\n      name\\n      ... on FacetValue {\\n        value\\n        __typename\\n      }\\n      __typename\\n    }\\n    ... on FacetValue {\\n      value\\n      __typename\\n    }\\n    ... on FacetRange {\\n      from\\n      to\\n      __typename\\n    }\\n    __typename\\n  }\\n  __typename\\n}\\n\\nfragment ElementLeaf on SearchResultElement {\\n  id\\n  designId\\n  name\\n  imageUrl\\n  maxOrderQuantity\\n  deliveryChannel\\n  price {\\n    centAmount\\n    formattedAmount\\n    currencyCode\\n    __typename\\n  }\\n  quantityInSet(sku: $sku)\\n  facets {\\n    category {\\n      ...ElementFacetCategory\\n      __typename\\n    }\\n    subcategory {\\n      ...ElementFacetCategory\\n      __typename\\n    }\\n    color {\\n      ...ElementFacetCategory\\n      __typename\\n    }\\n    colorFamily {\\n      ...ElementFacetCategory\\n      __typename\\n    }\\n    system\\n    __typename\\n  }\\n  inStock\\n  __typename\\n}\\n\\nfragment ElementFacetCategory on ElementCategory {\\n  name\\n  key\\n  __typename\\n}\"}",
-  "method": "POST",
-  "mode": "cors",
-  "credentials": "include"
-});
+  const response = await fetch(
+    'https://www.lego.com/api/graphql/PickABrickQuery',
+    {
+      headers: {
+        accept: '*/*',
+        'accept-language': 'en,de;q=0.9,es;q=0.8,en-US;q=0.7',
+        authorization:
+          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7InB1YiI6e30sInB2dCI6Im1EdVRHbjVnK1Z5QmRUSXFjYzVMck8vZ3krY1J0ak5sRk1UNDJ2c0tQbEVGSWtpVzRMajlEdDcvY013dXhPb2JoZEdYL2VQVTZoRHprOGRvcUVSMVpKYkpuVG1hVXc2N3FsQWVEb1k4aGhWdUEvaG9nbmI4ZTR2L250M213VEdjSnpnQ0YrWEJ2MUlSWHdFaERDQVhWdnM0bm9yWXFSM1c3S1lDQlp4N0kwcTBwTndTN2kralVzdGdwQUZQNDdiSHBiOXJGNWFTRzZseXhHK2JKYVo2SGhaQkZOcFJXMDBvU3dJSGE5ZUpsSUEwMTV5cWJGUno2bGZabGVMKzJ0SEpONVZWaXZGR0pnUEpoMmh2M0ErcVZXeWRhY1hIallmWG1xM0pzQis5UnVCdlRlTWZlYlMzNHZUcW5rSW92NU5nYnhsdVdyc3ByeDQyS3lwVTFuY3VyNkxVRHdiVmtwZG5qTjViMVF3ZUhDMS9hWlA4eFhja1QvbFF3N0pMbjZtZzdBQ1U4dnZIQjdoOEpoa1pqeU1pOHNtczdDMGxueE01RGY5b0xHRkZVVURMWnhPd1dyVktZaEJFSTZjRnNWbkJDNWNrYWFFb0NDQldDakpmZGZ3cXFhRFBmdWJST2tKeXlTbVB0OTZhd1g4S0FSWld6dWg2SzVaTVpCSVBSMWR2REVnU1FROGJ5dnpCRWhJUlA2RmhBV0FFaFNFbjFpV3paV2JXRXZTYTZld1h6NXFlaE9tUFB4ZU03OEpDdzl0dy45TGlDWm84ZWNDMlRqdjZpWUtmeldRPT0ifSwiaWF0IjoxNzMxNjEzMzU4LCJleHAiOjE3MzE3MTAzMDV9.GB0127Vp1jLB0td_1oqGVbWqz4Zt6UCfdp7FzHuSg4c',
+        'cache-control': 'no-cache',
+        'content-type': 'application/json',
+        'fff-id': 'bd5c1ce7-6264-4eec-a618-4dec41f906bb',
+        lid: '',
+        pragma: 'no-cache',
+        priority: 'u=1, i',
+        'sec-ch-ua':
+          '"Chromium";v="130", "Google Chrome";v="130", "Not?A_Brand";v="99"',
+        'sec-ch-ua-mobile': '?0',
+        'sec-ch-ua-platform': '"macOS"',
+        'sec-fetch-dest': 'empty',
+        'sec-fetch-mode': 'same-origin',
+        'sec-fetch-site': 'same-origin',
+        'session-cookie-id': 'kNoxYpurj83OrKAbg8rL_',
+        'true-client-ip': '84.115.218.253',
+        'visitor-guid': '4e4e1708-febe-4697-8ee4-584ebac7b9d0',
+        'x-lego-request-id':
+          '1fc77bfc-f260-4f41-8412-f10203787f31-app-shop-c-b806cc0b',
+        'x-locale': 'de-AT',
+      },
+      referrer: referrer,
+      referrerPolicy: 'strict-origin-when-cross-origin',
+      body:
+        '{"operationName":"PickABrickQuery","variables":{"input":{"perPage":400,"page":' +
+        store.fetchPageIndex +
+        '}},"query":"query PickABrickQuery($input: ElementQueryInput!, $sku: String) {\\n  searchElements(input: $input) {\\n    results {\\n      ...ElementLeaf\\n      __typename\\n    }\\n    facets {\\n      ...FacetData\\n      __typename\\n    }\\n    set {\\n      id\\n      type\\n      name\\n      imageUrl\\n      instructionsUrl\\n      pieces\\n      inStock\\n      price {\\n        formattedAmount\\n        __typename\\n      }\\n      __typename\\n    }\\n    total\\n    count\\n    __typename\\n  }\\n}\\n\\nfragment FacetData on Facet {\\n  id\\n  key\\n  name\\n  labels {\\n    count\\n    key\\n    name\\n    children {\\n      count\\n      key\\n      name\\n      ... on FacetValue {\\n        value\\n        __typename\\n      }\\n      __typename\\n    }\\n    ... on FacetValue {\\n      value\\n      __typename\\n    }\\n    ... on FacetRange {\\n      from\\n      to\\n      __typename\\n    }\\n    __typename\\n  }\\n  __typename\\n}\\n\\nfragment ElementLeaf on SearchResultElement {\\n  id\\n  designId\\n  name\\n  imageUrl\\n  maxOrderQuantity\\n  deliveryChannel\\n  price {\\n    centAmount\\n    formattedAmount\\n    currencyCode\\n    __typename\\n  }\\n  quantityInSet(sku: $sku)\\n  facets {\\n    category {\\n      ...ElementFacetCategory\\n      __typename\\n    }\\n    subcategory {\\n      ...ElementFacetCategory\\n      __typename\\n    }\\n    color {\\n      ...ElementFacetCategory\\n      __typename\\n    }\\n    colorFamily {\\n      ...ElementFacetCategory\\n      __typename\\n    }\\n    system\\n    __typename\\n  }\\n  inStock\\n  __typename\\n}\\n\\nfragment ElementFacetCategory on ElementCategory {\\n  name\\n  key\\n  __typename\\n}"}',
+      method: 'POST',
+      mode: 'cors',
+      credentials: 'include',
+    }
+  )
   store.fetchPageIndex++
   store.lastScraped = new Date()
   if (store.fetchPageIndex >= store.fetchMaxPageIndex) {
@@ -70,20 +96,32 @@ export async function getLegoPrices(db: IDBPDatabase, store: Store) {
       }
       const colorId = color?.id || legoInvItem.facets.color.key
 
-      const legoItem: LegoItem | undefined = await getLegoItem(db, legoInvItem.designId)
+      const legoItem: LegoItem | undefined = await getLegoItem(
+        db,
+        legoInvItem.designId
+      )
       if (!legoItem) {
         continue
       }
       legoItem.name = legoInvItem.name
       legoItem.externalCategoryId = legoInvItem.facets.subcategory.key
-      const legoCategory: LegoCategory = await getLegoCategory(db, legoItem.externalCategoryId)
+      const legoCategory: LegoCategory = await getLegoCategory(
+        db,
+        legoItem.externalCategoryId
+      )
       if (!legoCategory) {
-        await addLegoCategory(db, legoItem.externalCategoryId, legoInvItem.facets.subcategory.name)
+        await addLegoCategory(
+          db,
+          legoItem.externalCategoryId,
+          legoInvItem.facets.subcategory.name
+        )
       }
       await addLegoItem(
         colorId,
         legoItem,
-        '//www.lego.com/cdn/product-assets/element.img.photoreal.192x192/' + legoInvItem.id + '.jpg',
+        '//www.lego.com/cdn/product-assets/element.img.photoreal.192x192/' +
+          legoInvItem.id +
+          '.jpg',
         db
       )
       await addInvItem(
@@ -94,7 +132,7 @@ export async function getLegoPrices(db: IDBPDatabase, store: Store) {
         'New',
         1000000,
         legoInvItem.price.centAmount,
-        legoItem.externalItemId,
+        legoItem.externalItemId
       )
     } catch (e) {
       console.log('error adding item', legoInvItem, e)
@@ -115,7 +153,7 @@ export async function addLegoCategory(
     categoryId,
     id: legoCategoryId,
     name: legoCategoryName,
-    type: "Lego"
+    type: 'Lego',
   }
   await putExternalCategory(db, legoCategory)
 }
@@ -195,4 +233,3 @@ export async function addLegoCategory(
 //     price: legoPart.price.centAmount
 //   }
 // }
-

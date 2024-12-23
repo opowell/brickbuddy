@@ -26,21 +26,21 @@ self.onerror = function (message, source, lineno, colno, error) {
 
 async function startScrapingAlarm() {
   console.log('start scraping alarm')
-  await chrome.alarms.create('scrapePrices', { periodInMinutes: 0.5 });
+  await chrome.alarms.create('scrapePrices', { periodInMinutes: 0.5 })
 }
 
 chrome.alarms.onAlarm.addListener(() => {
   console.log('fire alarm')
-});
+})
 
 chrome.runtime.onInstalled.addListener(async ({ reason }) => {
   if (reason !== 'install') {
-    return;
+    return
   }
 
   // Create an alarm so we have something to look at in the demo
   startScrapingAlarm()
-});
+})
 
 // startScrapingAlarm()
 // const STORAGE_KEY = "scrape-prices-alarm";

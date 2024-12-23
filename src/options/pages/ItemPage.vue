@@ -1,98 +1,121 @@
 <script setup lang="ts">
-import HomeButton from '../components/HomeButton.vue';
-import PartsButton from '../components/PartsButton.vue';
-import PartVariantButton from '../components/PartVariantButton.vue';
-import { getPartPagePart } from '../idb/parts';
-import type { InvItem, PartPagePart, PartPageVariant, PartPageVariantInvItem, UiInvItem, UiItem, UiItemVariant } from '../types'
-import ActiveSearchButton from '../components/ActiveSearchButton.vue';
-import CategoryButton from '../components/CategoryButton.vue';
-import { formatInteger } from '../utils';
-import ActiveCartButton from '../components/ActiveCartButton.vue';
-import StoreItemsTable from '../components/StoreItemsTable.vue';
-import ExternalPartButton from '../components/ExternalPartButton.vue';
+import HomeButton from "../components/HomeButton.vue";
+import PartsButton from "../components/PartsButton.vue";
+import PartVariantButton from "../components/PartVariantButton.vue";
+import { getPartPagePart } from "../idb/parts";
+import type {
+  InvItem,
+  PartPagePart,
+  PartPageVariant,
+  PartPageVariantInvItem,
+  UiInvItem,
+  UiItem,
+  UiItemVariant,
+} from "../types";
+import ActiveSearchButton from "../components/ActiveSearchButton.vue";
+import CategoryButton from "../components/CategoryButton.vue";
+import { formatInteger } from "../utils";
+import ActiveCartButton from "../components/ActiveCartButton.vue";
+import StoreItemsTable from "../components/StoreItemsTable.vue";
+import ExternalPartButton from "../components/ExternalPartButton.vue";
 interface VariantWithPriceQuantity extends PartPageVariant {
-  price: number
-  maxPrice: number
-  quantity: number
+  price: number;
+  maxPrice: number;
+  quantity: number;
 }
-import { useRoute } from 'vue-router'
-import ColorButton from '../components/ColorButton.vue';
-const route = useRoute()
+import { useRoute } from "vue-router";
+import ColorButton from "../components/ColorButton.vue";
+const route = useRoute();
 
-const item = ref<PartPagePart | undefined>(undefined)
+const item = ref<PartPagePart | undefined>(undefined);
 onMounted(async () => {
-  item.value = await getPartPagePart(Number.parseInt(route.params.id))
-})
-const maxPrice = ref<number | undefined>(Number.POSITIVE_INFINITY)
-const minQuantity = ref(0)
+  item.value = await getPartPagePart(Number.parseInt(route.params.id));
+});
+const maxPrice = ref<number | undefined>(Number.POSITIVE_INFINITY);
+const minQuantity = ref(0);
 const variants = computed<VariantWithPriceQuantity[]>(() => {
   if (!item.value) {
-    return []
+    return [];
   }
-  const variantsMap = new Map<string, PartPageVariant>()
+  const variantsMap = new Map<string, PartPageVariant>();
   item.value.variants.forEach((variant: PartPageVariant) => {
-    let price = Number.POSITIVE_INFINITY
-    let varMaxPrice = 0
-    let quantity = 0
+    let price = Number.POSITIVE_INFINITY;
+    let varMaxPrice = 0;
+    let quantity = 0;
     variant.invItems.forEach((invItem: PartPageVariantInvItem) => {
-      if (condition.value !== 'Any' && invItem.condition !== condition.value) {
-        return
+      if (condition.value !== "Any" && invItem.condition !== condition.value) {
+        return;
       }
-      if (maxPrice.value && maxPrice.value !== 0 && maxPrice.value < Number.parseFloat(invItem.price)) {
-        return
+      if (
+        maxPrice.value &&
+        maxPrice.value !== 0 &&
+        maxPrice.value < Number.parseFloat(invItem.price)
+      ) {
+        return;
       }
       if (invItem.quantity >= minQuantity.value) {
         if (Number.parseFloat(invItem.price) < price) {
-          price = Number.parseFloat(invItem.price)
+          price = Number.parseFloat(invItem.price);
         }
         if (Number.parseFloat(invItem.price) > varMaxPrice) {
-          varMaxPrice = Number.parseFloat(invItem.price)
+          varMaxPrice = Number.parseFloat(invItem.price);
         }
       }
       if (!maxPrice.value || Number.parseFloat(invItem.price) <= maxPrice.value) {
-        quantity += invItem.quantity
+        quantity += invItem.quantity;
       }
-    })
+    });
     variantsMap.set(variant.colorId, {
       ...variant,
       price,
       maxPrice: varMaxPrice,
-      quantity
+      quantity,
+    });
+  });
+  return Array.from(variantsMap.values())
+    .filter((variant: VariantWithPriceQuantity) => {
+      return variant.price < Number.POSITIVE_INFINITY && variant.quantity > 0;
     })
-  })
-  return Array.from(variantsMap.values()).filter((variant: VariantWithPriceQuantity) => {
-    return variant.price < Number.POSITIVE_INFINITY && variant.quantity > 0
-  })
-    .sort((a: VariantWithPriceQuantity, b: VariantWithPriceQuantity) => a.price - b.price)
-})
-const condition = ref<string>('New')
+    .sort(
+      (a: VariantWithPriceQuantity, b: VariantWithPriceQuantity) => a.price - b.price
+    );
+});
+const condition = ref<string>("New");
 const invItems = computed<PartPageVariantInvItem[] | undefined>(() => {
-  const invItemsMap = new Map<string, PartPageVariantInvItem>()
+  const invItemsMap = new Map<string, PartPageVariantInvItem>();
   if (!item.value) {
-    return
+    return;
   }
-  item.value.variants.forEach(variant => {
-    variant.invItems.forEach(invItem => {
+  item.value.variants.forEach((variant) => {
+    variant.invItems.forEach((invItem) => {
       invItemsMap.set(invItem.type + invItem.storeId + invItem.invId, {
         ...invItem,
-        variant
-      })
-    })
-  })
-  return Array.from(invItemsMap.values())
-})
-const cartButton = ref<typeof ActiveCartButton | undefined>(undefined)
+        variant,
+      });
+    });
+  });
+  return Array.from(invItemsMap.values());
+});
+const cartButton = ref<typeof ActiveCartButton | undefined>(undefined);
 function refreshCartButton() {
   if (cartButton.value) {
-    cartButton.value.refresh()
+    cartButton.value.refresh();
   }
 }
-function setCartQuantity({ invItem, newQuantity }: { invItem: InvItem, newQuantity: number}) {
-  const originalItem = item.value?.variants.flatMap(v => v.invItems).find(i => i.invId === invItem.invId && i.storeId === invItem.storeId)
+function setCartQuantity({
+  invItem,
+  newQuantity,
+}: {
+  invItem: InvItem;
+  newQuantity: number;
+}) {
+  const originalItem = item.value?.variants
+    .flatMap((v) => v.invItems)
+    .find((i) => i.invId === invItem.invId && i.storeId === invItem.storeId);
   if (!originalItem) {
-    return
+    return;
   }
-  originalItem.cartQuantity = newQuantity
+  originalItem.cartQuantity = newQuantity;
 }
 </script>
 
@@ -121,20 +144,14 @@ function setCartQuantity({ invItem, newQuantity }: { invItem: InvItem, newQuanti
         </tr>
       </tbody>
     </table>
-    <div>Min quantity:<input v-model="minQuantity" type="number"></div>
-    <div>Min quantity:<input v-model="minQuantity" type="number"></div>
-    <div>Max price:<input v-model="maxPrice" type="number"></div>
+    <div>Min quantity:<input v-model="minQuantity" type="number" /></div>
+    <div>Min quantity:<input v-model="minQuantity" type="number" /></div>
+    <div>Max price:<input v-model="maxPrice" type="number" /></div>
     <div>
       Condition:<select v-model="condition">
-        <option value="New">
-          New
-        </option>
-        <option value="Any">
-          Any
-        </option>
-        <option value="Used">
-          Used
-        </option>
+        <option value="New">New</option>
+        <option value="Any">Any</option>
+        <option value="Used">Used</option>
       </select>
     </div>
     <h4>Variants ({{ variants.length }})</h4>
@@ -152,7 +169,7 @@ function setCartQuantity({ invItem, newQuantity }: { invItem: InvItem, newQuanti
         <tr v-for="(variant, index) in variants" :key="index">
           <td>
             <PartVariantButton :part="item" :variant="variant">
-              <img :src="variant.image">
+              <img :src="variant.image" />
             </PartVariantButton>
           </td>
           <td>

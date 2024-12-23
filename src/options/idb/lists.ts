@@ -1,11 +1,11 @@
-import { IDBPDatabase } from "idb"
-import { UiShopList, ShopListItem, ShopList, CachedList } from "../types"
-import { colors } from "./colors"
-import { getAll, getAllFromIndex } from "./db"
-import { getDbConnection } from "./idb"
-import STORES from "./stores"
+import { IDBPDatabase } from 'idb'
+import { UiShopList, ShopListItem, ShopList, CachedList } from '../types'
+import { colors } from './colors'
+import { getAll, getAllFromIndex } from './db'
+import { getDbConnection } from './idb'
+import STORES from './stores'
 import INDICES from './indices'
-import { getPart } from "./parts"
+import { getPart } from './parts'
 
 export async function addShopList(name: string) {
   const db = await getDbConnection()
@@ -38,7 +38,7 @@ export async function addShopListItem(
     minQuantity,
     maxQuantity,
     maxPrice,
-    colors: colors.toString().split(',')
+    colors: colors.toString().split(','),
   }
   await db.put(STORES.LIST_ITEMS.name, item)
 }

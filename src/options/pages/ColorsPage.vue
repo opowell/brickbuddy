@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { getColorsPageColors } from '../idb/colors';
-const colors = ref<ColorsPageColor[] | undefined>(undefined)
+import { getColorsPageColors } from "../idb/colors";
+const colors = ref<ColorsPageColor[] | undefined>(undefined);
 onMounted(async () => {
-  colors.value = await getColorsPageColors()
-})
-import ActiveSearchButton from '../components/ActiveSearchButton.vue';
-import ColorButton from '../components/ColorButton.vue';
-import HomeButton from '../components/HomeButton.vue';
-import { ColorsPageColor } from '../types';
-import NameIdLabel from '../components/NameIdLabel.vue';
+  colors.value = await getColorsPageColors();
+});
+import ActiveSearchButton from "../components/ActiveSearchButton.vue";
+import ColorButton from "../components/ColorButton.vue";
+import HomeButton from "../components/HomeButton.vue";
+import { ColorsPageColor } from "../types";
+import NameIdLabel from "../components/NameIdLabel.vue";
 </script>
 
 <template>
@@ -29,7 +29,7 @@ import NameIdLabel from '../components/NameIdLabel.vue';
       </thead>
       <tbody>
         <tr v-for="color in colors" :key="color.id">
-          <td><img v-if="color.image" :src="color.image"></td>
+          <td><img v-if="color.image" :src="color.image" /></td>
           <td>
             {{ color.id }}
           </td>
@@ -39,7 +39,7 @@ import NameIdLabel from '../components/NameIdLabel.vue';
           <td>
             <button @click="$emit('goColor', color)">
               {{ color.numInvItems }}
-            </button>            
+            </button>
           </td>
           <td>
             <NameIdLabel :id="color.brickLinkId" :name="color.brickLinkName" />

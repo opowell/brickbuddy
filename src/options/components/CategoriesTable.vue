@@ -1,16 +1,14 @@
 <script setup lang="ts">
-import { Category } from '../types';
+import { Category } from "../types";
 interface CategoryTableCategory extends Category {
-  image: string
-  numParts: number
+  image: string;
+  numParts: number;
 }
 defineProps({
-  categories: Object as PropType<CategoryTableCategory[]>
-})
-defineEmits([
-  'remove'
-])
-import CategoryButton from '../components/CategoryButton.vue';
+  categories: Object as PropType<CategoryTableCategory[]>,
+});
+defineEmits(["remove"]);
+import CategoryButton from "../components/CategoryButton.vue";
 </script>
 
 <template>
@@ -28,7 +26,7 @@ import CategoryButton from '../components/CategoryButton.vue';
         <td>
           <button @click="emits('remove', category)">x</button>
         </td>
-        <td><img v-if="category.image" :src="category.image"></td>
+        <td><img v-if="category.image" :src="category.image" /></td>
         <td>
           <CategoryButton :category="category" />
         </td>

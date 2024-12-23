@@ -2,19 +2,16 @@
 const { isSpan } = defineProps({
   id: [String, Number],
   name: String,
-  isSpan: Boolean
-})
+  isSpan: Boolean,
+});
 const tag = computed(() => {
   if (isSpan) {
-    return 'span'
+    return "span";
   }
-  return 'div'
-})
+  return "div";
+});
 </script>
 
-
 <template>
-  <component :is="tag">
-    {{ name }} ({{ id }})
-  </component>
+  <component :is="tag"> {{ name }} ({{ id }}) </component>
 </template>

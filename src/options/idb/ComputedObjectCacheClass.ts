@@ -1,9 +1,24 @@
-import { IDBPDatabase } from 'idb';
+import { IDBPDatabase } from 'idb'
 import STORES, { StoreDefinition } from './stores'
-import { getAll } from './db';
-import { Cart, CategoriesPageCategory, Category, Color, Condition, ExternalCategory, ExternalItem, HomeData, InvItem, Item, ItemVariant, Search, ShopList, Store } from '../types';
-import ObjectCache from './ObjectCacheClass';
-import { reportTime } from '../utils';
+import { getAll } from './db'
+import {
+  Cart,
+  CategoriesPageCategory,
+  Category,
+  Color,
+  Condition,
+  ExternalCategory,
+  ExternalItem,
+  HomeData,
+  InvItem,
+  Item,
+  ItemVariant,
+  Search,
+  ShopList,
+  Store,
+} from '../types'
+import ObjectCache from './ObjectCacheClass'
+import { reportTime } from '../utils'
 
 interface ExternalItem2 extends ExternalItem {
   externalCategory: ExternalCategory
@@ -79,17 +94,17 @@ export default class ComputedObjectCache {
   linked: Ref<boolean>
   constructor(objectCache: ObjectCache) {
     this.db = objectCache.db
-    this.cartsMap = ref(new Map<string, Cart>)
+    this.cartsMap = ref(new Map<string, Cart>())
     this.cartsArray = ref<Cart[] | undefined>()
-    this.categoriesMap = ref(new Map<number, LinkedCategory>)
+    this.categoriesMap = ref(new Map<number, LinkedCategory>())
     this.categoriesArray = ref<LinkedCategory[] | undefined>()
-    this.externalCategoriesMap = ref(new Map<string, LinkedExternalCategory>)
+    this.externalCategoriesMap = ref(new Map<string, LinkedExternalCategory>())
     this.externalCategoriesArray = ref<LinkedExternalCategory[] | undefined>()
     this.colorsMap = ref(new Map<string, Color>())
     this.colorsArray = ref<Color[] | undefined>()
-    this.conditionsMap = ref(new Map<string, Condition>)
+    this.conditionsMap = ref(new Map<string, Condition>())
     this.conditionsArray = ref<Condition[] | undefined>()
-    this.externalItemsMap = ref(new Map<string, LinkedExternalItem>)
+    this.externalItemsMap = ref(new Map<string, LinkedExternalItem>())
     this.externalItemsArray = ref<LinkedExternalItem[] | undefined>()
     this.itemsMap = ref(new Map<number, Item>())
     this.itemsArray = ref<Item[] | undefined>()
@@ -121,43 +136,49 @@ export default class ComputedObjectCache {
       )
     })
     this.linked = ref(false)
-    watch(this.loaded, (loaded) => {
-      if (!loaded) {
-        return
+    watch(
+      this.loaded,
+      (loaded) => {
+        if (!loaded) {
+          return
+        }
+        this.categoriesArray.value?.forEach((ec) => {
+          ec.externalCategories = []
+        })
+        this.externalCategoriesArray.value?.forEach((ec) => {
+          const category = this.categoriesMap.value.get(ec.categoryId)
+          if (!category) {
+            return
+          }
+          category.externalCategories.push(ec)
+          ec.category = category
+          ec.externalItems = []
+        })
+        this.externalItemsArray.value?.forEach((ei) => {
+          const ec = this.externalCategoriesMap.value.get(
+            ei.type + ei.externalCategoryId
+          )
+          if (!ec) {
+            return
+          }
+          ec.externalItems.push(ei)
+          ei.itemColors = []
+          ei.externalCategory = ec
+        })
+        this.itemColorsArray.value?.forEach((ic) => {
+          const ei = this.externalItemsMap.value.get(ic.type + ic.itemId)
+          if (!ei?.itemColors) {
+            return
+          }
+          ei.itemColors.push(ic)
+          ic.externalItem = ei
+        })
+        this.linked.value = true
+      },
+      {
+        immediate: true,
       }
-      this.categoriesArray.value?.forEach(ec => {
-        ec.externalCategories = []
-      })
-      this.externalCategoriesArray.value?.forEach(ec => {
-        const category = this.categoriesMap.value.get(ec.categoryId)
-        if (!category) {
-          return
-        }
-        category.externalCategories.push(ec)
-        ec.category = category
-        ec.externalItems = []
-      })
-      this.externalItemsArray.value?.forEach(ei => {
-        const ec = this.externalCategoriesMap.value.get(ei.type + ei.externalCategoryId)
-        if (!ec) {
-          return
-        }
-        ec.externalItems.push(ei)
-        ei.itemColors = []
-        ei.externalCategory = ec
-      })
-      this.itemColorsArray.value?.forEach(ic => {
-        const ei = this.externalItemsMap.value.get(ic.type + ic.itemId)
-        if (!ei?.itemColors) {
-          return
-        }
-        ei.itemColors.push(ic)
-        ic.externalItem = ei
-      })
-      this.linked.value = true
-    }, {
-      immediate: true
-    })
+    )
 
     this.homeData = computed<HomeData>(() => {
       return {
@@ -168,7 +189,7 @@ export default class ComputedObjectCache {
         conditions: this.conditionsArray.value?.length || 0,
         lists: this.listsArray.value?.length || 0,
         searches: this.searchesArray.value?.length || 0,
-        carts: this.cartsArray.value?.length || 0
+        carts: this.cartsArray.value?.length || 0,
       }
     })
     this.externalItemImageMap = computed(() => {
@@ -176,11 +197,11 @@ export default class ComputedObjectCache {
         return
       }
       const map = new Map<string, string>()
-      this.externalItemsArray.value?.forEach(ei => {
+      this.externalItemsArray.value?.forEach((ei) => {
         if (!ei.itemColors) {
           return
         }
-        const icImage = ei.itemColors.find(ic => !!ic.image)
+        const icImage = ei.itemColors.find((ic) => !!ic.image)
         const image = icImage?.image
         if (!image) {
           return
@@ -194,14 +215,18 @@ export default class ComputedObjectCache {
         return
       }
       const map = new Map<string, string>()
-      this.externalCategoriesArray.value?.forEach(ec => {
-        const eiImage = ec.externalItems.find(ei => {
-          return this.externalItemImageMap.value?.get(ei.type + ei.externalItemId)
+      this.externalCategoriesArray.value?.forEach((ec) => {
+        const eiImage = ec.externalItems.find((ei) => {
+          return this.externalItemImageMap.value?.get(
+            ei.type + ei.externalItemId
+          )
         })
         if (!eiImage) {
           return
         }
-        const image = this.externalItemImageMap.value?.get(eiImage.type + eiImage.externalItemId)
+        const image = this.externalItemImageMap.value?.get(
+          eiImage.type + eiImage.externalItemId
+        )
         if (!image) {
           return
         }
@@ -214,14 +239,16 @@ export default class ComputedObjectCache {
         return
       }
       const map = new Map<number, string>()
-      this.categoriesArray.value?.forEach(c => {
-        const ecImage = c.externalCategories.find(ec => {
+      this.categoriesArray.value?.forEach((c) => {
+        const ecImage = c.externalCategories.find((ec) => {
           return this.externalCategoryImageMap.value?.get(ec.type + ec.id)
         })
         if (!ecImage) {
           return
         }
-        const image = this.externalCategoryImageMap.value?.get(ecImage.type + ecImage.id)
+        const image = this.externalCategoryImageMap.value?.get(
+          ecImage.type + ecImage.id
+        )
         if (!image) {
           return
         }
@@ -241,7 +268,7 @@ export default class ComputedObjectCache {
         return undefined
       }
       const categories = new Map<number, Category2>()
-      this.categoriesArray.value.forEach(c => {
+      this.categoriesArray.value.forEach((c) => {
         if (search.categories.included.length > 0) {
           if (!search.categories.included.includes(c.id)) {
             return
@@ -256,14 +283,14 @@ export default class ComputedObjectCache {
         categories.set(c.id, category)
       })
       const ec2Map = new Map<string, ExternalCategory2>()
-      this.externalCategoriesArray.value.forEach(ec => {
+      this.externalCategoriesArray.value.forEach((ec) => {
         const category = categories.get(ec.categoryId)
         if (!category) {
           return
         }
         const ec2: ExternalCategory2 = {
           ...ec,
-          parts: []
+          parts: [],
         }
         category.externalCategories.push(ec2)
         ec2Map.set(ec2.id, ec2)
@@ -271,7 +298,7 @@ export default class ComputedObjectCache {
       if (!this.externalItemsArray2.value) {
         return
       }
-      this.externalItemsArray2.value.forEach(ei2 => {
+      this.externalItemsArray2.value.forEach((ei2) => {
         const ec2 = ec2Map.get(ei2.externalCategoryId)
         if (!ec2) {
           return
@@ -285,12 +312,12 @@ export default class ComputedObjectCache {
         return
       }
       const out = new Map<number, Item2>()
-      this.externalItemsArray2.value.forEach(ei => {
+      this.externalItemsArray2.value.forEach((ei) => {
         let outItem = out.get(ei.itemId)
         if (!outItem) {
           outItem = {
             itemId: ei.itemId,
-            externalItems: []
+            externalItems: [],
           }
         }
         outItem.externalItems.push(ei)
@@ -306,12 +333,16 @@ export default class ComputedObjectCache {
       if (!search) {
         return
       }
-      return Array.from(this.itemsMap2.value.values()).filter(i2 => {
-        return i2.externalItems.some(c => {
+      return Array.from(this.itemsMap2.value.values()).filter((i2) => {
+        return i2.externalItems.some((c) => {
           if (search.categories.included.length > 0) {
-            return search.categories.included.includes(c.externalCategory.categoryId)
+            return search.categories.included.includes(
+              c.externalCategory.categoryId
+            )
           }
-          return !search.categories.excluded.includes(c.externalCategory.categoryId)
+          return !search.categories.excluded.includes(
+            c.externalCategory.categoryId
+          )
         })
       })
     })
@@ -323,14 +354,16 @@ export default class ComputedObjectCache {
         return
       }
       const out: ExternalItem2[] = []
-      this.externalItemsArray.value.forEach(ei => {
-        const externalCategory = this.externalCategoriesMap.value.get(ei.type + ei.externalCategoryId)
+      this.externalItemsArray.value.forEach((ei) => {
+        const externalCategory = this.externalCategoriesMap.value.get(
+          ei.type + ei.externalCategoryId
+        )
         if (!externalCategory) {
           return
         }
         out.push({
           ...ei,
-          externalCategory
+          externalCategory,
         })
       })
       return out
@@ -343,11 +376,15 @@ export default class ComputedObjectCache {
       if (!this.externalItemsArray2.value) {
         return undefined
       }
-      return this.externalItemsArray2.value.filter(c => {
+      return this.externalItemsArray2.value.filter((c) => {
         if (search.categories.included.length > 0) {
-          return search.categories.included.includes(c.externalCategory.categoryId)
+          return search.categories.included.includes(
+            c.externalCategory.categoryId
+          )
         }
-        return !search.categories.excluded.includes(c.externalCategory.categoryId)
+        return !search.categories.excluded.includes(
+          c.externalCategory.categoryId
+        )
       })
     })
     this.categoriesPageCategories = computed(() => {
@@ -365,28 +402,51 @@ export default class ComputedObjectCache {
     objectCache.getActiveSearch()
     this.loadColors()
     this.loadObjects(STORES.STORES, this.storesArray, this.storesMap)
-    this.loadObjects(STORES.CATEGORIES, this.categoriesArray, this.categoriesMap)
-    this.loadObjects(STORES.EXTERNAL_CATEGORIES, this.externalCategoriesArray, this.externalCategoriesMap, (ec: ExternalCategory) => ec.type + ec.id)
-    this.loadObjects(STORES.EXTERNAL_PARTS, this.externalItemsArray, this.externalItemsMap, (ei: ExternalItem) => {
-      return ei.type + ei.externalItemId
-    })
+    this.loadObjects(
+      STORES.CATEGORIES,
+      this.categoriesArray,
+      this.categoriesMap
+    )
+    this.loadObjects(
+      STORES.EXTERNAL_CATEGORIES,
+      this.externalCategoriesArray,
+      this.externalCategoriesMap,
+      (ec: ExternalCategory) => ec.type + ec.id
+    )
+    this.loadObjects(
+      STORES.EXTERNAL_PARTS,
+      this.externalItemsArray,
+      this.externalItemsMap,
+      (ei: ExternalItem) => {
+        return ei.type + ei.externalItemId
+      }
+    )
     this.loadObjects(STORES.PARTS, this.itemsArray, this.itemsMap)
     this.loadObjects(STORES.SEARCHES, this.searchesArray, this.searchesMap)
-    this.loadObjects(STORES.INVENTORY_ITEMS, this.storeItemsArray, this.storeItemsMap)
-    this.loadObjects(STORES.PART_VARIANTS, this.itemColorsArray, this.itemColorsMap, (ic: ItemVariant) => {
-      return ic.type + ic.itemId + ic.colorId
-    })
+    this.loadObjects(
+      STORES.INVENTORY_ITEMS,
+      this.storeItemsArray,
+      this.storeItemsMap
+    )
+    this.loadObjects(
+      STORES.PART_VARIANTS,
+      this.itemColorsArray,
+      this.itemColorsMap,
+      (ic: ItemVariant) => {
+        return ic.type + ic.itemId + ic.colorId
+      }
+    )
     this.loadObjects(STORES.LISTS, this.listsArray, this.listsMap)
     this.loadObjects(STORES.CARTS, this.cartsArray, this.cartsMap)
     this.conditionsArray.value = [
       {
         id: 'new',
-        name: 'New'
+        name: 'New',
       },
       {
         id: 'used',
-        name: 'Used'
-      }
+        name: 'Used',
+      },
     ]
   }
   async loadColors() {
@@ -403,7 +463,7 @@ export default class ComputedObjectCache {
       return
     }
     array.value = objects
-    objects.forEach(object => {
+    objects.forEach((object) => {
       // @ts-ignore
       const id = mapper ? mapper(object) : object.id
       map.value.set(id, object)

@@ -1,7 +1,7 @@
-import stores, { StoreDefinition } from "./stores"
+import stores, { StoreDefinition } from './stores'
 
 export interface IndexDefinition {
-  store: StoreDefinition,
+  store: StoreDefinition
   name: string
   keyPath: string | string[]
 }
@@ -38,143 +38,143 @@ const indices: {
   BRICK_LINK_STORE_PAGES_BY_NEXT_SCRAPE: {
     store: stores.BRICK_LINK_STORE_PAGES,
     name: 'nextScrape',
-    keyPath: 'nextScrape'
+    keyPath: 'nextScrape',
   },
   STORES_BY_TYPE_AND_LAST_SCRAPED: {
     store: stores.STORES,
     name: 'typeLastScraped',
-    keyPath: ['type', 'lastScraped']
+    keyPath: ['type', 'lastScraped'],
   },
   STORES_BY_TYPE_AND_SLUG: {
     store: stores.STORES,
     name: 'typeSlug',
-    keyPath: ['type', 'slug']
+    keyPath: ['type', 'slug'],
   },
   STORES_BY_COUNTRY: {
     store: stores.STORES,
     name: 'country',
-    keyPath: 'countryId'
+    keyPath: 'countryId',
   },
   CART_ITEMS_BY_CART: {
     store: stores.CART_ITEMS,
     name: 'cartId',
-    keyPath: 'cartId'
+    keyPath: 'cartId',
   },
   CARTS_BY_ACTIVE: {
     store: stores.CARTS,
     name: 'active',
-    keyPath: 'active'
+    keyPath: 'active',
   },
   EXTERNAL_CATEGORIES_BY_TYPE: {
     store: stores.EXTERNAL_CATEGORIES,
     name: 'type',
-    keyPath: 'type'
+    keyPath: 'type',
   },
   EXTERNAL_CATEGORIES_BY_CATEGORY: {
     store: stores.EXTERNAL_CATEGORIES,
     name: 'categoryId',
-    keyPath: 'categoryId'
+    keyPath: 'categoryId',
   },
   EXTERNAL_PARTS_BY_TYPE_AND_CATEGORY: {
     store: stores.EXTERNAL_PARTS,
     name: 'typeAndCategoryId',
-    keyPath: ['type', 'externalCategoryId']
+    keyPath: ['type', 'externalCategoryId'],
   },
   EXTERNAL_PARTS_BY_CATEGORY: {
     store: stores.EXTERNAL_PARTS,
     name: 'externalCategoryId',
-    keyPath: 'externalCategoryId'
+    keyPath: 'externalCategoryId',
   },
   EXTERNAL_PARTS_BY_PART: {
     store: stores.EXTERNAL_PARTS,
     name: 'partId',
-    keyPath: 'itemId'
+    keyPath: 'itemId',
   },
   EXTERNAL_PARTS_BY_TYPE_AND_EXTERNAL_ID: {
     store: stores.EXTERNAL_PARTS,
     name: 'type + externalId',
-    keyPath: ['type', 'externalItemId']
+    keyPath: ['type', 'externalItemId'],
   },
   SEARCHES_BY_ACTIVE: {
     store: stores.SEARCHES,
     name: 'active',
-    keyPath: 'active'
+    keyPath: 'active',
   },
   SEARCH_FILTERS_BY_SEARCH: {
     store: stores.SEARCH_FILTERS,
     name: 'search',
-    keyPath: 'searchId'
+    keyPath: 'searchId',
   },
   SEARCH_FILTERS_BY_SEARCH_TYPE_OBJECT: {
     store: stores.SEARCH_FILTERS,
     name: 'searchTypeObject',
-    keyPath: ['searchId', 'type', 'objectId']
+    keyPath: ['searchId', 'type', 'objectId'],
   },
   INV_ITEMS_BY_STORE: {
     store: stores.INVENTORY_ITEMS,
     name: 'store',
-    keyPath: 'storeId'
+    keyPath: 'storeId',
   },
   PART_VARIANTS_BY_PART: {
     store: stores.PART_VARIANTS,
     name: 'part',
-    keyPath: 'itemId'
+    keyPath: 'itemId',
   },
   PART_VARIANTS_BY_TYPE_AND_PART: {
     store: stores.PART_VARIANTS,
     name: 'typePart',
-    keyPath: ['type', 'itemId']
+    keyPath: ['type', 'itemId'],
   },
   PART_VARIANTS_BY_PART_AND_COLOR: {
     store: stores.PART_VARIANTS,
     name: 'partColor',
-    keyPath: ['itemId', 'colorId']
+    keyPath: ['itemId', 'colorId'],
   },
   PART_VARIANTS_BY_COLOR: {
     store: stores.PART_VARIANTS,
     name: 'color',
-    keyPath: 'colorId'
+    keyPath: 'colorId',
   },
   INV_ITEMS_BY_ITEM: {
     store: stores.INVENTORY_ITEMS,
     name: 'item',
-    keyPath: 'itemId'
+    keyPath: 'itemId',
   },
   INV_ITEMS_BY_TYPE_AND_ITEM: {
     store: stores.INVENTORY_ITEMS,
     name: 'typeItem',
-    keyPath: ['type', 'itemId']
+    keyPath: ['type', 'itemId'],
   },
   INV_ITEMS_BY_ITEM_AND_COLOR: {
     store: stores.INVENTORY_ITEMS,
     name: 'itemColor',
-    keyPath: ['itemId', 'colorId']
+    keyPath: ['itemId', 'colorId'],
   },
   INV_ITEMS_BY_COLORS: {
     store: stores.INVENTORY_ITEMS,
     name: 'color',
-    keyPath: 'colorId'
+    keyPath: 'colorId',
   },
   INV_ITEMS_BY_CONDITION: {
     store: stores.INVENTORY_ITEMS,
     name: 'condition',
-    keyPath: 'condition'
+    keyPath: 'condition',
   },
   SHOP_LIST_ITEMS_BY_SHOP_LIST: {
     store: stores.LIST_ITEMS,
     name: 'shopList',
-    keyPath: 'listId'
+    keyPath: 'listId',
   },
   COLOR_BY_BRICKLINK_ID: {
     store: stores.COLORS,
     name: 'brickLinkId',
-    keyPath: 'brickLinkId'
+    keyPath: 'brickLinkId',
   },
   COLOR_BY_LEGO_ID: {
     store: stores.COLORS,
     name: 'legoId',
-    keyPath: 'legoId'
-  }
+    keyPath: 'legoId',
+  },
 }
 
 export default indices

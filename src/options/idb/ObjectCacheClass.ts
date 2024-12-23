@@ -1,15 +1,54 @@
-import { IDBPDatabase } from 'idb';
-import { ActiveSearch, CartItem, CartWithItems, CategoriesPageCategory, Category, Color, ExternalCategory, ExternalCategoryPageExternalPart, ExternalItem, ExternalPartPageExternalPart, ExternalPartPageInvItem, ExternalPartPageItemVariant, HomeData, InvItem, Item, ItemVariant, PartPageCategory, Search, SearchFilter, Store, StoreCountry, StorePageInvItemItem, UiColor } from '../types';
+import { IDBPDatabase } from 'idb'
+import {
+  ActiveSearch,
+  CartItem,
+  CartWithItems,
+  CategoriesPageCategory,
+  Category,
+  Color,
+  ExternalCategory,
+  ExternalCategoryPageExternalPart,
+  ExternalItem,
+  ExternalPartPageExternalPart,
+  ExternalPartPageInvItem,
+  ExternalPartPageItemVariant,
+  HomeData,
+  InvItem,
+  Item,
+  ItemVariant,
+  PartPageCategory,
+  Search,
+  SearchFilter,
+  Store,
+  StoreCountry,
+  StorePageInvItemItem,
+  UiColor,
+} from '../types'
 import STORES from './stores'
-import { getFirstActiveCart, getCartItems, getCartQuantity } from './carts';
-import { getExternalCategoriesByCategoryId, getCategoriesPageCategories, getCategoriesPageCategories2, getCategory, getExternalCategory, getPartPageCategory, loadExternalPartPrice } from './categories';
-import { getInvItemFromId } from './invItems';
-import { getPart, getStorePageExternalPart, getStorePagePart } from './parts';
-import { getFirstActiveSearch, getSearchFilters } from './searches';
-import { count, countFromIndex, get, getAll, getAllFromIndex, getFromIndex } from './db';
-import indices from './indices';
-import { cheapestPrice, reportTime, startTimer } from '../utils';
-import { liveObjectCache } from './idb';
+import { getFirstActiveCart, getCartItems, getCartQuantity } from './carts'
+import {
+  getExternalCategoriesByCategoryId,
+  getCategoriesPageCategories,
+  getCategoriesPageCategories2,
+  getCategory,
+  getExternalCategory,
+  getPartPageCategory,
+  loadExternalPartPrice,
+} from './categories'
+import { getInvItemFromId } from './invItems'
+import { getPart, getStorePageExternalPart, getStorePagePart } from './parts'
+import { getFirstActiveSearch, getSearchFilters } from './searches'
+import {
+  count,
+  countFromIndex,
+  get,
+  getAll,
+  getAllFromIndex,
+  getFromIndex,
+} from './db'
+import indices from './indices'
+import { cheapestPrice, reportTime, startTimer } from '../utils'
+import { liveObjectCache } from './idb'
 import ComputedObjectCacheClass from './ComputedObjectCacheClass'
 
 export default class ObjectCache {
@@ -78,11 +117,14 @@ export default class ObjectCache {
   }
   async getStoreCountries() {
     if (!this.allStoreCountries) {
-      this.allStoreCountries = await getAll<StoreCountry>(this.db, STORES.STORE_COUNTRIES)
+      this.allStoreCountries = await getAll<StoreCountry>(
+        this.db,
+        STORES.STORE_COUNTRIES
+      )
       if (!this.allStoreCountries) {
         return
       }
-      this.allStoreCountries.forEach(c => {
+      this.allStoreCountries.forEach((c) => {
         this.storeCountries.set(c.id, c)
       })
     }
@@ -94,7 +136,7 @@ export default class ObjectCache {
       if (!this.allCategories) {
         return
       }
-      this.allCategories.forEach(c => {
+      this.allCategories.forEach((c) => {
         this.categories.set(c.id, c)
       })
     }
@@ -172,8 +214,11 @@ export default class ObjectCache {
         }
         for (let i = 0; i < externalParts.length; i++) {
           const externalPart = externalParts[i]
-          const externalCategory = await this.getExternalCategory(externalPart.externalCategoryId, externalPart.type)
-          // 
+          const externalCategory = await this.getExternalCategory(
+            externalPart.externalCategoryId,
+            externalPart.type
+          )
+          //
         }
         return true
       }
@@ -210,12 +255,17 @@ export default class ObjectCache {
     if (!this.allCategories) {
       return
     }
-    this.allCategories.forEach(c => {
+    this.allCategories.forEach((c) => {
       this.categories.set(c.id, c)
     })
     return this.allCategories
   }
-  async getCheapestPrice(itemId: number, targetQ: number, ignoreColor: boolean, colorId: string) {
+  async getCheapestPrice(
+    itemId: number,
+    targetQ: number,
+    ignoreColor: boolean,
+    colorId: string
+  ) {
     const id = itemId + '-' + targetQ + '-' + ignoreColor + '-' + colorId
     if (this.cheapestPrices.has(id)) {
       return this.cheapestPrices.get(id)
@@ -229,24 +279,44 @@ export default class ObjectCache {
       const matchingPart = matchingParts[i]
       let matches: InvItem[] | undefined = []
       if (ignoreColor) {
-        matches = await getAllFromIndex<InvItem>(this.db, indices.INV_ITEMS_BY_ITEM, matchingPart.externalItemId)
+        matches = await getAllFromIndex<InvItem>(
+          this.db,
+          indices.INV_ITEMS_BY_ITEM,
+          matchingPart.externalItemId
+        )
       } else {
-        matches = await getAllFromIndex<InvItem>(this.db, indices.INV_ITEMS_BY_ITEM_AND_COLOR, [matchingPart.externalItemId, colorId])
+        matches = await getAllFromIndex<InvItem>(
+          this.db,
+          indices.INV_ITEMS_BY_ITEM_AND_COLOR,
+          [matchingPart.externalItemId, colorId]
+        )
       }
       if (!matches) {
         continue
       }
-      matches.forEach((match) => allMatchingInvItems.set(match.storeId + '//' + match.invId, match))
+      matches.forEach((match) =>
+        allMatchingInvItems.set(match.storeId + '//' + match.invId, match)
+      )
     }
-    const price = cheapestPrice(Array.from(allMatchingInvItems.values()), targetQ, true)
+    const price = cheapestPrice(
+      Array.from(allMatchingInvItems.values()),
+      targetQ,
+      true
+    )
     this.cheapestPrices.set(id, price)
     return price
   }
-  async getFirstVariantByPart(itemId: string): Promise<ItemVariant | undefined> {
+  async getFirstVariantByPart(
+    itemId: string
+  ): Promise<ItemVariant | undefined> {
     if (this.firstVariantByPart.has(itemId)) {
       return this.firstVariantByPart.get(itemId)
     }
-    const variant = await getFromIndex<ItemVariant>(this.db, indices.PART_VARIANTS_BY_PART, itemId)
+    const variant = await getFromIndex<ItemVariant>(
+      this.db,
+      indices.PART_VARIANTS_BY_PART,
+      itemId
+    )
     if (!variant) {
       return
     }
@@ -258,7 +328,11 @@ export default class ObjectCache {
     if (this.partVariantsByPartColor.has(id)) {
       return this.partVariantsByPartColor.get(id)
     }
-    const variants = await getAllFromIndex<ItemVariant>(this.db, indices.PART_VARIANTS_BY_PART_AND_COLOR, [itemId, colorId])
+    const variants = await getAllFromIndex<ItemVariant>(
+      this.db,
+      indices.PART_VARIANTS_BY_PART_AND_COLOR,
+      [itemId, colorId]
+    )
     if (!variants) {
       return
     }
@@ -270,25 +344,39 @@ export default class ObjectCache {
     if (this.partVariantByPartColor.has(id)) {
       return this.partVariantByPartColor.get(id)
     }
-    const variant = await getFromIndex<ItemVariant>(this.db, indices.PART_VARIANTS_BY_PART_AND_COLOR, [itemId, colorId])
+    const variant = await getFromIndex<ItemVariant>(
+      this.db,
+      indices.PART_VARIANTS_BY_PART_AND_COLOR,
+      [itemId, colorId]
+    )
     if (!variant) {
       return
     }
     this.partVariantByPartColor.set(id, variant)
     return variant
   }
-  async getExternalPartsByPart(id: number): Promise<ExternalItem[] | undefined> {
+  async getExternalPartsByPart(
+    id: number
+  ): Promise<ExternalItem[] | undefined> {
     if (this.externalPartsByPart.has(id)) {
       return this.externalPartsByPart.get(id)
     }
-    const externalItems = await getAllFromIndex<ExternalItem>(this.db, indices.EXTERNAL_PARTS_BY_PART, id)
+    const externalItems = await getAllFromIndex<ExternalItem>(
+      this.db,
+      indices.EXTERNAL_PARTS_BY_PART,
+      id
+    )
     if (!externalItems) {
       return
     }
     this.externalPartsByPart.set(id, externalItems)
     return externalItems
   }
-  async getAllObjects<T>(map: Map<string | number, T>, getter: Function, idMapper: Function = (value: T) => value.id): Promise<T[]> {
+  async getAllObjects<T>(
+    map: Map<string | number, T>,
+    getter: Function,
+    idMapper: Function = (value: T) => value.id
+  ): Promise<T[]> {
     if (map.size === 0) {
       const values = await getter()
       values.forEach((value: T) => {
@@ -297,7 +385,11 @@ export default class ObjectCache {
     }
     return Array.from(map.values())
   }
-  async getObject<T>(map: Map<string | number, T>, id: string | number, getter: Function): Promise<T | undefined> {
+  async getObject<T>(
+    map: Map<string | number, T>,
+    id: string | number,
+    getter: Function
+  ): Promise<T | undefined> {
     let object: T | undefined = map.get(id)
     if (!object) {
       object = await getter()
@@ -314,12 +406,12 @@ export default class ObjectCache {
       if (!cart) {
         const newCart = {
           active: 1,
-          name: new Date().toISOString()
+          name: new Date().toISOString(),
         }
         cart = {
           ...newCart,
           // @ts-ignore guaranteed to be number
-          id: await this.db.put(STORES.CARTS.name, newCart)
+          id: await this.db.put(STORES.CARTS.name, newCart),
         }
       }
       if (!cart) {
@@ -331,7 +423,7 @@ export default class ObjectCache {
       }
       this.activeCart = {
         ...cart,
-        cartItems
+        cartItems,
       }
     }
     return this.activeCart
@@ -346,7 +438,7 @@ export default class ObjectCache {
           name: new Date().toISOString(),
           filters: [],
           priceScoreQuantity: 100,
-          priceScoreIgnoreColor: true
+          priceScoreIgnoreColor: true,
         }
         search = {
           ...newSearch,
@@ -379,103 +471,211 @@ export default class ObjectCache {
     return this.activeSearch
   }
   async getInvItem(storeId: string, invItemId: string) {
-    return this.getObject(this.invItems, storeId + '//' + invItemId, async () => await getInvItemFromId(this.db, storeId, invItemId))
+    return this.getObject(
+      this.invItems,
+      storeId + '//' + invItemId,
+      async () => await getInvItemFromId(this.db, storeId, invItemId)
+    )
   }
   async getStore(storeId: string) {
-    return this.getObject(this.stores, storeId, async () => await get(this.db, STORES.STORES, storeId))
+    return this.getObject(
+      this.stores,
+      storeId,
+      async () => await get(this.db, STORES.STORES, storeId)
+    )
   }
   async getColor(colorId: string): Promise<Color | undefined> {
     const computedColor = this.computedCache?.colorsMap.value.get(colorId)
     if (computedColor) {
       return computedColor
     }
-    return this.getObject(this.colors, colorId, async () => await get<Color>(this.db, STORES.COLORS, colorId))
+    return this.getObject(
+      this.colors,
+      colorId,
+      async () => await get<Color>(this.db, STORES.COLORS, colorId)
+    )
   }
   async getCategory(categoryId: number): Promise<Category | undefined> {
-    return this.getObject<Category | undefined>(this.categories, categoryId, async () => await getCategory(this.db, categoryId))
+    return this.getObject<Category | undefined>(
+      this.categories,
+      categoryId,
+      async () => await getCategory(this.db, categoryId)
+    )
   }
   async getPart(itemId: number): Promise<Item | undefined> {
-    return this.getObject<Item | undefined>(this.parts, itemId, async () => await getPart(this.db, itemId))
+    return this.getObject<Item | undefined>(
+      this.parts,
+      itemId,
+      async () => await getPart(this.db, itemId)
+    )
   }
-  async getExternalCategory(categoryId: string, type: "BrickLink" | "Lego" | "Rebrickable"): Promise<ExternalCategory | undefined> {
-    return this.getObject<ExternalCategory | undefined>(this.externalCategories, categoryId, async () => await getExternalCategory(this.db, categoryId, type))
+  async getExternalCategory(
+    categoryId: string,
+    type: 'BrickLink' | 'Lego' | 'Rebrickable'
+  ): Promise<ExternalCategory | undefined> {
+    return this.getObject<ExternalCategory | undefined>(
+      this.externalCategories,
+      categoryId,
+      async () => await getExternalCategory(this.db, categoryId, type)
+    )
   }
-  async getPartPageCategory(categoryId: string): Promise<PartPageCategory | undefined> {
-    return this.getObject<PartPageCategory | undefined>(this.partPageCategories, categoryId, async () => await getPartPageCategory(this.db, categoryId))
+  async getPartPageCategory(
+    categoryId: string
+  ): Promise<PartPageCategory | undefined> {
+    return this.getObject<PartPageCategory | undefined>(
+      this.partPageCategories,
+      categoryId,
+      async () => await getPartPageCategory(this.db, categoryId)
+    )
   }
   async getStorePagePart(partId: string): Promise<Item | undefined> {
-    return this.getObject<Item | undefined>(this.parts, partId, async () => await getStorePagePart(partId, this))
+    return this.getObject<Item | undefined>(
+      this.parts,
+      partId,
+      async () => await getStorePagePart(partId, this)
+    )
   }
   async getCartItems(cartId: number): Promise<CartItem[] | undefined> {
-    return this.getObject<CartItem[] | undefined>(this.cartItemsByCart, cartId, async () => getAllFromIndex(this.db, indices.CART_ITEMS_BY_CART, cartId))
+    return this.getObject<CartItem[] | undefined>(
+      this.cartItemsByCart,
+      cartId,
+      async () => getAllFromIndex(this.db, indices.CART_ITEMS_BY_CART, cartId)
+    )
   }
-  async getInvItemsByExternalPartColor(type: 'Rebrickable' | 'Lego' | 'BrickLink', externalItemId: string, colorId: string): Promise<InvItem[] | undefined> {
+  async getInvItemsByExternalPartColor(
+    type: 'Rebrickable' | 'Lego' | 'BrickLink',
+    externalItemId: string,
+    colorId: string
+  ): Promise<InvItem[] | undefined> {
     return this.getObject<InvItem[] | undefined>(
       this.invItemsByExternalPartColor,
       type + '-' + externalItemId + '-' + colorId,
-      async () => await getAllFromIndex(
-        this.db,
-        indices.INV_ITEMS_BY_ITEM_AND_COLOR,
-        [externalItemId, colorId]
-      ))
+      async () =>
+        await getAllFromIndex(this.db, indices.INV_ITEMS_BY_ITEM_AND_COLOR, [
+          externalItemId,
+          colorId,
+        ])
+    )
   }
-  async getStorePageExternalPart(invItem: InvItem, type: "BrickLink" | "Lego"): Promise<StorePageInvItemItem | undefined> {
-    return this.getObject<StorePageInvItemItem | undefined>(this.storePageExternalParts, invItem.itemId, async () => await getStorePageExternalPart(invItem, type, this))
+  async getStorePageExternalPart(
+    invItem: InvItem,
+    type: 'BrickLink' | 'Lego'
+  ): Promise<StorePageInvItemItem | undefined> {
+    return this.getObject<StorePageInvItemItem | undefined>(
+      this.storePageExternalParts,
+      invItem.itemId,
+      async () => await getStorePageExternalPart(invItem, type, this)
+    )
   }
-  async getExternalPart(type: "BrickLink" | "Lego", externalItemId: string): Promise<ExternalItem | undefined> {
-    return this.getObject<ExternalItem | undefined>(this.externalParts, type + externalItemId, async () => await get(this.db, STORES.EXTERNAL_PARTS, [type, externalItemId]))
+  async getExternalPart(
+    type: 'BrickLink' | 'Lego',
+    externalItemId: string
+  ): Promise<ExternalItem | undefined> {
+    return this.getObject<ExternalItem | undefined>(
+      this.externalParts,
+      type + externalItemId,
+      async () =>
+        await get(this.db, STORES.EXTERNAL_PARTS, [type, externalItemId])
+    )
   }
   async getInvItemsByStore(storeId: string): Promise<InvItem[] | undefined> {
     console.log('get', storeId)
-    return this.getObject<InvItem[] | undefined>(this.invItemsByStore, storeId, async () => await getAllFromIndex(this.db, indices.INV_ITEMS_BY_STORE, storeId))
+    return this.getObject<InvItem[] | undefined>(
+      this.invItemsByStore,
+      storeId,
+      async () =>
+        await getAllFromIndex(this.db, indices.INV_ITEMS_BY_STORE, storeId)
+    )
   }
   async getCategoriesPageCategories(): Promise<CategoriesPageCategory[]> {
     console.log('getCategoriesPageCategories')
-    return this.getAllObjects<CategoriesPageCategory>(this.categoriesPageCategories, async () => await getCategoriesPageCategories())
+    return this.getAllObjects<CategoriesPageCategory>(
+      this.categoriesPageCategories,
+      async () => await getCategoriesPageCategories()
+    )
   }
-  async getCategoriesPageCategories2(): Promise<CategoriesPageCategory[] | undefined> {
+  async getCategoriesPageCategories2(): Promise<
+    CategoriesPageCategory[] | undefined
+  > {
     return await getCategoriesPageCategories2(this)
   }
-  async getExternalCategoriesByCategoryId(id: number): Promise<ExternalCategory[] | undefined> {
-    return this.getObject<ExternalCategory[]>(this.externalCategoriesByCategoryId, id, async () => await getExternalCategoriesByCategoryId(id, this))
+  async getExternalCategoriesByCategoryId(
+    id: number
+  ): Promise<ExternalCategory[] | undefined> {
+    return this.getObject<ExternalCategory[]>(
+      this.externalCategoriesByCategoryId,
+      id,
+      async () => await getExternalCategoriesByCategoryId(id, this)
+    )
   }
-  async getNumInvItemsByPart(externalItemId: string, type: 'Lego' | 'BrickLink' | 'Rebrickable'): Promise<number | undefined> {
+  async getNumInvItemsByPart(
+    externalItemId: string,
+    type: 'Lego' | 'BrickLink' | 'Rebrickable'
+  ): Promise<number | undefined> {
     const id = externalItemId + type
     if (this.numInvItemsByPart.has(id)) {
       return this.numInvItemsByPart.get(id)
     }
-    const num = await countFromIndex(this.db, indices.INV_ITEMS_BY_TYPE_AND_ITEM, [type, externalItemId])
+    const num = await countFromIndex(
+      this.db,
+      indices.INV_ITEMS_BY_TYPE_AND_ITEM,
+      [type, externalItemId]
+    )
     this.numInvItemsByPart.set(id, num)
     return num
   }
-  async getVariantsByExternalPart(externalItemId: string, type: 'Lego' | 'BrickLink' | 'Rebrickable'): Promise<ItemVariant[] | undefined> {
+  async getVariantsByExternalPart(
+    externalItemId: string,
+    type: 'Lego' | 'BrickLink' | 'Rebrickable'
+  ): Promise<ItemVariant[] | undefined> {
     const id = externalItemId + type
     if (this.variantsByPart.has(id)) {
       return this.variantsByPart.get(id)
     }
-    const variants = await getAllFromIndex(this.db, indices.PART_VARIANTS_BY_TYPE_AND_PART, [type, externalItemId])
+    const variants = await getAllFromIndex(
+      this.db,
+      indices.PART_VARIANTS_BY_TYPE_AND_PART,
+      [type, externalItemId]
+    )
     this.variantsByPart.set(id, variants)
     return variants
   }
-  async getInvItemsByExternalPart(externalItemId: string, type: 'Lego' | 'BrickLink' | 'Rebrickable'): Promise<InvItem[] | undefined> {
+  async getInvItemsByExternalPart(
+    externalItemId: string,
+    type: 'Lego' | 'BrickLink' | 'Rebrickable'
+  ): Promise<InvItem[] | undefined> {
     const id = externalItemId + type
     if (this.invItemsByPart.has(id)) {
       return this.invItemsByPart.get(id)
     }
-    const invItems = await getAllFromIndex(this.db, indices.INV_ITEMS_BY_TYPE_AND_ITEM, [type, externalItemId])
+    const invItems = await getAllFromIndex(
+      this.db,
+      indices.INV_ITEMS_BY_TYPE_AND_ITEM,
+      [type, externalItemId]
+    )
     this.invItemsByPart.set(id, invItems)
     return invItems
   }
-  async getNumVariantsByPart(externalItemId: string, type: 'Lego' | 'BrickLink' | 'Rebrickable'): Promise<number | undefined> {
+  async getNumVariantsByPart(
+    externalItemId: string,
+    type: 'Lego' | 'BrickLink' | 'Rebrickable'
+  ): Promise<number | undefined> {
     const id = externalItemId + type
     if (this.numVariantsByPart.has(id)) {
       return this.numVariantsByPart.get(id)
     }
-    const num = await countFromIndex(this.db, indices.PART_VARIANTS_BY_TYPE_AND_PART, [type, externalItemId])
+    const num = await countFromIndex(
+      this.db,
+      indices.PART_VARIANTS_BY_TYPE_AND_PART,
+      [type, externalItemId]
+    )
     this.numVariantsByPart.set(id, num)
     return num
   }
-  async getExternalPartPageExternalPart(type: 'Lego' | 'BrickLink', externalItemId: string): Promise<ExternalPartPageExternalPart | undefined> {
+  async getExternalPartPageExternalPart(
+    type: 'Lego' | 'BrickLink',
+    externalItemId: string
+  ): Promise<ExternalPartPageExternalPart | undefined> {
     const cart = await liveObjectCache.getActiveCart()
     if (!cart) {
       return
@@ -484,7 +684,8 @@ export default class ObjectCache {
     if (!externalPart) {
       return
     }
-    const variants: ItemVariant[] | undefined = await this.getVariantsByExternalPart(externalItemId, type)
+    const variants: ItemVariant[] | undefined =
+      await this.getVariantsByExternalPart(externalItemId, type)
     if (!variants) {
       return
     }
@@ -497,10 +698,11 @@ export default class ObjectCache {
       }
       eppvs.push({
         ...variant,
-        color
+        color,
       })
     }
-    const invItems: InvItem[] | undefined = await this.getInvItemsByExternalPart(externalItemId, type)
+    const invItems: InvItem[] | undefined =
+      await this.getInvItemsByExternalPart(externalItemId, type)
     if (!invItems) {
       return
     }
@@ -520,10 +722,13 @@ export default class ObjectCache {
         ...invItem,
         color,
         store,
-        cartQuantity
+        cartQuantity,
       })
     }
-    const category = await this.getExternalCategory(externalPart.externalCategoryId, externalPart.type)
+    const category = await this.getExternalCategory(
+      externalPart.externalCategoryId,
+      externalPart.type
+    )
     if (!category) {
       return
     }
@@ -531,22 +736,32 @@ export default class ObjectCache {
       ...externalPart,
       variants: eppvs,
       invItems: eppiis,
-      category
+      category,
     }
   }
-  async getExternalCategoryPageExternalParts(type: 'Lego' | 'BrickLink' | 'Rebrickable', categoryId: string): Promise<ExternalCategoryPageExternalPart[] | undefined> {
-    const parts: ExternalItem[] | undefined = await this.getExternalPartsInExternalCategory(type, categoryId)
+  async getExternalCategoryPageExternalParts(
+    type: 'Lego' | 'BrickLink' | 'Rebrickable',
+    categoryId: string
+  ): Promise<ExternalCategoryPageExternalPart[] | undefined> {
+    const parts: ExternalItem[] | undefined =
+      await this.getExternalPartsInExternalCategory(type, categoryId)
     if (!parts || parts.length === 0) {
       return
     }
     const ecpeps: ExternalCategoryPageExternalPart[] = []
     for (let i = 0; i < parts.length; i++) {
       const part = parts[i]
-      const numInvItems: number | undefined = await this.getNumInvItemsByPart(part.externalItemId, type)
+      const numInvItems: number | undefined = await this.getNumInvItemsByPart(
+        part.externalItemId,
+        type
+      )
       if (numInvItems === undefined || numInvItems === 0) {
         continue
       }
-      const numVariants: number | undefined = await this.getNumVariantsByPart(part.externalItemId, type)
+      const numVariants: number | undefined = await this.getNumVariantsByPart(
+        part.externalItemId,
+        type
+      )
       if (numVariants === undefined) {
         continue
       }
@@ -556,24 +771,34 @@ export default class ObjectCache {
         ...part,
         numInvItems,
         numVariants,
-        image: firstVariant?.image
+        image: firstVariant?.image,
       })
     }
     return ecpeps
   }
-  async getExternalPartsInExternalCategory(type: string, externalCategoryId: string): Promise<ExternalItem[] | undefined> {
+  async getExternalPartsInExternalCategory(
+    type: string,
+    externalCategoryId: string
+  ): Promise<ExternalItem[] | undefined> {
     const id = type + '-' + externalCategoryId
     if (this.externalPartsByExternalCategory.has(id)) {
       return this.externalPartsByExternalCategory.get(id)
     }
-    const externalItems = await getAllFromIndex<ExternalItem>(this.db, indices.EXTERNAL_PARTS_BY_TYPE_AND_CATEGORY, [type, externalCategoryId])
+    const externalItems = await getAllFromIndex<ExternalItem>(
+      this.db,
+      indices.EXTERNAL_PARTS_BY_TYPE_AND_CATEGORY,
+      [type, externalCategoryId]
+    )
     if (!externalItems) {
       return
     }
     const externalItemsWithStoreItems: ExternalItem[] = []
     for (let i = 0; i < externalItems.length; i++) {
       const item = externalItems[i]
-      const storeItems = await liveObjectCache.getInvItemsByExternalPart(item.externalItemId, item.type)
+      const storeItems = await liveObjectCache.getInvItemsByExternalPart(
+        item.externalItemId,
+        item.type
+      )
       if (!storeItems || storeItems.length === 0) {
         continue
       }
@@ -602,8 +827,7 @@ export default class ObjectCache {
       conditions,
       lists,
       searches,
-      carts
+      carts,
     }
   }
-
 }

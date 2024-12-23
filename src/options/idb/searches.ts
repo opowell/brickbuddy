@@ -1,12 +1,27 @@
-import { IDBPDatabase } from "idb"
-import { Search, CartWithItems, ActiveSearch, ActiveSearchButtonActiveSearch, SearchesPageSearch, Item, SearchPageSearch, SearchFilter, ExternalItem, CachedSearch } from "../types"
-import { getCategories } from "./categories"
-import { getCondition } from "./condition"
-import { get, getAll, getAllFromIndex, getFromIndex } from "./db"
-import { getCategoriesPageCategory, getDbConnection, liveObjectCache } from "./idb"
-import STORES from "./stores"
+import { IDBPDatabase } from 'idb'
+import {
+  Search,
+  CartWithItems,
+  ActiveSearch,
+  ActiveSearchButtonActiveSearch,
+  SearchesPageSearch,
+  Item,
+  SearchPageSearch,
+  SearchFilter,
+  ExternalItem,
+  CachedSearch,
+} from '../types'
+import { getCategories } from './categories'
+import { getCondition } from './condition'
+import { get, getAll, getAllFromIndex, getFromIndex } from './db'
+import {
+  getCategoriesPageCategory,
+  getDbConnection,
+  liveObjectCache,
+} from './idb'
+import STORES from './stores'
 import INDICES from './indices'
-import ObjectCache from "./ObjectCacheClass"
+import ObjectCache from './ObjectCacheClass'
 
 export async function addNewSearch() {
   const db = await getDbConnection()
@@ -15,16 +30,18 @@ export async function addNewSearch() {
     name: new Date().toISOString(),
     active: 0,
     priceScoreIgnoreColor: true,
-    priceScoreQuantity: 100
+    priceScoreQuantity: 100,
   }
   db.put(STORES.SEARCHES.name, newSearch)
   return newSearch
 }
 
-export async function getActiveCart(): Promise<CartWithItems | undefined> {
+export async function getActiveCart(): Promise<CartWithItems | undefined> {
   return await liveObjectCache.getActiveCart()
 }
-export async function getActiveSearchButtonActiveSearch(): Promise<ActiveSearchButtonActiveSearch | undefined> {
+export async function getActiveSearchButtonActiveSearch(): Promise<
+  ActiveSearchButtonActiveSearch | undefined
+> {
   const search = await getFirstActiveSearch(liveObjectCache)
   if (!search) {
     return
@@ -33,40 +50,50 @@ export async function getActiveSearchButtonActiveSearch(): Promise<ActiveSearchB
     ...search,
     categories: {
       excluded: search.categories.excluded,
-      excludedNames: (await getCategories(search.categories.excluded)).map(category => category?.id + ''),
+      excludedNames: (await getCategories(search.categories.excluded)).map(
+        (category) => category?.id + ''
+      ),
       included: search.categories.included,
-      includedNames: (await getCategories(search.categories.included)).map(category => category?.id + '')
+      includedNames: (await getCategories(search.categories.included)).map(
+        (category) => category?.id + ''
+      ),
     },
     colors: {
       excluded: search.colors.excluded,
       excludedNames: [],
       included: search.colors.included,
-      includedNames: []
+      includedNames: [],
     },
     conditions: {
       excluded: search.conditions.excluded,
       excludedNames: search.conditions.excluded,
       included: search.conditions.included,
-      includedNames: search.conditions.included
+      includedNames: search.conditions.included,
     },
     stores: {
       excluded: search.stores.excluded,
       excludedNames: [],
       included: search.stores.included,
-      includedNames: []
+      includedNames: [],
     },
     parts: {
       excluded: search.parts.excluded,
       excludedNames: [],
       included: search.parts.included,
-      includedNames: []
-    }
+      includedNames: [],
+    },
   }
   return activeSearchButtonActiveSearch
 }
 
-export async function getFirstActiveSearch(objectCache: ObjectCache): Promise<ActiveSearch | undefined> {
-  const search = await getFromIndex<Search>(objectCache.db, INDICES.SEARCHES_BY_ACTIVE, 1)
+export async function getFirstActiveSearch(
+  objectCache: ObjectCache
+): Promise<ActiveSearch | undefined> {
+  const search = await getFromIndex<Search>(
+    objectCache.db,
+    INDICES.SEARCHES_BY_ACTIVE,
+    1
+  )
   if (!search) {
     return
   }
@@ -74,15 +101,21 @@ export async function getFirstActiveSearch(objectCache: ObjectCache): Promise<Ac
   return activeSearch
 }
 
-export async function getAllSearches(db: IDBPDatabase): Promise<CachedSearch[] | undefined> {
+export async function getAllSearches(
+  db: IDBPDatabase
+): Promise<CachedSearch[] | undefined> {
   return await getAll(db, STORES.SEARCHES)
 }
 
-export async function getAllSearchFilters(db: IDBPDatabase): Promise<SearchFilter[] | undefined> {
+export async function getAllSearchFilters(
+  db: IDBPDatabase
+): Promise<SearchFilter[] | undefined> {
   return await getAll(db, STORES.SEARCH_FILTERS)
 }
 
-export async function getSearchesPagesSearches(): Promise<SearchesPageSearch[] | undefined> {
+export async function getSearchesPagesSearches(): Promise<
+  SearchesPageSearch[] | undefined
+> {
   const db = await getDbConnection()
   const searches = await getAllSearches(db)
   if (!searches) {
@@ -92,13 +125,17 @@ export async function getSearchesPagesSearches(): Promise<SearchesPageSearch[] |
   for (let i = 0; i < searches.length; i++) {
     const search = searches[i]
     searchesPageSearches.push({
-      ...search
+      ...search,
     })
   }
   return searchesPageSearches
 }
 
-export async function searchAllowsPart(db: IDBPDatabase, search: Search, part: ExternalItem) {
+export async function searchAllowsPart(
+  db: IDBPDatabase,
+  search: Search,
+  part: ExternalItem
+) {
   return true // TODO
 }
 
@@ -116,11 +153,21 @@ export async function setPriceScoreQuantity(quantity: number) {
   db.put(STORES.SEARCHES.name, search)
 }
 
-export async function getSearchFilters(db: IDBPDatabase, search: Search): Promise<SearchFilter[] | undefined> {
-  return await getAllFromIndex<SearchFilter>(db, INDICES.SEARCH_FILTERS_BY_SEARCH, search.id)
+export async function getSearchFilters(
+  db: IDBPDatabase,
+  search: Search
+): Promise<SearchFilter[] | undefined> {
+  return await getAllFromIndex<SearchFilter>(
+    db,
+    INDICES.SEARCH_FILTERS_BY_SEARCH,
+    search.id
+  )
 }
 
-export async function getSearch(id: number, objectCache: ObjectCache): Promise<ActiveSearch | undefined> {
+export async function getSearch(
+  id: number,
+  objectCache: ObjectCache
+): Promise<ActiveSearch | undefined> {
   const search = await get<Search>(objectCache.db, STORES.SEARCHES, id)
   if (!search) {
     return
@@ -129,51 +176,64 @@ export async function getSearch(id: number, objectCache: ObjectCache): Promise<A
   return activeSearch
 }
 
-async function loadSearchFilters(search: Search, objectCache: ObjectCache): Promise<ActiveSearch | undefined> {
-  const filters = await getAllFromIndex<SearchFilter>(objectCache.db, INDICES.SEARCH_FILTERS_BY_SEARCH, search.id)
+async function loadSearchFilters(
+  search: Search,
+  objectCache: ObjectCache
+): Promise<ActiveSearch | undefined> {
+  const filters = await getAllFromIndex<SearchFilter>(
+    objectCache.db,
+    INDICES.SEARCH_FILTERS_BY_SEARCH,
+    search.id
+  )
   if (!filters) {
     return
   }
   const filterTypes = [
     {
       arrayName: 'categories',
-      type: 'category'
+      type: 'category',
     },
     {
       arrayName: 'colors',
-      type: 'color'
+      type: 'color',
     },
     {
       arrayName: 'conditions',
-      type: 'condition'
+      type: 'condition',
     },
     {
       arrayName: 'stores',
-      type: 'store'
+      type: 'store',
     },
     {
       arrayName: 'parts',
-      type: 'part'
-    }
+      type: 'part',
+    },
   ]
   const activeSearch = {
     ...search,
-    filters
+    filters,
   }
-  filterTypes.forEach(ft => {
-    const included = filters.filter(f => f.type === ft.type && !f.isExcluded).map(f => f.objectId)
-    const excluded = filters.filter(f => f.type === ft.type && f.isExcluded).map(f => f.objectId)
+  filterTypes.forEach((ft) => {
+    const included = filters
+      .filter((f) => f.type === ft.type && !f.isExcluded)
+      .map((f) => f.objectId)
+    const excluded = filters
+      .filter((f) => f.type === ft.type && f.isExcluded)
+      .map((f) => f.objectId)
     // @ts-ignore
     activeSearch[ft.arrayName] = {
       included,
-      excluded
+      excluded,
     }
   })
   // @ts-ignore
   return activeSearch
 }
 
-export async function getSearchPageSearch(id: number): Promise<SearchPageSearch | undefined> {
+export async function getSearchPageSearch(
+  id: number
+): Promise<SearchPageSearch | undefined> {
   const search = await getSearch(id)
   if (!search) {
     return
@@ -186,7 +246,7 @@ export async function getSearchPageSearch(id: number): Promise<SearchPageSearch 
     excludedCategoryObjects: [],
     colorObjects: [],
     partObjects: [],
-    storeObjects: []
+    storeObjects: [],
   }
   const db = await getDbConnection()
   for (let i = 0; i < search.categories.included.length; i++) {
@@ -210,7 +270,7 @@ export async function getSearchPageSearch(id: number): Promise<SearchPageSearch 
     const cpc = await getCategoriesPageCategory(category)
     if (!cpc) {
       continue
-    }    
+    }
     activeSearchPageSearch.excludedCategoryObjects.push(cpc)
   }
   for (let i = 0; i < search.conditions.included.length; i++) {

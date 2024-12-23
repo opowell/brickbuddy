@@ -1,17 +1,24 @@
-import { IDBPDatabase } from "idb"
-import { UiStore, ShippingCost, StoreType, StoresPageStore, StorePageStore, InvItem, Store, ItemVariant, CachedStore, CachedItemVariant, CachedInvItem } from "../types"
-import { getDbConnection, liveObjectCache } from "./idb"
-import { countInvItems, getStorePageInvItems } from "./invItems"
-import { getFirstActiveSearch } from "./searches"
-import { get } from "./db"
+import { IDBPDatabase } from 'idb'
+import {
+  UiStore,
+  ShippingCost,
+  StoreType,
+  StoresPageStore,
+  StorePageStore,
+  InvItem,
+  Store,
+  ItemVariant,
+  CachedStore,
+  CachedItemVariant,
+  CachedInvItem,
+} from '../types'
+import { getDbConnection, liveObjectCache } from './idb'
+import { countInvItems, getStorePageInvItems } from './invItems'
+import { getFirstActiveSearch } from './searches'
+import { get } from './db'
 import STORES from './stores'
 
 export const openStore = ref<UiStore | null>(null)
-
-export async function addNewStore() {
-  const db = await getDbConnection()
-  await addStore('', 'abcd', [], '', 100, db)
-}
 
 export async function addStore(
   name: string,
@@ -37,12 +44,12 @@ export async function addStore(
     slug,
     lastScraped: new Date(),
     type: type,
-    countryId
+    countryId,
   }
   db.put(STORES.STORES.name, newStore)
   const newUiStore: UiStore = {
     ...newStore,
-    items: []
+    items: [],
   }
   return newUiStore
 }
@@ -61,7 +68,7 @@ export async function updateStore(db: IDBPDatabase, store: Store | UiStore) {
       shippingCosts: store.shippingCosts,
       slug: store.slug,
       type: store.type,
-      countryId: store.countryId
+      countryId: store.countryId,
     }
     await db.put(STORES.STORES.name, storeObj)
   } catch (e) {
@@ -73,17 +80,25 @@ export async function createInitialStores(db: IDBPDatabase) {
   if (!db) {
     db = await getDbConnection()
   }
-  await addStore("Lego Pick a Brick", "lego-pick-a-brick", [
-    {
-      region: 'AT',
-      cost: 0,
-      minOrderPrice: 1200
-    },
-    {
-      region: 'AT',
-      cost: 600,
-    },
-  ], 'https://www.lego.com/de-at/pick-and-build/pick-a-brick', 100, db, StoreType.Lego)
+  await addStore(
+    'Lego Pick a Brick',
+    'lego-pick-a-brick',
+    [
+      {
+        region: 'AT',
+        cost: 0,
+        minOrderPrice: 1200,
+      },
+      {
+        region: 'AT',
+        cost: 600,
+      },
+    ],
+    'https://www.lego.com/de-at/pick-and-build/pick-a-brick',
+    100,
+    db,
+    StoreType.Lego
+  )
   // await addStore("BrickDom's Brick Shop", "1720918", [
   //   {
   //     region: 'AT',
@@ -301,15 +316,21 @@ export async function getAllStores(db: IDBPDatabase): Promise<CachedStore[]> {
   return await db.getAll(STORES.STORES.name)
 }
 
-export async function getAllVariants(db: IDBPDatabase): Promise<CachedItemVariant[]> {
+export async function getAllVariants(
+  db: IDBPDatabase
+): Promise<CachedItemVariant[]> {
   return await db.getAll(STORES.PART_VARIANTS.name)
 }
 
-export async function getAllInvItems(db: IDBPDatabase): Promise<CachedInvItem[]> {
+export async function getAllInvItems(
+  db: IDBPDatabase
+): Promise<CachedInvItem[]> {
   return await db.getAll(STORES.INVENTORY_ITEMS.name)
 }
 
-export async function getStoresPageStores(): Promise<StoresPageStore[] | undefined> {
+export async function getStoresPageStores(): Promise<
+  StoresPageStore[] | undefined
+> {
   const search = await getFirstActiveSearch(liveObjectCache)
   if (!search) {
     return
@@ -318,21 +339,31 @@ export async function getStoresPageStores(): Promise<StoresPageStore[] | undefin
   const uiStores: StoresPageStore[] = []
   for (let i = 0; i < stores.length; i++) {
     const store = stores[i]
-    const numInvItems = await countInvItems(liveObjectCache.db, store.id, search)
-    let fetchPercent = 100*numInvItems / (store.fetchMaxPageIndex * (store.type === StoreType.BrickLink ? 100 : 400))
+    const numInvItems = await countInvItems(
+      liveObjectCache.db,
+      store.id,
+      search
+    )
+    let fetchPercent =
+      (100 * numInvItems) /
+      (store.fetchMaxPageIndex *
+        (store.type === StoreType.BrickLink ? 100 : 400))
     if (store.fullyFetched) {
       fetchPercent = 100
     }
     uiStores.push({
       ...store,
       numInvItems,
-      fetchPercent
+      fetchPercent,
     })
   }
   return uiStores
 }
 
-export async function getStorePageStore(id: string, type: 'BrickLink' | 'Lego' | 'Rebrickable'): Promise<StorePageStore | undefined> {
+export async function getStorePageStore(
+  id: string,
+  type: 'BrickLink' | 'Lego' | 'Rebrickable'
+): Promise<StorePageStore | undefined> {
   console.log(id, type)
   const store = await liveObjectCache.getStore(id)
   if (!store) {

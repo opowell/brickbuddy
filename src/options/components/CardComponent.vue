@@ -1,15 +1,14 @@
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
-import { formatInteger } from '../utils';
+import { useRouter } from "vue-router";
+import { formatInteger } from "../utils";
 
-const router = useRouter()
+const router = useRouter();
 defineProps({
   name: String,
   count: Number,
-  href: String
-})
+  href: String,
+});
 </script>
-
 
 <template>
   <button @click="router.push(href)">

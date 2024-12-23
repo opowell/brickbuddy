@@ -1,16 +1,14 @@
 <script setup lang="ts">
 interface ConditionsTableCondition {
-  id: string
-  image: string
-  numInvItems: number
+  id: string;
+  image: string;
+  numInvItems: number;
 }
 defineProps({
-  conditions: Object as PropType<ConditionsTableCondition[]>
-})
-defineEmits([
-  'remove'
-])
-import ConditionButton from '../components/ConditionButton.vue';
+  conditions: Object as PropType<ConditionsTableCondition[]>,
+});
+defineEmits(["remove"]);
+import ConditionButton from "../components/ConditionButton.vue";
 </script>
 
 <template>

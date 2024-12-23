@@ -1,43 +1,69 @@
-import { IDBPDatabase } from "idb";
-import { BrickLinkCategory, BrickLinkItem, Category, Color, ExternalItem, InvItem, Item, RebrickableCategory, RebrickableItem, Store, StoreType } from "../types";
+import { IDBPDatabase } from 'idb'
+import {
+  BrickLinkCategory,
+  BrickLinkItem,
+  Category,
+  Color,
+  ExternalItem,
+  InvItem,
+  Item,
+  RebrickableCategory,
+  RebrickableItem,
+  Store,
+  StoreType,
+} from '../types'
 import * as math from 'mathjs'
 import INDICES from './indices'
-import { addBrickLinkCategory, getBrickLinkCategory, getCategory, getRebrickableCategory, updateCategory } from "./categories";
-import { getAllFromIndex, getFromIndex, put } from "./db";
-import { addInvItem } from "./invItems";
-import { getBrickLinkItem, addBrickLinkItem } from "./parts";
-import { updateStore } from "./storeMethods";
-import { rbPartsBrickLinkId } from "./idb";
-import stores from "./stores";
-import { addMinutes } from "../utils";
+import {
+  addBrickLinkCategory,
+  getBrickLinkCategory,
+  getCategory,
+  getRebrickableCategory,
+  updateCategory,
+} from './categories'
+import { getAllFromIndex, getFromIndex, put } from './db'
+import { addInvItem } from './invItems'
+import { getBrickLinkItem, addBrickLinkItem } from './parts'
+import { updateStore } from './storeMethods'
+import { rbPartsBrickLinkId } from './idb'
+import stores from './stores'
+import { addMinutes } from '../utils'
 
-async function getColorByBrickLinkId(db: IDBPDatabase, brickLinkId: string): Promise<Color | undefined> {
+async function getColorByBrickLinkId(
+  db: IDBPDatabase,
+  brickLinkId: string
+): Promise<Color | undefined> {
   return await getFromIndex(db, INDICES.COLOR_BY_BRICKLINK_ID, brickLinkId + '')
 }
 
 export async function getBrickLinkPrices(db: IDBPDatabase, store: Store) {
-  const response = await fetch(`https://store.bricklink.com/ajax/clone/store/searchitems.ajax?sort=6&pgSize=100&pg=${store.fetchPageIndex}&showHomeItems=0&sid=${store.id}`, {
-    "headers": {
-      "accept": "application/json, text/javascript, */*; q=0.01",
-      "accept-language": "en,de;q=0.9,es;q=0.8,en-US;q=0.7",
-      "cache-control": "no-cache",
-      "pragma": "no-cache",
-      "priority": "u=1, i",
-      "sec-ch-ua": "\"Chromium\";v=\"130\", \"Google Chrome\";v=\"130\", \"Not?A_Brand\";v=\"99\"",
-      "sec-ch-ua-mobile": "?0",
-      "sec-ch-ua-platform": "\"macOS\"",
-      "sec-fetch-dest": "empty",
-      "sec-fetch-mode": "cors",
-      "sec-fetch-site": "same-origin",
-      "x-requested-with": "XMLHttpRequest"
-    },
-    "referrer": "https://store.bricklink.com/" + store.slug + "?p=" + store.slug,
-    "referrerPolicy": "no-referrer-when-downgrade",
-    "body": null,
-    "method": "GET",
-    "mode": "cors",
-    "credentials": "include"
-  })
+  const response = await fetch(
+    `https://store.bricklink.com/ajax/clone/store/searchitems.ajax?sort=6&pgSize=100&pg=${store.fetchPageIndex}&showHomeItems=0&sid=${store.id}`,
+    {
+      headers: {
+        accept: 'application/json, text/javascript, */*; q=0.01',
+        'accept-language': 'en,de;q=0.9,es;q=0.8,en-US;q=0.7',
+        'cache-control': 'no-cache',
+        pragma: 'no-cache',
+        priority: 'u=1, i',
+        'sec-ch-ua':
+          '"Chromium";v="130", "Google Chrome";v="130", "Not?A_Brand";v="99"',
+        'sec-ch-ua-mobile': '?0',
+        'sec-ch-ua-platform': '"macOS"',
+        'sec-fetch-dest': 'empty',
+        'sec-fetch-mode': 'cors',
+        'sec-fetch-site': 'same-origin',
+        'x-requested-with': 'XMLHttpRequest',
+      },
+      referrer:
+        'https://store.bricklink.com/' + store.slug + '?p=' + store.slug,
+      referrerPolicy: 'no-referrer-when-downgrade',
+      body: null,
+      method: 'GET',
+      mode: 'cors',
+      credentials: 'include',
+    }
+  )
   store.fetchPageIndex++
   const now = new Date()
   if (store.lastScraped < now) {
@@ -46,12 +72,19 @@ export async function getBrickLinkPrices(db: IDBPDatabase, store: Store) {
   if (store.fetchPageIndex >= store.fetchMaxPageIndex) {
     store.fetchPageIndex = 1
     store.fullyFetched = true
-    const invItems = await getAllFromIndex<InvItem>(db, INDICES.INV_ITEMS_BY_STORE, store.id)
+    const invItems = await getAllFromIndex<InvItem>(
+      db,
+      INDICES.INV_ITEMS_BY_STORE,
+      store.id
+    )
     if (invItems) {
       for (let i = 0; i < invItems.length; i++) {
         const invItem = invItems[i]
         if (invItem.stale) {
-          await db.delete(stores.INVENTORY_ITEMS.name, [store.id, invItem.invId])
+          await db.delete(stores.INVENTORY_ITEMS.name, [
+            store.id,
+            invItem.invId,
+          ])
         } else {
           invItem.stale = true
           await put(db, stores.INVENTORY_ITEMS, invItem)
@@ -67,7 +100,9 @@ export async function getBrickLinkPrices(db: IDBPDatabase, store: Store) {
   }
   store.fetchMaxPageIndex = Math.ceil(json.result.totalLotCnt / 100) + 1
   await updateStore(db, store)
-  const partCategories = json.result.categories.find((c: { type: string }) => c.type === 'P')
+  const partCategories = json.result.categories.find(
+    (c: { type: string }) => c.type === 'P'
+  )
   const blCategories = new Map<string, string>()
   if (partCategories) {
     for (let i = 0; i < partCategories.categories.length; i++) {
@@ -86,32 +121,43 @@ export async function getBrickLinkPrices(db: IDBPDatabase, store: Store) {
           console.log('no color!!', resultItem.colorID, resultItem)
           continue
         }
-        const blItem: BrickLinkItem | undefined = await getBrickLinkItem(db, resultItem.itemNo + '', resultItem.categoryString)
+        const blItem: BrickLinkItem | undefined = await getBrickLinkItem(
+          db,
+          resultItem.itemNo + '',
+          resultItem.categoryString
+        )
         if (!blItem) {
           continue
         }
         blItem.name = resultItem.itemName
         blItem.externalCategoryId = resultItem.categoryString
-        const brickLinkCategory: BrickLinkCategory = await getBrickLinkCategory(db, blItem.externalCategoryId)
+        const brickLinkCategory: BrickLinkCategory = await getBrickLinkCategory(
+          db,
+          blItem.externalCategoryId
+        )
         if (!brickLinkCategory) {
           const blCategoryName = blCategories.get(resultItem.categoryString)
           if (!blCategoryName) {
             continue
           }
-          const rebrickableItem: RebrickableItem | undefined = rbPartsBrickLinkId.get(blItem.externalItemId)
+          const rebrickableItem: RebrickableItem | undefined =
+            rbPartsBrickLinkId.get(blItem.externalItemId)
           if (!rebrickableItem) {
             continue
           }
-          const rebrickableCategory = await getRebrickableCategory(db, rebrickableItem.externalCategoryId)
-          await addBrickLinkCategory(db, blItem.externalCategoryId, blCategoryName, rebrickableCategory.categoryId)
+          const rebrickableCategory = await getRebrickableCategory(
+            db,
+            rebrickableItem.externalCategoryId
+          )
+          await addBrickLinkCategory(
+            db,
+            blItem.externalCategoryId,
+            blCategoryName,
+            rebrickableCategory.categoryId
+          )
         }
         blItem.name = resultItem.itemName
-        await addBrickLinkItem(
-          color.id,
-          blItem,
-          resultItem.newThumb1Img,
-          db
-        )
+        await addBrickLinkItem(color.id, blItem, resultItem.newThumb1Img, db)
         const newScore = await addInvItem(
           db,
           resultItem.invID + '',
@@ -119,8 +165,15 @@ export async function getBrickLinkPrices(db: IDBPDatabase, store: Store) {
           color.id,
           resultItem.invNew,
           resultItem.invQty,
-          math.number(math.multiply(math.bignumber(100), math.bignumber(resultItem.rawConvertedPrice))).toString(),
-          blItem.externalItemId,
+          math
+            .number(
+              math.multiply(
+                math.bignumber(100),
+                math.bignumber(resultItem.rawConvertedPrice)
+              )
+            )
+            .toString(),
+          blItem.externalItemId
         )
         cumScore += newScore
       } catch (e) {
