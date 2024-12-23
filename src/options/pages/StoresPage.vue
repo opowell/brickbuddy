@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { StoreType, type StoresPageStore } from '../types';
 import StoreButton from '../components/StoreButton.vue';
-import { addNewStore, getStoresPageStores } from '../idb/storeMethods'
+import { getStoresPageStores } from '../idb/storeMethods'
 import { stopFetching, startFetching, startFetchingStores, stopFetchingStores, fetchingStoreInventory, fetchingStores } from '../idb/scraping'
 function startScrapingBLStores() {
   setBLStoreScraping(true)
@@ -94,6 +94,5 @@ async function importStores() {
         </tr>
       </tbody>
     </table>
-    <button @click="addNewStore">Add new</button>
   </div>
 </template>

@@ -64,6 +64,12 @@ export async function getActiveSearchButtonActiveSearch(): Promise<
       included: search.colors.included,
       includedNames: [],
     },
+    countries: {
+      excluded: search.countries.excluded,
+      excludedNames: search.countries.excluded,
+      included: search.countries.included,
+      includedNames: search.countries.included,
+    },
     conditions: {
       excluded: search.conditions.excluded,
       excludedNames: search.conditions.excluded,
@@ -196,6 +202,10 @@ async function loadSearchFilters(
     {
       arrayName: 'colors',
       type: 'color',
+    },
+    {
+      arrayName: 'countries',
+      type: 'storeCountry',
     },
     {
       arrayName: 'conditions',

@@ -3,8 +3,10 @@ import { Store, StoreType } from '../types'
 import { getBrickLinkPrices } from './getBrickLinkPrices'
 import { getLegoPrices } from './getLegoPrices'
 import { getDbConnection, importBrickLinkStores, liveObjectCache } from './idb'
-import { getFromIndex } from './db'
+import { getAllFromIndex, getFromIndex } from './db'
 import INDICES from './indices'
+import { getAllActiveStoreIds } from './storeMethods'
+import { getActiveSearch } from './searches'
 let stopFetch: boolean = false
 let stopStoresFetch: boolean = false
 export const fetchingStoreInventory = ref(false)
@@ -78,7 +80,7 @@ async function getBrickLinkFetchStore(
   oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1)
   oneYearAhead.setFullYear(oneYearAhead.getFullYear() + 1)
 
-  const store = await getFromIndex<Store>(
+  const stores = await getAllFromIndex<Store>(
     db,
     INDICES.STORES_BY_TYPE_AND_LAST_SCRAPED,
     IDBKeyRange.bound(
@@ -86,7 +88,23 @@ async function getBrickLinkFetchStore(
       [StoreType.BrickLink, oneYearAhead]
     )
   )
-  return store
+  if (!stores) {
+    return
+  }
+  const search = await liveObjectCache.getActiveSearch()
+  if (!search) {
+    return
+  }
+  const activeStoreIds = await getAllActiveStoreIds(db, search.id)
+  if (!activeStoreIds) {
+    return
+  }
+  for (let i = 0; i < stores.length; i++) {
+    const store = stores[i]
+    if (activeStoreIds.includes(store.id)) {
+      return store
+    }
+  }
 }
 
 async function getLegoFetchStore(db: IDBPDatabase): Promise<Store | undefined> {

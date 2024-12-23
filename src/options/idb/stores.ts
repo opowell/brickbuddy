@@ -17,6 +17,7 @@ const stores: {
   PARTS: StoreDefinition
   SEARCHES: StoreDefinition
   SEARCH_FILTERS: StoreDefinition
+  SEARCH_STORES: StoreDefinition
   STORE_COUNTRIES: StoreDefinition
   LISTS: StoreDefinition
   LIST_ITEMS: StoreDefinition
@@ -87,6 +88,10 @@ const stores: {
   SEARCH_FILTERS: {
     name: 'searchFilters',
     keyPath: ['searchId', 'type', 'objectId'],
+  },
+  SEARCH_STORES: {
+    name: 'searchStores',
+    keyPath: ['searchId', 'storeId'],
   },
   STORE_COUNTRIES: {
     name: 'storeCountries',

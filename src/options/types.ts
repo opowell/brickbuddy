@@ -116,6 +116,12 @@ export interface StoreState {
   name: string
 }
 
+export interface SearchStore {
+  searchId: number
+  storeId: string
+  isExcluded: number
+}
+
 export interface StoreCountriesPageStoreCountry extends StoreCountry {
   numStores: number
   excluded: boolean
@@ -389,7 +395,7 @@ export interface SearchFilter {
   isExcluded: boolean
 }
 export interface Search {
-  id: IDBValidKey | string
+  id: number
   name: string
   active: number
   filters?: SearchFilter[]
@@ -406,6 +412,10 @@ export interface ActiveSearch extends Search {
     excluded: string[]
   }
   conditions: {
+    included: string[]
+    excluded: string[]
+  }
+  countries: {
     included: string[]
     excluded: string[]
   }
@@ -432,6 +442,12 @@ export interface ActiveSearchButtonActiveSearch extends ActiveSearch {
     excludedNames: string[]
   }
   colors: {
+    included: string[]
+    excluded: string[]
+    includedNames: string[]
+    excludedNames: string[]
+  }
+  countries: {
     included: string[]
     excluded: string[]
     includedNames: string[]

@@ -12,6 +12,7 @@ const indices: {
   CARTS_BY_ACTIVE: IndexDefinition
   SEARCH_FILTERS_BY_SEARCH: IndexDefinition
   SEARCH_FILTERS_BY_SEARCH_TYPE_OBJECT: IndexDefinition
+  SEARCH_STORES_EXCLUDED: IndexDefinition
   SEARCHES_BY_ACTIVE: IndexDefinition
   CART_ITEMS_BY_CART: IndexDefinition
   EXTERNAL_CATEGORIES_BY_TYPE: IndexDefinition
@@ -109,6 +110,11 @@ const indices: {
     store: stores.SEARCH_FILTERS,
     name: 'searchTypeObject',
     keyPath: ['searchId', 'type', 'objectId'],
+  },
+  SEARCH_STORES_EXCLUDED: {
+    store: stores.SEARCH_STORES,
+    name: 'searchStoresExcluded',
+    keyPath: ['searchId', 'isExcluded'],
   },
   INV_ITEMS_BY_STORE: {
     store: stores.INVENTORY_ITEMS,

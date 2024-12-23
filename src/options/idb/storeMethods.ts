@@ -11,12 +11,15 @@ import {
   CachedStore,
   CachedItemVariant,
   CachedInvItem,
+  SearchStore,
 } from '../types'
 import { getDbConnection, liveObjectCache } from './idb'
 import { countInvItems, getStorePageInvItems } from './invItems'
 import { getFirstActiveSearch } from './searches'
-import { get } from './db'
+import { get, getAllFromIndex } from './db'
 import STORES from './stores'
+import indices from './indices'
+import { BOOLEAN_AS_NUMBER } from './utils'
 
 export const openStore = ref<UiStore | null>(null)
 
@@ -316,6 +319,53 @@ export async function getAllStores(db: IDBPDatabase): Promise<CachedStore[]> {
   return await db.getAll(STORES.STORES.name)
 }
 
+export async function getAllActiveStores(
+  db: IDBPDatabase,
+  searchId: number
+): Promise<Store[] | undefined> {
+  const ids = await getAllActiveStoreIds(db, searchId)
+  if (!ids) {
+    return
+  }
+  const stores: Store[] = []
+  for (let i = 0; i < ids.length; i++) {
+    const store = await getStore(ids[i])
+    if (!store) {
+      continue
+    }
+    stores.push(store)
+  }
+  return stores
+}
+export async function getAllActiveStoreIds(
+  db: IDBPDatabase,
+  searchId: number
+): Promise<string[] | undefined> {
+  let storeIds: string[] = []
+  const included = await getAllFromIndex<SearchStore>(
+    db,
+    indices.SEARCH_STORES_EXCLUDED,
+    [searchId, BOOLEAN_AS_NUMBER.FALSE]
+  )
+  if (included) {
+    storeIds = included.map((ss) => ss.storeId)
+  } else {
+    // @ts-ignore
+    storeIds = await db.getAllKeys(STORES.STORES.name)
+  }
+  const excluded = await getAllFromIndex<SearchStore>(
+    db,
+    indices.SEARCH_STORES_EXCLUDED,
+    [searchId, BOOLEAN_AS_NUMBER.TRUE]
+  )
+
+  if (excluded) {
+    const excludedIds = excluded.map((ss) => ss.storeId)
+    storeIds = storeIds.filter((storeId) => !excludedIds.includes(storeId))
+  }
+  return storeIds
+}
+
 export async function getAllVariants(
   db: IDBPDatabase
 ): Promise<CachedItemVariant[]> {
@@ -335,7 +385,10 @@ export async function getStoresPageStores(): Promise<
   if (!search) {
     return
   }
-  const stores = await getAllStores(liveObjectCache.db)
+  const stores = await getAllActiveStores(liveObjectCache.db, search.id)
+  if (!stores) {
+    return
+  }
   const uiStores: StoresPageStore[] = []
   for (let i = 0; i < stores.length; i++) {
     const store = stores[i]

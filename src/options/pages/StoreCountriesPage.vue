@@ -1,5 +1,10 @@
 <script setup lang="ts">
-import { SearchFilter, StoreCountriesPageStoreCountry, StoreCountry } from "../types";
+import {
+  SearchFilter,
+  Store,
+  StoreCountriesPageStoreCountry,
+  StoreCountry,
+} from "../types";
 const storeCountries = ref<StoreCountriesPageStoreCountry[] | undefined>();
 onMounted(async () => {
   storeCountries.value = await getStoreCountriesPageStoreCountries();
@@ -12,7 +17,9 @@ import { getStoreCountriesPageStoreCountries } from "../idb/storeCountries";
 import { getActiveSearch } from "../idb/searches";
 import { liveObjectCache } from "../idb/idb";
 import stores from "../idb/stores";
-import { dbDelete, put } from "../idb/db";
+import { dbDelete, getAllFromIndex, put } from "../idb/db";
+import indices from "../idb/indices";
+import { BOOLEAN_AS_NUMBER } from "../idb/utils";
 
 function include(country: StoreCountriesPageStoreCountry) {
   return filter(country, false);
@@ -47,6 +54,22 @@ async function filter(country: StoreCountriesPageStoreCountry, isExcluded: boole
   put(liveObjectCache.db, stores.SEARCH_FILTERS, filter);
   country.excluded = isExcluded;
   country.included = !isExcluded;
+  const storesInCountry = await getAllFromIndex<Store>(
+    liveObjectCache.db,
+    indices.STORES_BY_COUNTRY,
+    country.id
+  );
+  if (!storesInCountry) {
+    return;
+  }
+  for (let i = 0; i < storesInCountry.length; i++) {
+    const store = storesInCountry[i];
+    await put(liveObjectCache.db, stores.SEARCH_STORES, {
+      searchId: search.id,
+      storeId: store.id,
+      isExcluded: isExcluded ? BOOLEAN_AS_NUMBER.TRUE : BOOLEAN_AS_NUMBER.FALSE,
+    });
+  }
 }
 </script>
 

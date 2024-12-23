@@ -50,6 +50,7 @@ import indices from './indices'
 import { cheapestPrice, reportTime, startTimer } from '../utils'
 import { liveObjectCache } from './idb'
 import ComputedObjectCacheClass from './ComputedObjectCacheClass'
+import { getAllActiveStoreIds } from './storeMethods'
 
 export default class ObjectCache {
   allCategories: Category[] | undefined
@@ -143,13 +144,15 @@ export default class ObjectCache {
     return this.allCategories
   }
   async getHomePageNumStores(): Promise<number | undefined> {
-    const x = await this.getHomePageNumObjects(
-      'stores',
-      this.getStore,
-      (store: Store) => store.id,
-      this.getAllStoreKeys
-    )
-    return x
+    const search = await this.getActiveSearch()
+    if (!search) {
+      return
+    }
+    const ids = await getAllActiveStoreIds(this.db, search.id)
+    if (!ids) {
+      return
+    }
+    return ids.length
   }
   async getHomePageNumStoreCountries(): Promise<number | undefined> {
     return await count(this.db, STORES.STORE_COUNTRIES)

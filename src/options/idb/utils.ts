@@ -7,3 +7,8 @@ export function sum(array: any[], getValue: Function) {
     return accumulator + getValue(currentValue)
   }, 0)
 }
+
+export const BOOLEAN_AS_NUMBER = {
+  FALSE: 0,
+  TRUE: 1,
+}

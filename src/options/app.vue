@@ -26,7 +26,6 @@ onMounted(async () => {
 
 import { watch } from "vue";
 import { useRoute } from "vue-router";
-import { addStore } from "./idb/storeMethods";
 import { reportTime, startTimer } from "./utils";
 
 const route = useRoute();

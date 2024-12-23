@@ -29,10 +29,10 @@ const text = computed(() => {
   if (search.priceScoreIgnoreColor) {
     texts.push("ignore color");
   }
-  const fields = ["categories", "colors", "parts", "conditions"];
+  const fields = ["categories", "colors", "parts", "conditions", "countries"];
   fields.forEach((field) => {
-    // @ts-ignore
     const searchField: { includedNames: string[]; excludedNames: string[] } =
+      // @ts-ignore
       search[field];
     if (!searchField) {
       return;
@@ -43,17 +43,22 @@ const text = computed(() => {
     ) {
       return;
     }
-    let searchText = capitalizeFirstLetter(field) + ": ";
     if (searchField.includedNames.length > 0) {
-      searchText += searchField.includedNames.length + " included";
-    }
-    if (searchField.excludedNames.length > 0) {
-      if (searchField.includedNames.length > 0) {
-        searchText += ", ";
+      let searchText = searchField.includedNames.length + " " + field;
+      if (searchField.excludedNames.length > 0) {
+        searchText =
+          searchField.includedNames.length +
+          "-" +
+          searchField.excludedNames.length +
+          " " +
+          field;
       }
-      searchText += searchField.excludedNames.length + " excluded";
+      texts.push(searchText);
+    } else {
+      if (searchField.excludedNames.length > 0) {
+        texts.push("-" + searchField.excludedNames.length + " " + field);
+      }
     }
-    texts.push(searchText);
   });
   return "Search: " + texts.join("; ");
 });
