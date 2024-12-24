@@ -9,12 +9,14 @@ import ColorButton from "../components/ColorButton.vue";
 import HomeButton from "../components/HomeButton.vue";
 import { ColorsPageColor } from "../types";
 import NameIdLabel from "../components/NameIdLabel.vue";
+import ActiveCartButton from "../components/ActiveCartButton.vue";
 </script>
 
 <template>
   <div>
     <HomeButton />
     <ActiveSearchButton />
+    <ActiveCartButton />
     <h4 v-if="colors">Colors ({{ colors.length }})</h4>
     <table>
       <thead>

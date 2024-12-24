@@ -277,22 +277,41 @@ export default class ObjectCache {
     if (!matchingParts) {
       return
     }
+    const search = await this.getActiveSearch()
+    if (!search) {
+      return
+    }
     const allMatchingInvItems = new Map<string, InvItem>()
     for (let i = 0; i < matchingParts.length; i++) {
       const matchingPart = matchingParts[i]
-      let matches: InvItem[] | undefined = []
-      if (ignoreColor) {
-        matches = await getAllFromIndex<InvItem>(
-          this.db,
-          indices.INV_ITEMS_BY_ITEM,
-          matchingPart.externalItemId
-        )
-      } else {
-        matches = await getAllFromIndex<InvItem>(
-          this.db,
-          indices.INV_ITEMS_BY_ITEM_AND_COLOR,
-          [matchingPart.externalItemId, colorId]
-        )
+      let matches: InvItem[] = []
+      const storeIds = await getAllActiveStoreIds(this.db, search.id)
+      if (!storeIds) {
+        return
+      }
+      for (let i = 0; i < storeIds.length; i++) {
+        const storeId = storeIds[i]
+        if (ignoreColor) {
+          const invItems = await getAllFromIndex<InvItem>(
+            this.db,
+            indices.INV_ITEMS_BY_STORE_ITEM,
+            [storeId, matchingPart.externalItemId]
+          )
+          if (!invItems) {
+            continue
+          }
+          matches.push(...invItems)
+        } else {
+          const invItems = await getAllFromIndex<InvItem>(
+            this.db,
+            indices.INV_ITEMS_BY_ITEM_AND_COLOR,
+            [matchingPart.externalItemId, colorId]
+          )
+          if (!invItems) {
+            return
+          }
+          matches = invItems
+        }
       }
       if (!matches) {
         continue

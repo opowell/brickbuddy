@@ -20,7 +20,12 @@ onMounted(async () => {
   parts.value = await liveObjectCache.getHomePageNumParts();
 });
 const loaded = computed(() => {
-  return !!stores.value && !!colors.value && !!categories.value;
+  return (
+    stores.value !== undefined &&
+    storeCountries.value !== undefined &&
+    colors.value !== undefined &&
+    categories.value !== undefined
+  );
 });
 watch(loaded, () => {
   if (loaded) {

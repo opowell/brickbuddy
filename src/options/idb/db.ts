@@ -54,6 +54,14 @@ export async function put(
     console.log(value, e)
   }
 }
+
+export async function getAllKeysFromIndex(
+  db: IDBPDatabase,
+  index: IndexDefinition
+) {
+  return await db.getAllKeysFromIndex(index.store.name, index.name)
+}
+
 export async function dbDelete(
   db: IDBPDatabase,
   storeDef: StoreDefinition,

@@ -347,7 +347,7 @@ export async function getAllActiveStoreIds(
     indices.SEARCH_STORES_EXCLUDED,
     [searchId, BOOLEAN_AS_NUMBER.FALSE]
   )
-  if (included) {
+  if (included && included.length > 0) {
     storeIds = included.map((ss) => ss.storeId)
   } else {
     // @ts-ignore

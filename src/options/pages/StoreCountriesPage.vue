@@ -1,10 +1,5 @@
 <script setup lang="ts">
-import {
-  SearchFilter,
-  Store,
-  StoreCountriesPageStoreCountry,
-  StoreCountry,
-} from "../types";
+import { SearchFilter, Store, StoreCountriesPageStoreCountry } from "../types";
 const storeCountries = ref<StoreCountriesPageStoreCountry[] | undefined>();
 onMounted(async () => {
   storeCountries.value = await getStoreCountriesPageStoreCountries();
@@ -16,7 +11,7 @@ import ActiveCartButton from "../components/ActiveCartButton.vue";
 import { getStoreCountriesPageStoreCountries } from "../idb/storeCountries";
 import { getActiveSearch } from "../idb/searches";
 import { liveObjectCache } from "../idb/idb";
-import stores from "../idb/stores";
+import STORES from "../idb/stores";
 import { dbDelete, getAllFromIndex, put } from "../idb/db";
 import indices from "../idb/indices";
 import { BOOLEAN_AS_NUMBER } from "../idb/utils";
@@ -32,13 +27,24 @@ async function clear(country: StoreCountriesPageStoreCountry) {
   if (!search) {
     return;
   }
-  dbDelete(liveObjectCache.db, stores.SEARCH_FILTERS, [
+  dbDelete(liveObjectCache.db, STORES.SEARCH_FILTERS, [
     search.id,
     "storeCountry",
     country.id,
   ]);
   country.excluded = false;
   country.included = false;
+  const stores = await getAllFromIndex<Store>(
+    liveObjectCache.db,
+    indices.STORES_BY_COUNTRY,
+    country.id
+  );
+  if (!stores) {
+    return;
+  }
+  for (let i = 0; i < stores.length; i++) {
+    await dbDelete(liveObjectCache.db, STORES.SEARCH_STORES, [search.id, stores[i].id]);
+  }
 }
 async function filter(country: StoreCountriesPageStoreCountry, isExcluded: boolean) {
   const search = await getActiveSearch();
@@ -51,22 +57,21 @@ async function filter(country: StoreCountriesPageStoreCountry, isExcluded: boole
     isExcluded,
     objectId: country.id,
   };
-  put(liveObjectCache.db, stores.SEARCH_FILTERS, filter);
+  put(liveObjectCache.db, STORES.SEARCH_FILTERS, filter);
   country.excluded = isExcluded;
   country.included = !isExcluded;
-  const storesInCountry = await getAllFromIndex<Store>(
+  const stores = await getAllFromIndex<Store>(
     liveObjectCache.db,
     indices.STORES_BY_COUNTRY,
     country.id
   );
-  if (!storesInCountry) {
+  if (!stores) {
     return;
   }
-  for (let i = 0; i < storesInCountry.length; i++) {
-    const store = storesInCountry[i];
-    await put(liveObjectCache.db, stores.SEARCH_STORES, {
+  for (let i = 0; i < stores.length; i++) {
+    await put(liveObjectCache.db, STORES.SEARCH_STORES, {
       searchId: search.id,
-      storeId: store.id,
+      storeId: stores[i].id,
       isExcluded: isExcluded ? BOOLEAN_AS_NUMBER.TRUE : BOOLEAN_AS_NUMBER.FALSE,
     });
   }

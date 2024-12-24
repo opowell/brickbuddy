@@ -159,7 +159,6 @@ async function addBrickLinkStorePage(
   if (await get(db, STORES.BRICK_LINK_STORE_PAGES, page.url)) {
     return
   }
-  console.log('addBrickLinkStorePage', page.url)
   return await updateBrickLinkStorePage(db, page)
 }
 async function updateBrickLinkStorePage(
@@ -204,7 +203,6 @@ async function parseStoreLinks(
   html: string,
   db: IDBPDatabase
 ): Promise<number> {
-  console.log('parseStoreLinks')
   let score = 0
   const INSTANT_CHECKOUT =
     ' <a href="https://www.bricklink.com/help.asp?helpID=2466"><I class="fas fa-bolt icon-instant-checkout"></I></a>'
