@@ -29,6 +29,7 @@ onMounted(async () => {
 })
 
 const search = ref('')
+const numMinItems: Ref<number | undefined> = ref(100)
 import HomeButton from '../components/HomeButton.vue';
 import ActiveSearchButton from '../components/ActiveSearchButton.vue';
 import ActiveCartButton from '../components/ActiveCartButton.vue';
@@ -37,6 +38,17 @@ import { importBrickLinkStores, liveObjectCache } from '../idb/idb'
 async function importStores() {
   return await importBrickLinkStores(liveObjectCache.db)
 }
+
+const filteredStores = computed(() => {
+  if (!stores.value) {
+    return []
+  }
+  if (!numMinItems.value) {
+    return stores.value
+  }
+  const min = numMinItems.value
+  return stores.value.filter(store => store.numInvItems >= min)
+})
 </script>
 
 <template>
@@ -44,7 +56,7 @@ async function importStores() {
     <HomeButton />
     <ActiveCartButton />
     <ActiveSearchButton />
-    <h4 v-if="stores">Stores ({{ stores.length }})</h4>
+    <h4 v-if="stores">Stores ({{ filteredStores.length }} / {{ stores.length }})</h4>
     <h4>Scraping:</h4>
     <div><button @click="importStores">Import from BrickLink</button></div>
     <div>
@@ -60,6 +72,7 @@ async function importStores() {
       </button>
     </div>
     <div>Search:<input v-model="search" /></div>
+    <div>Inventory (min.):<input v-model="numMinItems" type="number" /></div>
     <table>
       <thead>
         <tr>
@@ -73,7 +86,7 @@ async function importStores() {
         </tr>
       </thead>
       <tbody>
-        <tr v-for="store in stores" :key="store.id">
+        <tr v-for="store in filteredStores" :key="store.id">
           <td>
             <button>{{ store.countryId }}</button>
           </td>
