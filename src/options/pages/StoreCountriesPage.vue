@@ -10,11 +10,10 @@ import ActiveSearchButton from "../components/ActiveSearchButton.vue";
 import ActiveCartButton from "../components/ActiveCartButton.vue";
 import { getStoreCountriesPageStoreCountries } from "../idb/storeCountries";
 import { getActiveSearch } from "../idb/searches";
-import { getDbConnection, liveObjectCache, putSearchStore } from "../idb/idb";
+import { liveObjectCache, putSearchStore } from "../idb/idb";
 import STORES from "../idb/stores";
 import { dbDelete, getAllFromIndex, put } from "../idb/db";
 import indices from "../idb/indices";
-import { BOOLEAN_AS_NUMBER } from "../idb/utils";
 
 function include(country: StoreCountriesPageStoreCountry) {
   return filter(country, false);
@@ -97,18 +96,13 @@ async function filter(country: StoreCountriesPageStoreCountry, isExcluded: boole
             <button>{{ country.numStores }}</button>
           </td>
           <td>
-            <button :disabled="country.included" @click="include(country)">
-              Include
-            </button>
-            <button :disabled="country.excluded" @click="exclude(country)">
-              Exclude
-            </button>
-            <button
-              :disabled="!country.excluded && !country.included"
-              @click="clear(country)"
-            >
-              Clear
-            </button>
+            <FilterButtons
+              :included="country.included"
+              :excluded="country.excluded"
+              @include="include(country)"
+              @exclude="exclude(country)"
+              @clear="clear(country)"
+            />
           </td>
         </tr>
       </tbody>

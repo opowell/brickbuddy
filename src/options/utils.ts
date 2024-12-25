@@ -58,7 +58,10 @@ export function formatFloat(x: number) {
   }
   return (x / 1000000).toFixed(1) + 'm'
 }
-export function formatAmount(x: number | string) {
+export function formatAmount(x: number | string | undefined) {
+  if (!x) {
+    return x
+  }
   if (typeof x !== 'number') {
     x = Number.parseFloat(x)
     if (Number.isNaN(x)) {
@@ -134,8 +137,12 @@ export function addMinutes(date: Date, minutes: number) {
 }
 
 let timeStart = new Map<string, number>()
-export function startTimer(x: string) {
-  timeStart.set(x, new Date().getTime())
+export function startTimer(x: string, log?: boolean) {
+  const time = new Date().getTime()
+  if (log) {
+    console.log('start timer', x, time)
+  }
+  timeStart.set(x, time)
 }
 
 export function reportTime(x: string) {
@@ -144,7 +151,8 @@ export function reportTime(x: string) {
     console.log('no timer started for', x)
     return
   }
-  console.log(x, new Date().getTime() - start)
+  const time = new Date().getTime()
+  console.log('report time', x, time - start)
 }
 
 export function getScore(

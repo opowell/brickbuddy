@@ -1,24 +1,48 @@
 <script setup lang="ts">
 import HomeButton from "../components/HomeButton.vue";
 import { getSearchPageSearch, setPriceScoreQuantity } from "../idb/searches";
-import { SearchPageSearch } from "../types";
+import { ConditionPriceAdjustment, SearchPageSearch } from "../types";
 const search = ref<SearchPageSearch | undefined>(undefined);
 const priceScoreQuantity = ref<number>(100);
 const route = useRoute();
-const conditions = ref();
-const priceAdjustments = ref({});
+const conditionPriceAdjustmentValues = ref({
+  New: 1,
+  Used: 1,
+});
+const conditionPriceAdjustments = computed<ConditionPriceAdjustment[]>(() => {
+  if (!search.value) {
+    return [];
+  }
+  return [
+    {
+      searchId: search.value.id,
+      condition: "New",
+      adjustment: conditionPriceAdjustmentValues.value.New,
+    },
+    {
+      searchId: search.value.id,
+      condition: "Used",
+      adjustment: conditionPriceAdjustmentValues.value.Used,
+    },
+  ];
+});
 onMounted(async () => {
-  conditions.value = ["New", "Used"];
   search.value = await getSearchPageSearch(route.params.id - 0);
   if (!search.value) {
     return;
   }
   priceScoreQuantity.value = search.value.priceScoreQuantity;
+  search.value.conditionPriceAdjustments.forEach((adjustment) => {
+    conditionPriceAdjustmentValues.value[adjustment.condition] = adjustment.adjustment;
+  });
 });
 import NameIdLabel from "../components/NameIdLabel.vue";
-import CategoriesTable from "../components/CategoriesTable.vue";
-import ConditionsTable from "../components/ConditionsTable.vue";
 import { liveObjectCache } from "../idb/idb";
+import stores from "../idb/stores";
+import { put } from "../idb/db";
+function setConditionAdjustment(adjustment: ConditionPriceAdjustment) {
+  put(liveObjectCache.db, stores.SEARCH_CONDITION_PRICE_ADJUSTMENTS, adjustment);
+}
 </script>
 
 <template>
@@ -26,15 +50,18 @@ import { liveObjectCache } from "../idb/idb";
     <HomeButton />
     <h4>Search <NameIdLabel :id="search.id" :name="search.name" /></h4>
     <div>
-      Price score quantity: <input v-model="priceScoreQuantity" type="number" />
+      <div>
+        Price score quantity: <input v-model="priceScoreQuantity" type="number" />
+        <button @click="setPriceScoreQuantity(priceScoreQuantity)">Set</button>
+      </div>
       <div>
         Condition price adjustments:
-        <div v-for="condition in conditions" :key="condition">
-          {{ condition }}:
-          <input v-model="priceAdjustments[condition]" type="number" step="0.1" />
+        <div v-for="adjustment in conditionPriceAdjustments" :key="adjustment.condition">
+          {{ adjustment.condition }}:
+          <input v-model="adjustment.adjustment" type="number" step="0.05" />
+          <button @click="setConditionAdjustment(adjustment)">Set</button>
         </div>
       </div>
-      <button @click="setPriceScoreQuantity(priceScoreQuantity)">Set</button>
     </div>
     <h4 v-if="search.filters">Filters ({{ search.filters.length }})</h4>
     <table v-if="search.filters">

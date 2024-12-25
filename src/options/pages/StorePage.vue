@@ -12,11 +12,12 @@ import ExternalPartButton from "../components/ExternalPartButton.vue";
 import ColorButton from "../components/ColorButton.vue";
 import ActiveSearchButton from "../components/ActiveSearchButton.vue";
 import ActiveCartButton from "../components/ActiveCartButton.vue";
-import { formatAmount, formatInteger } from "../utils";
+import { formatAmount, formatInteger, getScore } from "../utils";
 import ExternalCategoryButton from "../components/ExternalCategoryButton.vue";
 import ConditionButton from "../components/ConditionButton.vue";
 import PartVariantButton from "../components/PartVariantButton.vue";
 import QuantityInput from "../components/QuantityInput.vue";
+import { externalPartPriceMap } from "../idb/categories";
 const route = useRoute();
 const store = ref<StorePageStore | undefined>();
 const search = ref<ActiveSearch | undefined>();
@@ -133,7 +134,9 @@ const cartButton = ref<typeof ActiveCartButton | undefined>(undefined);
               )
             }}
           </td>
-          <td>{{ invItem.priceScore }}</td>
+          <td>
+            {{ formatAmount(externalPartPriceMap.get(invItem.type + invItem.itemId)) }}
+          </td>
           <td>
             <QuantityInput
               :current="invItem.cartQuantity"

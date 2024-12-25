@@ -6,6 +6,7 @@ import {
   CategoriesPageCategory,
   Category,
   Color,
+  ConditionPriceAdjustment,
   ExternalCategory,
   ExternalCategoryPageExternalPart,
   ExternalItem,
@@ -678,6 +679,18 @@ export default class ObjectCache {
     if (!search) {
       return
     }
+    const adjustments = await getAllFromIndex<ConditionPriceAdjustment>(
+      this.db,
+      indices.SEARCH_CONDITION_PRICE_ADJUSTMENTS_BY_SEARCH,
+      search.id
+    )
+    if (!adjustments) {
+      return
+    }
+    const conditionsMap = new Map()
+    adjustments.forEach((a) => {
+      conditionsMap.set(a.condition, a.adjustment)
+    })
     const storeIds = await getAllActiveStoreIds(this.db, search.id)
     if (!storeIds) {
       return
@@ -693,6 +706,13 @@ export default class ObjectCache {
       if (!storeItems) {
         continue
       }
+      storeItems.forEach((storeItem) => {
+        const adjustment = conditionsMap.get(storeItem.condition)
+        if (!adjustment) {
+          return
+        }
+        storeItem.price = Number.parseFloat(storeItem.price) * adjustment + ''
+      })
       invItems.push(...storeItems)
     }
     this.invItemsByPart.set(id, invItems)
@@ -791,17 +811,21 @@ export default class ObjectCache {
     const ecpeps: ExternalCategoryPageExternalPart[] = []
     for (let i = 0; i < parts.length; i++) {
       const part = parts[i]
+      startTimer('getNumInvItemsByPart')
       const numInvItems: number | undefined = await this.getNumInvItemsByPart(
         part.externalItemId,
         type
       )
+      reportTime('getNumInvItemsByPart')
       if (numInvItems === undefined || numInvItems === 0) {
         continue
       }
+      startTimer('getNumVariantsByPart')
       const numVariants: number | undefined = await this.getNumVariantsByPart(
         part.externalItemId,
         type
       )
+      reportTime('getNumVariantsByPart')
       if (numVariants === undefined) {
         continue
       }

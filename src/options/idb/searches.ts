@@ -10,6 +10,7 @@ import {
   SearchFilter,
   ExternalItem,
   CachedSearch,
+  ConditionPriceAdjustment,
 } from '../types'
 import { getCategories } from './categories'
 import { getCondition } from './condition'
@@ -22,6 +23,7 @@ import {
 import STORES from './stores'
 import INDICES from './indices'
 import ObjectCache from './ObjectCacheClass'
+import indices from './indices'
 
 export async function addNewSearch() {
   const db = await getDbConnection()
@@ -244,7 +246,7 @@ async function loadSearchFilters(
 export async function getSearchPageSearch(
   id: number
 ): Promise<SearchPageSearch | undefined> {
-  const search = await getSearch(id)
+  const search = await getSearch(id, liveObjectCache)
   if (!search) {
     return
   }
@@ -257,8 +259,18 @@ export async function getSearchPageSearch(
     colorObjects: [],
     partObjects: [],
     storeObjects: [],
+    conditionPriceAdjustments: [],
   }
   const db = await getDbConnection()
+  const adjustments = await getAllFromIndex<ConditionPriceAdjustment>(
+    liveObjectCache.db,
+    indices.SEARCH_CONDITION_PRICE_ADJUSTMENTS_BY_SEARCH,
+    search.id
+  )
+  if (!adjustments) {
+    return
+  }
+  activeSearchPageSearch.conditionPriceAdjustments = adjustments
   for (let i = 0; i < search.categories.included.length; i++) {
     const id = search.categories.included[i]
     const category = await liveObjectCache.getCategory(id)

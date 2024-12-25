@@ -299,7 +299,7 @@ export interface StorePageInvItem extends InvItem {
   category: CategoryWithExternals
   variant: StorePageInvItemVariant
   cartQuantity: number
-  priceScore: string
+  priceScore?: string
 }
 
 export interface StorePageInvItemVariant extends ItemVariant {
@@ -496,7 +496,15 @@ export interface SearchPageSearch extends ActiveSearch {
   colorObjects: UiColor[]
   partObjects: ActiveSearchPagePart[]
   storeObjects: ActiveSearchPageStore[]
+  conditionPriceAdjustments: ConditionPriceAdjustment[]
 }
+
+export interface ConditionPriceAdjustment {
+  searchId: number
+  condition: string
+  adjustment: number
+}
+
 export interface SearchesPageSearch extends Search {}
 export interface UiListItem extends ShopListItem {
   item?: UiItem
@@ -553,6 +561,7 @@ export interface ColorsPageColor extends Color {
 
 export interface Category {
   excluded?: boolean
+  included?: boolean
   id: number
 }
 

@@ -34,6 +34,7 @@ const indices: {
   INV_ITEMS_BY_STORE_ITEM: IndexDefinition
   INV_ITEMS_BY_COLORS: IndexDefinition
   INV_ITEMS_BY_CONDITION: IndexDefinition
+  SEARCH_CONDITION_PRICE_ADJUSTMENTS_BY_SEARCH: IndexDefinition
   SHOP_LIST_ITEMS_BY_SHOP_LIST: IndexDefinition
   STORES_BY_COUNTRY: IndexDefinition
   COLOR_BY_BRICKLINK_ID: IndexDefinition
@@ -183,6 +184,11 @@ const indices: {
     store: stores.INVENTORY_ITEMS,
     name: 'condition',
     keyPath: 'condition',
+  },
+  SEARCH_CONDITION_PRICE_ADJUSTMENTS_BY_SEARCH: {
+    store: stores.SEARCH_CONDITION_PRICE_ADJUSTMENTS,
+    name: 'searchConditionPriceAdjustmentSearch',
+    keyPath: 'searchId',
   },
   SHOP_LIST_ITEMS_BY_SHOP_LIST: {
     store: stores.LIST_ITEMS,

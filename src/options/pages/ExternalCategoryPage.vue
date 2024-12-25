@@ -13,7 +13,7 @@ import IncludeCategoryButton from "../components/IncludeCategoryButton.vue";
 import ExcludeCategoryButton from "../components/ExcludeCategoryButton.vue";
 const route = useRoute();
 import { useRouter } from "vue-router";
-import { formatAmount } from "../utils";
+import { formatAmount, reportTime, startTimer } from "../utils";
 import ActiveSearchButton from "../components/ActiveSearchButton.vue";
 import ExternalPartButton from "../components/ExternalPartButton.vue";
 import {
@@ -29,10 +29,11 @@ onMounted(async () => {
   );
 });
 const sortedParts = computed<ExternalCategoryPageExternalPart[]>(() => {
+  startTimer("sortedParts");
   if (!category.value) {
     return [];
   }
-  return category.value.externalParts.sort((a, b) => {
+  const sorted = category.value.externalParts.sort((a, b) => {
     if (!a.name) {
       return 1;
     }
@@ -44,48 +45,53 @@ const sortedParts = computed<ExternalCategoryPageExternalPart[]>(() => {
       sensitivity: "base",
     });
   });
+  reportTime("sortedParts");
+  return sorted;
 });
 </script>
 
 <template>
-  <div v-if="category">
+  <div>
     <HomeButton />
     <CategoriesButton />
     <ActiveSearchButton />
-    <h4>
-      External category: {{ category.type }} {{ category.name }} ({{ category.id }})
-    </h4>
-    <IncludeCategoryButton
-      :category="category"
-      @include="router.push(Crumbs.categories.href)"
-    />
-    <ExcludeCategoryButton
-      :category="category"
-      @exclude="router.push(Crumbs.categories.href)"
-    />
-    <div>Category: <CategoryButton :category="category.category" /></div>
-    <h4>Parts ({{ category.externalParts.length }})</h4>
-    <table>
-      <thead>
-        <tr>
-          <th>Image</th>
-          <th>Name</th>
-          <th>Colors</th>
-          <th>Inv. items</th>
-          <th>Price</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="part in sortedParts" :key="part.itemId">
-          <td><img v-if="part.image" :src="part.image" /></td>
-          <td>
-            <ExternalPartButton :part="part" />
-          </td>
-          <td>{{ part.numVariants }}</td>
-          <td>{{ part.numInvItems }}</td>
-          <td>{{ formatAmount(externalPartPriceMap.get(part.type + part.itemId)) }}</td>
-        </tr>
-      </tbody>
-    </table>
+    <div v-if="!category">Loading...</div>
+    <div v-else>
+      <h4>
+        External category: {{ category.type }} {{ category.name }} ({{ category.id }})
+      </h4>
+      <IncludeCategoryButton
+        :category="category"
+        @include="router.push(Crumbs.categories.href)"
+      />
+      <ExcludeCategoryButton
+        :category="category"
+        @exclude="router.push(Crumbs.categories.href)"
+      />
+      <div>Category: <CategoryButton :category="category.category" /></div>
+      <h4>Parts ({{ category.externalParts.length }})</h4>
+      <table>
+        <thead>
+          <tr>
+            <th>Image</th>
+            <th>Name</th>
+            <th>Colors</th>
+            <th>Inv. items</th>
+            <th>Price</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="part in sortedParts" :key="part.itemId">
+            <td><img v-if="part.image" :src="part.image" /></td>
+            <td>
+              <ExternalPartButton :part="part" />
+            </td>
+            <td>{{ part.numVariants }}</td>
+            <td>{{ part.numInvItems }}</td>
+            <td>{{ formatAmount(externalPartPriceMap.get(part.type + part.itemId)) }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </template>

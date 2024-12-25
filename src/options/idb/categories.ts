@@ -30,6 +30,7 @@ import { getActiveSearch, getFirstActiveSearch } from './searches'
 import { getAllActiveStores } from './storeMethods'
 import indices from './indices'
 import { BOOLEAN_AS_NUMBER } from './utils'
+import { reportTime, startTimer } from '../utils'
 
 export const externalPartPriceMap = ref<Map<string, number>>(
   new Map<string, number>()
@@ -152,8 +153,8 @@ export async function getAllExternalCategories(
 export async function getExternalCategoriesByCategoryId(
   id: number,
   objectCache: ObjectCache
-) {
-  return await getAllFromIndex(
+): Promise<ExternalCategory[] | undefined> {
+  return await getAllFromIndex<ExternalCategory>(
     objectCache.db,
     INDICES.EXTERNAL_CATEGORIES_BY_CATEGORY,
     id
@@ -164,6 +165,7 @@ export async function getExternalCategoryPageExternalCategory(
   type: 'BrickLink' | 'Lego' | 'Rebrickable',
   id: string
 ): Promise<ExternalCategoryPageExternalCategory | undefined> {
+  startTimer('getExternalCategoryPageExternalCategory')
   const externalCategory = await liveObjectCache.getExternalCategory(id, type)
   if (!externalCategory) {
     return
@@ -179,11 +181,14 @@ export async function getExternalCategoryPageExternalCategory(
   if (!externalCategories) {
     return
   }
+  startTimer('getExternalCategoryPageExternalParts')
   const externalParts =
     await liveObjectCache.getExternalCategoryPageExternalParts(type, id)
   if (!externalParts) {
     return
   }
+  reportTime('getExternalCategoryPageExternalParts')
+  reportTime('getExternalCategoryPageExternalCategory')
   return {
     ...externalCategory,
     category: {

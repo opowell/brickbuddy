@@ -6,10 +6,14 @@ import {
   ExternalCategory,
   SearchFilter,
 } from "../types";
-import ExcludeCategoryButton from "../components/ExcludeCategoryButton.vue";
-import IncludeCategoryButton from "../components/IncludeCategoryButton.vue";
-import { getDbConnection, liveObjectCache } from "../idb/idb";
+import {
+  getDbConnection,
+  liveObjectCache,
+  putSearchCategory,
+  putSearchStore,
+} from "../idb/idb";
 import ObjectCache from "../idb/ObjectCacheClass";
+import FilterButtons from "../components/FilterButtons.vue";
 interface CategoriesPageUniqueCategory {
   externalCategories: CategoriesPageExternalCategory[];
   isExternal: boolean;
@@ -17,6 +21,8 @@ interface CategoriesPageUniqueCategory {
   image?: string;
   id: number | string;
   category: CategoriesPageCategory;
+  included: boolean;
+  excluded: boolean;
 }
 // @ts-ignore
 function countUnique(iterable: Iterable) {
@@ -66,6 +72,8 @@ const uniqueExternalCategories = computed<CategoriesPageUniqueCategory[]>(() => 
           image,
           id: ec.id,
           category,
+          included: false,
+          excluded: false,
         });
       });
     } else {
@@ -82,15 +90,17 @@ const uniqueExternalCategories = computed<CategoriesPageUniqueCategory[]>(() => 
         image,
         id: category.id,
         category,
+        included: false,
+        excluded: false,
       });
     }
   });
   return out;
 });
-async function excludeCategory(category: Category) {
+async function exclude(category: Category) {
   return await filterCategory(category, true);
 }
-async function includeCategory(category: Category) {
+async function include(category: Category) {
   return await filterCategory(category, false);
 }
 async function filterCategory(category: Category, isExcluded: boolean) {
@@ -107,15 +117,55 @@ async function filterCategory(category: Category, isExcluded: boolean) {
   put(liveObjectCache.db, stores.SEARCH_FILTERS, filter);
   category.excluded = isExcluded;
   put(liveObjectCache.db, stores.CATEGORIES, category);
+  const categories = await getExternalCategoriesByCategoryId(
+    category.id,
+    liveObjectCache
+  );
+  if (!categories) {
+    return;
+  }
+  for (let i = 0; i < categories.length; i++) {
+    await putSearchCategory(liveObjectCache.db, search.id, categories[i].id, isExcluded);
+  }
 }
 import CategoryButton from "../components/CategoryButton.vue";
 import HomeButton from "../components/HomeButton.vue";
 import ActiveSearchButton from "../components/ActiveSearchButton.vue";
 import ExternalCategoryButton from "../components/ExternalCategoryButton.vue";
 import { getActiveSearch } from "../idb/searches";
-import { put } from "../idb/db";
+import { dbDelete, getAllFromIndex, put } from "../idb/db";
 import stores from "../idb/stores";
 import { reportTime, startTimer } from "../utils";
+import indices from "../idb/indices";
+import { getExternalCategoriesByCategoryId } from "../idb/categories";
+
+async function clear(category: Category) {
+  const search = await getActiveSearch();
+  if (!search) {
+    return;
+  }
+  dbDelete(liveObjectCache.db, stores.SEARCH_FILTERS, [
+    search.id,
+    "storeCountry",
+    category.id,
+  ]);
+  category.excluded = false;
+  category.included = false;
+  const categories = await getAllFromIndex<ExternalCategory>(
+    liveObjectCache.db,
+    indices.EXTERNAL_CATEGORIES_BY_CATEGORY,
+    category.id
+  );
+  if (!categories) {
+    return;
+  }
+  for (let i = 0; i < categories.length; i++) {
+    await dbDelete(liveObjectCache.db, stores.SEARCH_CATEGORIES, [
+      search.id,
+      categories[i].id,
+    ]);
+  }
+}
 </script>
 
 <template>
@@ -150,13 +200,12 @@ import { reportTime, startTimer } from "../utils";
             {{ externalCategory.numParts }}
           </td>
           <td>
-            <ExcludeCategoryButton
-              :category="externalCategory.category"
-              @exclude="excludeCategory(externalCategory.category)"
-            />
-            <IncludeCategoryButton
-              :category="externalCategory.category"
-              @include="includeCategory(externalCategory.category)"
+            <FilterButtons
+              :included="externalCategory.included"
+              :excluded="externalCategory.excluded"
+              @include="include(externalCategory)"
+              @exclude="exclude(externalCategory)"
+              @clear="clear(externalCategory)"
             />
           </td>
         </tr>

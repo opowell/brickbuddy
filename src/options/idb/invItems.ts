@@ -256,18 +256,12 @@ export async function getStorePageInvItem(
   if (!variant) {
     return
   }
-  const cheapestPrice = await objectCache.getCheapestPrice(
+  const priceScore = undefined
+  objectCache.getCheapestPrice(
     part.itemId,
     search.priceScoreQuantity,
     search.priceScoreIgnoreColor,
     color.id
-  )
-  const priceScoreString = getScore(
-    [],
-    search.priceScoreQuantity,
-    invItem.price,
-    true,
-    cheapestPrice
   )
   const cart = await objectCache.getActiveCart()
   if (!cart) {
@@ -282,7 +276,7 @@ export async function getStorePageInvItem(
       ...variant,
       color,
     },
-    priceScore: priceScoreString,
+    priceScore,
     cartQuantity,
     externalCategory,
     category: {

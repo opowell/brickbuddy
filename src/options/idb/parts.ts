@@ -131,21 +131,20 @@ export async function getBrickLinkItem(
   brickLinkId: string,
   brickLinkCategoryId?: string
 ): Promise<BrickLinkItem | undefined> {
-  let blItem: BrickLinkItem = await getFromIndex(
+  let blItem = await getFromIndex(
     db,
     INDICES.EXTERNAL_PARTS_BY_TYPE_AND_EXTERNAL_ID,
     ['BrickLink', brickLinkId]
   )
   if (!blItem) {
-    const rebrickableItem: RebrickableItem | undefined =
-      rbPartsBrickLinkId.get(brickLinkId)
+    const rebrickableItem = rbPartsBrickLinkId.get(brickLinkId)
     if (!rebrickableItem) {
-      console.log(
-        'no item',
-        brickLinkId,
-        rebrickableItem,
-        Object.keys(rbPartsBrickLinkId).includes(brickLinkId)
-      )
+      // console.log(
+      //   'no item',
+      //   brickLinkId,
+      //   rebrickableItem,
+      //   Object.keys(rbPartsBrickLinkId).includes(brickLinkId)
+      // )
       return
     }
     const itemId = await put(db, STORES.PARTS, {})

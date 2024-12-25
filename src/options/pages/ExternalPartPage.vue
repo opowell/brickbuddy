@@ -8,9 +8,6 @@ import type {
   InvItem,
   PartPageVariant,
   PartPageVariantInvItem,
-  UiInvItem,
-  UiItem,
-  UiItemVariant,
 } from "../types";
 import ActiveSearchButton from "../components/ActiveSearchButton.vue";
 import { formatInteger } from "../utils";
@@ -23,16 +20,13 @@ interface VariantWithPriceQuantity extends PartPageVariant {
 }
 import { useRoute } from "vue-router";
 import ColorButton from "../components/ColorButton.vue";
-import { getDbConnection } from "../idb/idb";
+import { liveObjectCache } from "../idb/idb";
 import ExternalCategoryButton from "../components/ExternalCategoryButton.vue";
-import ObjectCache from "../idb/ObjectCacheClass";
 const route = useRoute();
 
 const item = ref<ExternalPartPageExternalPart | undefined>();
 onMounted(async () => {
-  const db = await getDbConnection();
-  const cache = new ObjectCache(db);
-  item.value = await cache.getExternalPartPageExternalPart(
+  item.value = await liveObjectCache.getExternalPartPageExternalPart(
     route.params.type,
     route.params.id
   );
@@ -121,7 +115,12 @@ function setCartQuantity({
 }) {
   const originalItem = item.value?.variants
     .flatMap((v) => item.value?.invItems)
-    .find((i) => i.invId === invItem.invId && i.storeId === invItem.storeId);
+    .find((i) => {
+      if (!i) {
+        return false;
+      }
+      return i.invId === invItem.invId && i.storeId === invItem.storeId;
+    });
   if (!originalItem) {
     return;
   }

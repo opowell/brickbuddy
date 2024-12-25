@@ -28,7 +28,7 @@ export async function createActiveSearchIfNecessary(
   }
   const newSearch: Search = {
     id: 0,
-    active: 1,
+    active: BOOLEAN_AS_NUMBER.TRUE,
     name: new Date().toISOString(),
     filters: [],
     priceScoreQuantity: 100,
@@ -38,6 +38,7 @@ export async function createActiveSearchIfNecessary(
   if (!id) {
     return
   }
+  // @ts-ignore
   newSearch.id = id
 }
 
@@ -244,7 +245,6 @@ async function parseStoreLinks(
   return score - 20
 }
 async function parsePageLinks(html: string, db: IDBPDatabase): Promise<number> {
-  console.log('parsePageLinks')
   let score = 0
   const LINK_START = "<a href='/browseStores.asp"
   const LINK_END = "'>"
@@ -377,6 +377,19 @@ export async function putSearchStore(
   put(db, STORES.SEARCH_STORES, {
     searchId,
     storeId,
+    isExcluded: isExcluded ? BOOLEAN_AS_NUMBER.TRUE : BOOLEAN_AS_NUMBER.FALSE,
+  })
+}
+
+export async function putSearchCategory(
+  db: IDBPDatabase,
+  searchId: number,
+  categoryId: string,
+  isExcluded: boolean
+) {
+  put(db, STORES.SEARCH_CATEGORIES, {
+    searchId,
+    categoryId,
     isExcluded: isExcluded ? BOOLEAN_AS_NUMBER.TRUE : BOOLEAN_AS_NUMBER.FALSE,
   })
 }
@@ -535,7 +548,7 @@ export async function getDbConnection(): Promise<IDBPDatabase> {
     return dbConnection
   }
   let createData = false
-  const db = await openDB(DB_NAME, 2, {
+  const db = await openDB(DB_NAME, 3, {
     async upgrade(db, oldVersion, newVersion, transaction) {
       Object.keys(STORES).forEach((key) => {
         // @ts-ignore
