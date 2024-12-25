@@ -116,9 +116,9 @@ export async function getBrickLinkPrices(db: IDBPDatabase, store: Store) {
     for (let j = 0; j < group.items.length; j++) {
       const resultItem = group.items[j]
       try {
-        const color: Color = await getColorByBrickLinkId(db, resultItem.colorID)
+        const color = await getColorByBrickLinkId(db, resultItem.colorID)
         if (!color) {
-          console.log('no color!!', resultItem.colorID, resultItem)
+          // console.log('no color!!', resultItem.colorID, resultItem)
           continue
         }
         const blItem: BrickLinkItem | undefined = await getBrickLinkItem(

@@ -204,7 +204,6 @@ export async function getAllActiveCategories(
   }
   const categoriesPageCategories: CategoriesPageCategory[] = []
   for (let i = 0; i < 20; i++) {
-    console.log(ids[i])
     const category = await getCategory(db, ids[i])
     if (!category) {
       continue

@@ -657,14 +657,12 @@ async function addItem(
   item.type = type
   await db.put(STORES.EXTERNAL_PARTS.name, item)
 
-  let variant: ItemVariant = await getItemVariant(
-    db,
-    type,
-    item.externalItemId,
-    colorId
-  )
-  if (!variant) {
-    const image: string = await toDataURL('https:' + imageUrl)
+  let variant = await getItemVariant(db, type, item.externalItemId, colorId)
+  if (variant) {
+    return
+  }
+  try {
+    const image = await toDataURL('https:' + imageUrl)
     variant = {
       itemId: item.externalItemId,
       colorId,
@@ -672,7 +670,7 @@ async function addItem(
       type,
     }
     await putVariant(db, variant)
-  }
+  } catch (e) {}
 }
 
 export async function getNumPartsInCategory(

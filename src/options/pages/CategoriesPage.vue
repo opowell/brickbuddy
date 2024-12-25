@@ -58,7 +58,7 @@ const uniqueExternalCategories = computed<CategoriesPageUniqueCategory[]>(() => 
         if (ec.numParts === 0) {
           return;
         }
-        const image = externalCategoryImageMap.value?.get(ec.id);
+        const image = externalCategoryImageMap.value?.get(ec.id) || ec.image;
         out.push({
           isExternal: true,
           externalCategories: [ec],

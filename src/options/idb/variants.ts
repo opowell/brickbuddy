@@ -37,7 +37,7 @@ export async function getItemVariant(
   type: 'Rebrickable' | 'Lego' | 'BrickLink',
   externalItemId: string,
   colorId: string
-) {
+): Promise<ItemVariant | undefined> {
   if (!externalItemId || !colorId) {
     return
   }

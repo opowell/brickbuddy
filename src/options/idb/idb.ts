@@ -82,27 +82,23 @@ export async function getCategoriesPageCategory(
   if (!externalCategories) {
     return
   }
-  console.log('externalCategories', externalCategories)
   const categoriesPageExternalCategories: CategoriesPageExternalCategory[] = []
   for (let i = 0; i < externalCategories.length; i++) {
     const externalCategory = externalCategories[i]
-    const numParts =
-      await liveObjectCache.getNumExternalPartsInExternalCategory(
+    const externalItems =
+      await liveObjectCache.getExternalItemsInExternalCategory(
         externalCategory.type,
         externalCategory.id
       )
-    if (numParts === 0) {
+    if (!externalItems || externalItems.length === 0) {
       continue
     }
-    console.log(numParts)
-    // const variant = await liveObjectCache.getFirstVariantByPart(
-    //   parts[0].externalItemId
-    // )
-    let variant = undefined
-    console.log('variant', variant)
+    const variant = await liveObjectCache.getFirstVariantByPart(
+      externalItems[0].externalItemId
+    )
     categoriesPageExternalCategories.push({
       ...externalCategory,
-      numParts,
+      numParts: externalItems.length,
       image: variant?.image,
     })
   }

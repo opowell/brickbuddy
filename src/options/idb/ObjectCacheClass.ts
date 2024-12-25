@@ -816,10 +816,10 @@ export default class ObjectCache {
     }
     return ecpeps
   }
-  async getNumExternalPartsInExternalCategory(
+  async getExternalItemsInExternalCategory(
     type: string,
     externalCategoryId: string
-  ): Promise<number> {
+  ): Promise<ExternalItem[] | undefined> {
     const id = type + '-' + externalCategoryId
     // if (this.externalPartsByExternalCategory.has(id)) {
     //   return this.externalPartsByExternalCategory.get(id)
@@ -830,11 +830,11 @@ export default class ObjectCache {
       [type, externalCategoryId]
     )
     if (!externalItems) {
-      return 0
+      return
     }
-    let numExternalItemsWithStoreItems = 0
+    const externalItemsWithStoreItems: ExternalItem[] = []
     for (let i = 0; i < externalItems.length; i++) {
-      // const item = externalItems[i]
+      const item = externalItems[i]
       // const storeItems = await liveObjectCache.getInvItemsByExternalPart(
       //   item.externalItemId,
       //   item.type
@@ -842,9 +842,9 @@ export default class ObjectCache {
       // if (!storeItems || storeItems.length === 0) {
       //   continue
       // }
-      numExternalItemsWithStoreItems++
+      externalItemsWithStoreItems.push(item)
     }
-    return numExternalItemsWithStoreItems
+    return externalItemsWithStoreItems
   }
   async getExternalPartsInExternalCategory(
     type: string,
