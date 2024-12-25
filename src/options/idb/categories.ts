@@ -202,15 +202,23 @@ export async function getAllActiveCategories(
   if (!ids) {
     return
   }
-  const categories: Category[] = []
-  for (let i = 0; i < ids.length; i++) {
-    const store = await getCategory(db, ids[i])
-    if (!store) {
+  const categoriesPageCategories: CategoriesPageCategory[] = []
+  for (let i = 0; i < 20; i++) {
+    console.log(ids[i])
+    const category = await getCategory(db, ids[i])
+    if (!category) {
       continue
     }
-    categories.push(store)
+    const categoriesPageCategory = await getCategoriesPageCategory(category)
+    if (
+      !categoriesPageCategory ||
+      categoriesPageCategory.externalCategories.length === 0
+    ) {
+      continue
+    }
+    categoriesPageCategories.push(categoriesPageCategory)
   }
-  return categories
+  return categoriesPageCategories
 }
 export async function getAllActiveCategoryIds(
   db: IDBPDatabase,
@@ -226,11 +234,11 @@ export async function getAllActiveCategoryIds(
     categoryIds = included.map((ss) => ss.categoryId)
   } else {
     // @ts-ignore
-    categoryIds = await db.getAllKeys(STORES.STORES.name)
+    categoryIds = await db.getAllKeys(STORES.CATEGORIES.name)
   }
   const excluded = await getAllFromIndex<SearchCategory>(
     db,
-    indices.SEARCH_STORES_EXCLUDED,
+    indices.SEARCH_CATEGORIES_EXCLUDED,
     [searchId, BOOLEAN_AS_NUMBER.TRUE]
   )
 

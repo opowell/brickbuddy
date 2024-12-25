@@ -92,7 +92,7 @@ export async function getLegoPrices(db: IDBPDatabase, store: Store) {
     try {
       const color = await getColorByLegoId(db, legoInvItem.facets.color.key)
       if (!color) {
-        console.log('no color?!', legoInvItem.facets.color.key)
+        // console.log('no color?!', legoInvItem.facets.color.key)
       }
       const colorId = color?.id || legoInvItem.facets.color.key
 

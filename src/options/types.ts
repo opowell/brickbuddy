@@ -624,13 +624,13 @@ export interface CategoryPageCategory extends Category {
 }
 
 export interface CategoriesPageExternalCategory extends ExternalCategory {
-  parts: ExternalItem[]
+  numParts: number
   image?: string
 }
 
 export interface CategoriesPageCategory extends Category {
   image?: string
-  externalCategories?: CategoriesPageExternalCategory[]
+  externalCategories: CategoriesPageExternalCategory[]
 }
 
 export interface UiCategory extends Category {

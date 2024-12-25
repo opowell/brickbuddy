@@ -816,6 +816,36 @@ export default class ObjectCache {
     }
     return ecpeps
   }
+  async getNumExternalPartsInExternalCategory(
+    type: string,
+    externalCategoryId: string
+  ): Promise<number> {
+    const id = type + '-' + externalCategoryId
+    // if (this.externalPartsByExternalCategory.has(id)) {
+    //   return this.externalPartsByExternalCategory.get(id)
+    // }
+    const externalItems = await getAllFromIndex<ExternalItem>(
+      this.db,
+      indices.EXTERNAL_PARTS_BY_TYPE_AND_CATEGORY,
+      [type, externalCategoryId]
+    )
+    if (!externalItems) {
+      return 0
+    }
+    let numExternalItemsWithStoreItems = 0
+    for (let i = 0; i < externalItems.length; i++) {
+      // const item = externalItems[i]
+      // const storeItems = await liveObjectCache.getInvItemsByExternalPart(
+      //   item.externalItemId,
+      //   item.type
+      // )
+      // if (!storeItems || storeItems.length === 0) {
+      //   continue
+      // }
+      numExternalItemsWithStoreItems++
+    }
+    return numExternalItemsWithStoreItems
+  }
   async getExternalPartsInExternalCategory(
     type: string,
     externalCategoryId: string
