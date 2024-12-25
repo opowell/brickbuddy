@@ -51,6 +51,7 @@ import { cheapestPrice, reportTime, startTimer } from '../utils'
 import { liveObjectCache } from './idb'
 import ComputedObjectCacheClass from './ComputedObjectCacheClass'
 import { getAllActiveStoreIds } from './storeMethods'
+import { BOOLEAN_AS_NUMBER } from './utils'
 
 export default class ObjectCache {
   allCategories: Category[] | undefined
@@ -654,11 +655,14 @@ export default class ObjectCache {
     if (this.variantsByPart.has(id)) {
       return this.variantsByPart.get(id)
     }
-    const variants = await getAllFromIndex(
+    const variants = await getAllFromIndex<ItemVariant>(
       this.db,
       indices.PART_VARIANTS_BY_TYPE_AND_PART,
       [type, externalItemId]
     )
+    if (!variants) {
+      return
+    }
     this.variantsByPart.set(id, variants)
     return variants
   }
@@ -670,11 +674,27 @@ export default class ObjectCache {
     if (this.invItemsByPart.has(id)) {
       return this.invItemsByPart.get(id)
     }
-    const invItems = await getAllFromIndex(
-      this.db,
-      indices.INV_ITEMS_BY_TYPE_AND_ITEM,
-      [type, externalItemId]
-    )
+    const search = await this.getActiveSearch()
+    if (!search) {
+      return
+    }
+    const storeIds = await getAllActiveStoreIds(this.db, search.id)
+    if (!storeIds) {
+      return
+    }
+    const invItems = []
+    for (let i = 0; i < storeIds.length; i++) {
+      const storeId = storeIds[i]
+      const storeItems = await getAllFromIndex<InvItem>(
+        this.db,
+        indices.INV_ITEMS_BY_TYPE_STORE_ITEM,
+        [type, storeId, externalItemId]
+      )
+      if (!storeItems) {
+        continue
+      }
+      invItems.push(...storeItems)
+    }
     this.invItemsByPart.set(id, invItems)
     return invItems
   }
@@ -698,7 +718,7 @@ export default class ObjectCache {
     type: 'Lego' | 'BrickLink',
     externalItemId: string
   ): Promise<ExternalPartPageExternalPart | undefined> {
-    const cart = await liveObjectCache.getActiveCart()
+    const cart = await this.getActiveCart()
     if (!cart) {
       return
     }
@@ -706,8 +726,7 @@ export default class ObjectCache {
     if (!externalPart) {
       return
     }
-    const variants: ItemVariant[] | undefined =
-      await this.getVariantsByExternalPart(externalItemId, type)
+    const variants = await this.getVariantsByExternalPart(externalItemId, type)
     if (!variants) {
       return
     }
@@ -723,8 +742,7 @@ export default class ObjectCache {
         color,
       })
     }
-    const invItems: InvItem[] | undefined =
-      await this.getInvItemsByExternalPart(externalItemId, type)
+    const invItems = await this.getInvItemsByExternalPart(externalItemId, type)
     if (!invItems) {
       return
     }

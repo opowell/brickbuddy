@@ -116,6 +116,12 @@ export interface StoreState {
   name: string
 }
 
+export interface SearchCategory {
+  searchId: number
+  categoryId: number
+  isExcluded: number
+}
+
 export interface SearchStore {
   searchId: number
   storeId: string

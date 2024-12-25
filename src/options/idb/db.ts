@@ -87,15 +87,23 @@ export function createIndex(
   transaction: IDBPTransaction<unknown, string[], 'versionchange'>,
   index: IndexDefinition
 ) {
-  const store = transaction.objectStore(index.store.name)
-  store.createIndex(index.name, index.keyPath)
+  try {
+    const store = transaction.objectStore(index.store.name)
+    store.createIndex(index.name, index.keyPath)
+  } catch (e) {
+    console.error(e)
+  }
 }
 export function createStore(
   db: IDBPDatabase,
   storeDefinition: StoreDefinition
 ) {
-  db.createObjectStore(storeDefinition.name, {
-    keyPath: storeDefinition.keyPath,
-    autoIncrement: storeDefinition.autoIncrement === true,
-  })
+  try {
+    db.createObjectStore(storeDefinition.name, {
+      keyPath: storeDefinition.keyPath,
+      autoIncrement: storeDefinition.autoIncrement === true,
+    })
+  } catch (e) {
+    console.error(e)
+  }
 }

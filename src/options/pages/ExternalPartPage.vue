@@ -4,6 +4,7 @@ import PartsButton from "../components/PartsButton.vue";
 import PartVariantButton from "../components/PartVariantButton.vue";
 import type {
   ExternalPartPageExternalPart,
+  ExternalPartPageItemVariant,
   InvItem,
   PartPageVariant,
   PartPageVariantInvItem,
@@ -22,13 +23,16 @@ interface VariantWithPriceQuantity extends PartPageVariant {
 }
 import { useRoute } from "vue-router";
 import ColorButton from "../components/ColorButton.vue";
-import { liveObjectCache } from "../idb/idb";
+import { getDbConnection } from "../idb/idb";
 import ExternalCategoryButton from "../components/ExternalCategoryButton.vue";
+import ObjectCache from "../idb/ObjectCacheClass";
 const route = useRoute();
 
 const item = ref<ExternalPartPageExternalPart | undefined>();
 onMounted(async () => {
-  item.value = await liveObjectCache.getExternalPartPageExternalPart(
+  const db = await getDbConnection();
+  const cache = new ObjectCache(db);
+  item.value = await cache.getExternalPartPageExternalPart(
     route.params.type,
     route.params.id
   );

@@ -1,15 +1,17 @@
 import { IDBPDatabase } from 'idb'
 import { SearchFilter, StoreCountriesPageStoreCountry } from '../types'
 import { countFromIndex, getFromIndex, put } from './db'
-import { liveObjectCache } from './idb'
+import { getDbConnection, liveObjectCache } from './idb'
 import indices from './indices'
 import stores from './stores'
 import { getActiveSearch } from './searches'
+import ObjectCache from './ObjectCacheClass'
 
 export async function getStoreCountriesPageStoreCountries(): Promise<
   StoreCountriesPageStoreCountry[] | undefined
 > {
-  const cache = liveObjectCache
+  const db = await getDbConnection()
+  const cache = new ObjectCache(db)
   const countries = await cache.getStoreCountries()
   if (!countries) {
     return

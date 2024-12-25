@@ -123,7 +123,7 @@ async function getBrickLinkStorePage(
   return getFromIndex<BrickLinkStorePage>(
     db,
     INDICES.BRICK_LINK_STORE_PAGES_BY_NEXT_SCRAPE,
-    IDBKeyRange.bound([yearsAgo], [yearsAhead])
+    IDBKeyRange.bound(yearsAgo, yearsAhead)
   )
 }
 export async function importBrickLinkStores(db: IDBPDatabase) {
@@ -199,6 +199,10 @@ async function fetchBrickLinkPage(url: string, db: IDBPDatabase) {
   return storeScore + linksScore
 }
 
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
 async function parseStoreLinks(
   html: string,
   db: IDBPDatabase
@@ -229,8 +233,11 @@ async function parseStoreLinks(
     }
     nextIndex = html.indexOf(SLUG_START, endOfName)
     const added = await importBrickLinkStore(db, slug, name)
+    sleep(1000)
     if (added) {
       score++
+    } else {
+      score--
     }
   }
   return score - 20
@@ -278,6 +285,7 @@ async function importBrickLinkStore(
   slug: string,
   name: string
 ): Promise<boolean> {
+  // console.log('import', slug)
   const existingStore = await getBrickLinkStoreBySlug(db, slug)
   if (existingStore) {
     return false
@@ -335,7 +343,41 @@ async function importBrickLinkStore(
     StoreType.BrickLink,
     countryId
   )
+  const search = await liveObjectCache.getActiveSearch()
+  if (search) {
+    const isExcluded = await isCountryExcluded(db, search.id, countryId)
+    await putSearchStore(db, search.id, id, isExcluded)
+  }
   return !!result
+}
+
+async function isCountryExcluded(
+  db: IDBPDatabase,
+  searchId: number,
+  countryId: string
+): Promise<boolean> {
+  const result = await getFromIndex<SearchFilter>(
+    db,
+    indices.SEARCH_FILTERS_BY_SEARCH_TYPE_OBJECT,
+    [searchId, 'storeCountry', countryId]
+  )
+  if (!result) {
+    return false
+  }
+  return result.isExcluded
+}
+
+export async function putSearchStore(
+  db: IDBPDatabase,
+  searchId: number,
+  storeId: string,
+  isExcluded: boolean
+) {
+  put(db, STORES.SEARCH_STORES, {
+    searchId,
+    storeId,
+    isExcluded: isExcluded ? BOOLEAN_AS_NUMBER.TRUE : BOOLEAN_AS_NUMBER.FALSE,
+  })
 }
 
 function extractValue(
@@ -432,6 +474,7 @@ import stores from './stores'
 import { addMinutes } from '../utils'
 import indices from './indices'
 import { addStoreCountry } from './storeCountries'
+import { BOOLEAN_AS_NUMBER } from './utils'
 interface RbPart {
   part_cat_id: number
   name: string
@@ -491,22 +534,17 @@ export async function getDbConnection(): Promise<IDBPDatabase> {
     return dbConnection
   }
   let createData = false
-  const db = await openDB(DB_NAME, 1, {
+  const db = await openDB(DB_NAME, 2, {
     async upgrade(db, oldVersion, newVersion, transaction) {
-      switch (oldVersion) {
-        case 0: {
-          Object.keys(STORES).forEach((key) => {
-            // @ts-ignore
-            createStore(db, STORES[key])
-          })
-          Object.keys(INDICES).forEach((key) => {
-            // @ts-ignore
-            createIndex(transaction, INDICES[key])
-          })
-          createData = true
-          break
-        }
-      }
+      Object.keys(STORES).forEach((key) => {
+        // @ts-ignore
+        createStore(db, STORES[key])
+      })
+      Object.keys(INDICES).forEach((key) => {
+        // @ts-ignore
+        createIndex(transaction, INDICES[key])
+      })
+      createData = true
     },
   })
   if (createData) {

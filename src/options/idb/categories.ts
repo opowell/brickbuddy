@@ -15,7 +15,9 @@ import {
   LegoCategory,
   PartPageCategory,
   RebrickableCategory,
+  SearchCategory,
   SearchFilter,
+  SearchStore,
   UiCategory,
 } from '../types'
 import { get, getAllFromIndex, getFromIndex, put } from './db'
@@ -24,7 +26,10 @@ import INDICES from './indices'
 import { getCategoriesPageCategory, liveObjectCache } from './idb'
 import { getCategoryPageParts } from './parts'
 import ObjectCache from './ObjectCacheClass'
-import { getActiveSearch } from './searches'
+import { getActiveSearch, getFirstActiveSearch } from './searches'
+import { getAllActiveStores } from './storeMethods'
+import indices from './indices'
+import { BOOLEAN_AS_NUMBER } from './utils'
 
 export const externalPartPriceMap = ref<Map<string, number>>(
   new Map<string, number>()
@@ -189,25 +194,86 @@ export async function getExternalCategoryPageExternalCategory(
   }
 }
 
+export async function getAllActiveCategories(
+  db: IDBPDatabase,
+  searchId: number
+): Promise<Category[] | undefined> {
+  const ids = await getAllActiveCategoryIds(db, searchId)
+  if (!ids) {
+    return
+  }
+  const categories: Category[] = []
+  for (let i = 0; i < ids.length; i++) {
+    const store = await getCategory(db, ids[i])
+    if (!store) {
+      continue
+    }
+    categories.push(store)
+  }
+  return categories
+}
+export async function getAllActiveCategoryIds(
+  db: IDBPDatabase,
+  searchId: number
+): Promise<number[] | undefined> {
+  let categoryIds: number[] = []
+  const included = await getAllFromIndex<SearchCategory>(
+    db,
+    indices.SEARCH_CATEGORIES_EXCLUDED,
+    [searchId, BOOLEAN_AS_NUMBER.FALSE]
+  )
+  if (included && included.length > 0) {
+    categoryIds = included.map((ss) => ss.categoryId)
+  } else {
+    // @ts-ignore
+    categoryIds = await db.getAllKeys(STORES.STORES.name)
+  }
+  const excluded = await getAllFromIndex<SearchCategory>(
+    db,
+    indices.SEARCH_STORES_EXCLUDED,
+    [searchId, BOOLEAN_AS_NUMBER.TRUE]
+  )
+
+  if (excluded) {
+    const excludedIds = excluded.map((ss) => ss.categoryId)
+    categoryIds = categoryIds.filter(
+      (categoryId) => !excludedIds.includes(categoryId)
+    )
+  }
+  return categoryIds
+}
+
 export async function getCategoriesPageCategories2(
   objectCache: ObjectCache
 ): Promise<CategoriesPageCategory[] | undefined> {
-  const search = await objectCache.getActiveSearch()
+  const search = await getFirstActiveSearch(objectCache)
   if (!search) {
     return
   }
-  const categories: CategoriesPageCategory[] = []
-  const included = search.categories.included
-  if (included.length > 0) {
-    for (let i = 0; i < included.length; i++) {
-      const category = await objectCache.getCategory(included[i])
-      if (!category) {
-        continue
-      }
-      categories.push(category)
-    }
-    return categories.sort((a, b) => a.id - b.id)
+  const categories = await getAllActiveCategories(liveObjectCache.db, search.id)
+  if (!categories) {
+    return
   }
+  const categoriesPageCategories: CategoriesPageCategory[] = []
+  for (let i = 0; i < categories.length; i++) {
+    const category = categories[i]
+    // const numInvItems = await countInvItems(
+    //   liveObjectCache.db,
+    //   store.id,
+    //   search
+    // )
+    // let fetchPercent =
+    //   (100 * numInvItems) /
+    //   (store.fetchMaxPageIndex *
+    //     (store.type === StoreType.BrickLink ? 100 : 400))
+    // if (store.fullyFetched) {
+    //   fetchPercent = 100
+    // }
+    categoriesPageCategories.push({
+      ...category,
+    })
+  }
+  return categoriesPageCategories
 }
 
 export async function getCategoriesPageCategories(): Promise<

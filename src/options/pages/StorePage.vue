@@ -40,6 +40,9 @@ onMounted(async () => {
   }
   mounted.value = true;
 });
+const first100Items = computed(() => {
+  return invItems.value.slice(0, 100);
+});
 
 // URL for shipping terms:
 // https://store.bricklink.com/ajax/clone/store/policy.ajax?sid=2066952
@@ -88,6 +91,7 @@ const cartButton = ref<typeof ActiveCartButton | undefined>(undefined);
     <div>Fetch index: {{ store.fetchPageIndex }} / {{ store.fetchMaxPageIndex }}</div>
     <div>Last scraped: {{ store.lastScraped.toISOString() }}</div>
     <div>Price adjustment: {{ store.priceAdjustment }}%</div>
+    <div>Country: {{ store.countryId }}</div>
     <div>
       Link: <a target="_blank" :href="url">{{ url }}</a>
     </div>
@@ -107,7 +111,7 @@ const cartButton = ref<typeof ActiveCartButton | undefined>(undefined);
         </tr>
       </thead>
       <tbody>
-        <tr v-for="invItem in invItems" :key="invItem.invId">
+        <tr v-for="invItem in first100Items" :key="invItem.invId">
           <td>
             <PartVariantButton :part="invItem.item" :variant="invItem.variant">
               <img v-if="invItem.variant" :src="invItem.variant.image" />

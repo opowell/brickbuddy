@@ -27,16 +27,18 @@ const computedCategories = computed<CategoriesPageCategory[] | undefined>(() => 
   return categories.value;
 });
 const categoryImageMap = computed(() => {
-  if (!liveObjectCache.computedCache.linked) {
-    return;
-  }
-  return liveObjectCache.computedCache.categoryImageMap.value;
+  return new Map();
+  // if (!liveObjectCache.computedCache.linked) {
+  //   return;
+  // }
+  // return liveObjectCache.computedCache.categoryImageMap.value;
 });
 const externalCategoryImageMap = computed(() => {
-  if (!liveObjectCache.computedCache.linked) {
-    return;
-  }
-  return liveObjectCache.computedCache.externalCategoryImageMap.value;
+  return new Map();
+  // if (!liveObjectCache.computedCache.linked) {
+  //   return;
+  // }
+  // return liveObjectCache.computedCache.externalCategoryImageMap.value;
 });
 onMounted(async () => {
   const db = await getDbConnection();
@@ -117,7 +119,7 @@ import { reportTime, startTimer } from "../utils";
 </script>
 
 <template>
-  <div v-if="!categories || !liveObjectCache">Loading...</div>
+  <div v-if="!categories">Loading...</div>
   <div v-else>
     <HomeButton />
     <ActiveSearchButton />

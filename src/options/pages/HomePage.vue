@@ -12,7 +12,7 @@ const colors = ref<number | undefined>();
 const categories = ref<number | undefined>();
 const parts = ref<number | undefined>();
 onMounted(async () => {
-  startTimer("HomePage");
+  // startTimer("HomePage");
   colors.value = await liveObjectCache.getHomePageNumColors();
   stores.value = await liveObjectCache.getHomePageNumStores();
   storeCountries.value = await liveObjectCache.getHomePageNumStoreCountries();
@@ -29,7 +29,7 @@ const loaded = computed(() => {
 });
 watch(loaded, () => {
   if (loaded) {
-    reportTime("HomePage");
+    // reportTime("HomePage");
   }
 });
 </script>

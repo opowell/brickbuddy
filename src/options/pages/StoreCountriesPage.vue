@@ -10,7 +10,7 @@ import ActiveSearchButton from "../components/ActiveSearchButton.vue";
 import ActiveCartButton from "../components/ActiveCartButton.vue";
 import { getStoreCountriesPageStoreCountries } from "../idb/storeCountries";
 import { getActiveSearch } from "../idb/searches";
-import { liveObjectCache } from "../idb/idb";
+import { getDbConnection, liveObjectCache, putSearchStore } from "../idb/idb";
 import STORES from "../idb/stores";
 import { dbDelete, getAllFromIndex, put } from "../idb/db";
 import indices from "../idb/indices";
@@ -69,11 +69,7 @@ async function filter(country: StoreCountriesPageStoreCountry, isExcluded: boole
     return;
   }
   for (let i = 0; i < stores.length; i++) {
-    await put(liveObjectCache.db, STORES.SEARCH_STORES, {
-      searchId: search.id,
-      storeId: stores[i].id,
-      isExcluded: isExcluded ? BOOLEAN_AS_NUMBER.TRUE : BOOLEAN_AS_NUMBER.FALSE,
-    });
+    await putSearchStore(liveObjectCache.db, search.id, stores[i].id, isExcluded);
   }
 }
 </script>

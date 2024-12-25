@@ -49,7 +49,7 @@ export async function startFetching() {
       }
       getPrices()
     },
-    25000 + Math.floor(Math.random() * 5000)
+    15000 + Math.floor(Math.random() * 10000)
   )
 }
 export async function startFetchingStores() {
@@ -68,7 +68,7 @@ export async function startFetchingStores() {
       }
       importBrickLinkStores(db)
     },
-    150000 + Math.floor(Math.random() * 5000)
+    30000 + Math.floor(Math.random() * 15000)
   )
 }
 

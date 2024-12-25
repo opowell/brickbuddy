@@ -10,7 +10,7 @@ import { startFetching, startFetchingStores } from "./idb/scraping";
 
 const loaded = ref(false);
 onMounted(async () => {
-  startTimer("app.vue");
+  // startTimer("app.vue");
   await importRbPartsToMemory();
   const db = await getDbConnection();
   await loadLiveObjectCache(db);
@@ -18,7 +18,7 @@ onMounted(async () => {
   startFetchingStores();
   startFetching();
   loaded.value = true;
-  reportTime("app.vue");
+  // reportTime("app.vue");
   return {
     loaded,
   };
