@@ -57,9 +57,10 @@ export async function put(
 
 export async function getAllKeysFromIndex(
   db: IDBPDatabase,
-  index: IndexDefinition
+  index: IndexDefinition,
+  query?: IDBValidKey | IDBKeyRange | null | undefined
 ) {
-  return await db.getAllKeysFromIndex(index.store.name, index.name)
+  return await db.getAllKeysFromIndex(index.store.name, index.name, query)
 }
 
 export async function dbDelete(

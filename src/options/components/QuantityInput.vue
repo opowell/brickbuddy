@@ -30,9 +30,3 @@ const setButtonDisabled: ComputedRef<boolean> = computed(() => {
     Set
   </button>
 </template>
-
-<style lang="css" scoped>
-input {
-  width: 5rem;
-}
-</style>

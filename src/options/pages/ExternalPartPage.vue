@@ -37,7 +37,8 @@ onMounted(async () => {
   reportTime("ExternalPartPage");
 });
 const maxPrice = ref<number | undefined>(Number.POSITIVE_INFINITY);
-const minQuantity = ref(0);
+const minQuantity = ref();
+const maxQuantity = ref();
 const variants = computed<VariantWithPriceQuantity[]>(() => {
   const itemValue = item.value;
   if (!itemValue) {
@@ -59,7 +60,7 @@ const variants = computed<VariantWithPriceQuantity[]>(() => {
         if (maxPrice.value && maxPrice.value !== 0 && maxPrice.value < priceNumber) {
           return;
         }
-        if (invItem.quantity >= minQuantity.value) {
+        if (minQuantity.value === undefined || invItem.quantity >= minQuantity.value) {
           if (priceNumber < price) {
             price = priceNumber;
           }
@@ -150,8 +151,10 @@ function setCartQuantity({
     <h4>External Item {{ item.name }}</h4>
     <div>Item: {{ item.itemId }}</div>
     <div>External Category: <ExternalCategoryButton :category="item.category" /></div>
-    <div>Min quantity:<input v-model="minQuantity" type="number" /></div>
-    <div>Min quantity:<input v-model="minQuantity" type="number" /></div>
+    <div>
+      Quantity: <input v-model="minQuantity" type="number" /> -
+      <input v-model="maxQuantity" type="number" />
+    </div>
     <div>Max price:<input v-model="maxPrice" type="number" /></div>
     <div>
       Condition:<select v-model="condition">

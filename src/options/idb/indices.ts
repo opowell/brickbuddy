@@ -7,6 +7,7 @@ export interface IndexDefinition {
 }
 const indices: {
   BRICK_LINK_STORE_PAGES_BY_NEXT_SCRAPE: IndexDefinition
+  STORES_BY_TYPE: IndexDefinition
   STORES_BY_TYPE_AND_LAST_SCRAPED: IndexDefinition
   STORES_BY_TYPE_AND_SLUG: IndexDefinition
   CARTS_BY_ACTIVE: IndexDefinition
@@ -49,6 +50,11 @@ const indices: {
     store: stores.STORES,
     name: 'typeLastScraped',
     keyPath: ['type', 'lastScraped'],
+  },
+  STORES_BY_TYPE: {
+    store: stores.STORES,
+    name: 'type',
+    keyPath: 'type',
   },
   STORES_BY_TYPE_AND_SLUG: {
     store: stores.STORES,

@@ -548,7 +548,7 @@ export async function getDbConnection(): Promise<IDBPDatabase> {
     return dbConnection
   }
   let createData = false
-  const db = await openDB(DB_NAME, 4, {
+  const db = await openDB(DB_NAME, 5, {
     async upgrade(db, oldVersion, newVersion, transaction) {
       Object.keys(STORES).forEach((key) => {
         try {

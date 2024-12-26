@@ -16,7 +16,7 @@ import {
 import { getDbConnection, liveObjectCache } from './idb'
 import { countInvItems, getStorePageInvItems } from './invItems'
 import { getFirstActiveSearch } from './searches'
-import { get, getAllFromIndex } from './db'
+import { get, getAllFromIndex, getAllKeysFromIndex } from './db'
 import STORES from './stores'
 import indices from './indices'
 import { BOOLEAN_AS_NUMBER } from './utils'
@@ -323,7 +323,7 @@ export async function getAllActiveStores(
   db: IDBPDatabase,
   searchId: number
 ): Promise<Store[] | undefined> {
-  const ids = await getAllActiveStoreIds(db, searchId)
+  const ids = await liveObjectCache.getAllActiveStoreIds(searchId)
   if (!ids) {
     return
   }
@@ -349,6 +349,15 @@ export async function getAllActiveStoreIds(
   )
   if (included && included.length > 0) {
     storeIds = included.map((ss) => ss.storeId)
+    const legoIds = await getAllKeysFromIndex(
+      liveObjectCache.db,
+      indices.STORES_BY_TYPE,
+      StoreType.Lego
+    )
+    if (legoIds) {
+      // @ts-ignore
+      storeIds.push(...legoIds)
+    }
   } else {
     // @ts-ignore
     storeIds = await db.getAllKeys(STORES.STORES.name)
