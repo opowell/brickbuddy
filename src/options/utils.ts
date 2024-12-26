@@ -83,7 +83,10 @@ export function formatAmount(x: number | string | undefined) {
   }
   return (x / 1000000).toFixed(1) + 'm'
 }
-export function formatInteger(x: number) {
+export function formatInteger(x: number | undefined) {
+  if (x === undefined) {
+    return
+  }
   if (x < 1000) {
     return x
   }
@@ -136,8 +139,8 @@ export function addMinutes(date: Date, minutes: number) {
   date.setTime(date.getTime() + minutes * 60 * 1000)
 }
 
-let timeStart = new Map<string, number>()
-export function startTimer(x: string, log?: boolean) {
+let timeStart = new Map<string | number, number>()
+export function startTimer(x: string | number, log?: boolean) {
   const time = new Date().getTime()
   if (log) {
     console.log('start timer', x, time)
@@ -145,7 +148,7 @@ export function startTimer(x: string, log?: boolean) {
   timeStart.set(x, time)
 }
 
-export function reportTime(x: string) {
+export function reportTime(x: string | number) {
   const start = timeStart.get(x)
   if (!start) {
     console.log('no timer started for', x)

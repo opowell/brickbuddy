@@ -21,13 +21,14 @@ import {
   getRebrickableCategory,
   updateCategory,
 } from './categories'
-import { getAllFromIndex, getFromIndex, put } from './db'
+import { getAll, getAllFromIndex, getAllKeys, getFromIndex, put } from './db'
 import { addInvItem } from './invItems'
 import { getBrickLinkItem, addBrickLinkItem } from './parts'
 import { updateStore } from './storeMethods'
 import { rbPartsBrickLinkId } from './idb'
 import stores from './stores'
 import { addMinutes } from '../utils'
+import { addCondition } from './condition'
 
 async function getColorByBrickLinkId(
   db: IDBPDatabase,
@@ -98,6 +99,7 @@ export async function getBrickLinkPrices(db: IDBPDatabase, store: Store) {
     await updateStore(db, store)
     return
   }
+  const conditions = await getAllKeys(db, stores.CONDITIONS)
   store.fetchMaxPageIndex = Math.ceil(json.result.totalLotCnt / 100) + 1
   await updateStore(db, store)
   const partCategories = json.result.categories.find(
@@ -158,6 +160,9 @@ export async function getBrickLinkPrices(db: IDBPDatabase, store: Store) {
         }
         blItem.name = resultItem.itemName
         await addBrickLinkItem(color.id, blItem, resultItem.newThumb1Img, db)
+        if (!conditions.includes(resultItem.invNew)) {
+          await addCondition(db, resultItem.invNew)
+        }
         const newScore = await addInvItem(
           db,
           resultItem.invID + '',

@@ -35,6 +35,15 @@ import { reportTime, startTimer } from '../utils'
 export const externalPartPriceMap = ref<Map<string, number>>(
   new Map<string, number>()
 )
+export const externalPartNumInvItemsMap = ref<Map<string, number>>(
+  new Map<string, number>()
+)
+export const externalPartNumVariantsMap = ref<Map<string, number>>(
+  new Map<string, number>()
+)
+export const externalPartImagesMap = ref<Map<string, string>>(
+  new Map<string, string>()
+)
 
 export async function loadExternalPartPrice(
   type: 'Lego' | 'BrickLink' | 'Rebrickable',
@@ -52,6 +61,48 @@ export async function loadExternalPartPrice(
     return
   }
   externalPartPriceMap.value.set(type + itemId, price)
+}
+
+export async function loadExternalPartNumInvItems(
+  type: 'Lego' | 'BrickLink' | 'Rebrickable',
+  externalItemId: string
+) {
+  const cache = liveObjectCache
+  const numInvItems: number | undefined = await cache.getNumInvItemsByPart(
+    externalItemId,
+    type
+  )
+  if (numInvItems === undefined) {
+    return
+  }
+  externalPartNumInvItemsMap.value.set(type + externalItemId, numInvItems)
+}
+
+export async function loadExternalPartNumVariants(
+  type: 'Lego' | 'BrickLink' | 'Rebrickable',
+  externalItemId: string
+) {
+  const cache = liveObjectCache
+  const numVariants: number | undefined = await cache.getNumVariantsByPart(
+    externalItemId,
+    type
+  )
+  if (numVariants === undefined) {
+    return
+  }
+  externalPartNumVariantsMap.value.set(type + externalItemId, numVariants)
+}
+
+export async function loadExternalPartImage(
+  type: 'Lego' | 'BrickLink' | 'Rebrickable',
+  externalItemId: string
+) {
+  const cache = liveObjectCache
+  const firstVariant = await cache.getFirstVariantByPart(externalItemId)
+  if (!firstVariant) {
+    return
+  }
+  externalPartImagesMap.value.set(type + externalItemId, firstVariant?.image)
 }
 
 export async function getCategories(
@@ -165,7 +216,7 @@ export async function getExternalCategoryPageExternalCategory(
   type: 'BrickLink' | 'Lego' | 'Rebrickable',
   id: string
 ): Promise<ExternalCategoryPageExternalCategory | undefined> {
-  startTimer('getExternalCategoryPageExternalCategory')
+  // startTimer('getExternalCategoryPageExternalCategory')
   const externalCategory = await liveObjectCache.getExternalCategory(id, type)
   if (!externalCategory) {
     return
@@ -181,14 +232,14 @@ export async function getExternalCategoryPageExternalCategory(
   if (!externalCategories) {
     return
   }
-  startTimer('getExternalCategoryPageExternalParts')
+  // startTimer('getExternalCategoryPageExternalParts')
   const externalParts =
     await liveObjectCache.getExternalCategoryPageExternalParts(type, id)
   if (!externalParts) {
     return
   }
-  reportTime('getExternalCategoryPageExternalParts')
-  reportTime('getExternalCategoryPageExternalCategory')
+  // reportTime('getExternalCategoryPageExternalParts')
+  // reportTime('getExternalCategoryPageExternalCategory')
   return {
     ...externalCategory,
     category: {
@@ -202,13 +253,13 @@ export async function getExternalCategoryPageExternalCategory(
 export async function getAllActiveCategories(
   db: IDBPDatabase,
   searchId: number
-): Promise<Category[] | undefined> {
+): Promise<CategoriesPageCategory[] | undefined> {
   const ids = await getAllActiveCategoryIds(db, searchId)
   if (!ids) {
     return
   }
   const categoriesPageCategories: CategoriesPageCategory[] = []
-  for (let i = 0; i < 20; i++) {
+  for (let i = 0; i < ids.length; i++) {
     const category = await getCategory(db, ids[i])
     if (!category) {
       continue
@@ -269,18 +320,6 @@ export async function getCategoriesPageCategories2(
   const categoriesPageCategories: CategoriesPageCategory[] = []
   for (let i = 0; i < categories.length; i++) {
     const category = categories[i]
-    // const numInvItems = await countInvItems(
-    //   liveObjectCache.db,
-    //   store.id,
-    //   search
-    // )
-    // let fetchPercent =
-    //   (100 * numInvItems) /
-    //   (store.fetchMaxPageIndex *
-    //     (store.type === StoreType.BrickLink ? 100 : 400))
-    // if (store.fullyFetched) {
-    //   fetchPercent = 100
-    // }
     categoriesPageCategories.push({
       ...category,
     })

@@ -611,14 +611,13 @@ export interface CachedExternalCategory extends ExternalCategory {
 }
 
 export interface ExternalCategoryPageExternalCategory extends ExternalCategory {
-  externalParts: ExternalCategoryPageExternalPart[]
+  externalParts: ExternalItem[]
   category: CategoryWithExternals
 }
 
 export interface ExternalCategoryPageExternalPart extends ExternalItem {
   image?: string
   numVariants: number
-  numInvItems: number
 }
 
 export interface CategoryPagePart extends Item {

@@ -14,8 +14,10 @@ import ActiveSearchButton from "../components/ActiveSearchButton.vue";
 import PartButton from "../components/PartButton.vue";
 const router = useRouter();
 const category = ref<CategoryPageCategory | undefined>();
+startTimer("CategoryPage");
 onMounted(async () => {
   category.value = await getCategoryPageCategory(route.params.id - 0);
+  reportTime("CategoryPage");
 });
 const parts = computed(() => {
   if (!category.value) {
@@ -24,6 +26,7 @@ const parts = computed(() => {
   return category.value.parts;
 });
 import ExternalCategoryButton from "../components/ExternalCategoryButton.vue";
+import { reportTime, startTimer } from "../utils";
 </script>
 
 <template>

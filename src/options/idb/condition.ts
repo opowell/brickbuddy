@@ -1,8 +1,9 @@
 import { IDBPDatabase } from 'idb'
 import INDICES from './indices'
 import { ActiveSearchPageCondition, ConditionsPageCondition } from '../types'
-import { countFromIndex } from './db'
+import { countFromIndex, put } from './db'
 import { getDbConnection } from './idb'
+import stores from './stores'
 
 export async function getCondition(
   db: IDBPDatabase,
@@ -39,4 +40,8 @@ export async function getConditionsPageConditions(): Promise<
     })
   }
   return cpConditions
+}
+
+export async function addCondition(db: IDBPDatabase, id: string) {
+  return await put(db, stores.CONDITIONS, { id })
 }

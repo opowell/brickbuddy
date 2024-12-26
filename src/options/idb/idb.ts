@@ -548,15 +548,19 @@ export async function getDbConnection(): Promise<IDBPDatabase> {
     return dbConnection
   }
   let createData = false
-  const db = await openDB(DB_NAME, 3, {
+  const db = await openDB(DB_NAME, 4, {
     async upgrade(db, oldVersion, newVersion, transaction) {
       Object.keys(STORES).forEach((key) => {
-        // @ts-ignore
-        createStore(db, STORES[key])
+        try {
+          // @ts-ignore
+          createStore(db, STORES[key])
+        } catch {}
       })
       Object.keys(INDICES).forEach((key) => {
-        // @ts-ignore
-        createIndex(transaction, INDICES[key])
+        try {
+          // @ts-ignore
+          createIndex(transaction, INDICES[key])
+        } catch {}
       })
       createData = true
     },

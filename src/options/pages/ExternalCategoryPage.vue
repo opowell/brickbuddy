@@ -13,13 +13,17 @@ import IncludeCategoryButton from "../components/IncludeCategoryButton.vue";
 import ExcludeCategoryButton from "../components/ExcludeCategoryButton.vue";
 const route = useRoute();
 import { useRouter } from "vue-router";
-import { formatAmount, reportTime, startTimer } from "../utils";
+import { formatAmount, formatInteger, reportTime, startTimer } from "../utils";
 import ActiveSearchButton from "../components/ActiveSearchButton.vue";
 import ExternalPartButton from "../components/ExternalPartButton.vue";
 import {
   externalPartPriceMap,
+  externalPartNumInvItemsMap,
+  externalPartNumVariantsMap,
+  externalPartImagesMap,
   getExternalCategoryPageExternalCategory,
 } from "../idb/categories";
+startTimer("ExternalCategoryPage");
 const router = useRouter();
 const category = ref<ExternalCategoryPageExternalCategory>();
 onMounted(async () => {
@@ -27,9 +31,9 @@ onMounted(async () => {
     route.params.type,
     route.params.id
   );
+  reportTime("ExternalCategoryPage");
 });
 const sortedParts = computed<ExternalCategoryPageExternalPart[]>(() => {
-  startTimer("sortedParts");
   if (!category.value) {
     return [];
   }
@@ -45,7 +49,6 @@ const sortedParts = computed<ExternalCategoryPageExternalPart[]>(() => {
       sensitivity: "base",
     });
   });
-  reportTime("sortedParts");
   return sorted;
 });
 </script>
@@ -82,12 +85,29 @@ const sortedParts = computed<ExternalCategoryPageExternalPart[]>(() => {
         </thead>
         <tbody>
           <tr v-for="part in sortedParts" :key="part.itemId">
-            <td><img v-if="part.image" :src="part.image" /></td>
+            <td>
+              <img
+                v-if="externalPartImagesMap.get(part.type + part.externalItemId)"
+                :src="externalPartImagesMap.get(part.type + part.externalItemId)"
+              />
+            </td>
             <td>
               <ExternalPartButton :part="part" />
             </td>
-            <td>{{ part.numVariants }}</td>
-            <td>{{ part.numInvItems }}</td>
+            <td>
+              {{
+                formatInteger(
+                  externalPartNumVariantsMap.get(part.type + part.externalItemId)
+                )
+              }}
+            </td>
+            <td>
+              {{
+                formatInteger(
+                  externalPartNumInvItemsMap.get(part.type + part.externalItemId)
+                )
+              }}
+            </td>
             <td>{{ formatAmount(externalPartPriceMap.get(part.type + part.itemId)) }}</td>
           </tr>
         </tbody>

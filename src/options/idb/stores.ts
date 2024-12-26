@@ -9,6 +9,8 @@ const stores: {
   CART_ITEMS: StoreDefinition
   CATEGORIES: StoreDefinition
   COLORS: StoreDefinition
+  COMPUTEDS: StoreDefinition
+  CONDITIONS: StoreDefinition
   EXTERNAL_CATEGORIES: StoreDefinition
   EXTERNAL_COLORS: StoreDefinition
   EXTERNAL_PARTS: StoreDefinition
@@ -47,6 +49,14 @@ const stores: {
     name: 'colors',
     keyPath: 'id',
     autoIncrement: true,
+  },
+  COMPUTEDS: {
+    name: 'computeds',
+    keyPath: 'id',
+  },
+  CONDITIONS: {
+    name: 'conditions',
+    keyPath: 'id',
   },
   EXTERNAL_CATEGORIES: {
     name: 'externalCategories',

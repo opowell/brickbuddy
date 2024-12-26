@@ -35,6 +35,9 @@ import {
   getExternalCategory,
   getPartPageCategory,
   loadExternalPartPrice,
+  loadExternalPartNumInvItems,
+  loadExternalPartNumVariants,
+  loadExternalPartImage,
 } from './categories'
 import { getInvItemFromId } from './invItems'
 import { getPart, getStorePageExternalPart, getStorePagePart } from './parts'
@@ -45,6 +48,7 @@ import {
   get,
   getAll,
   getAllFromIndex,
+  getAllKeys,
   getFromIndex,
 } from './db'
 import indices from './indices'
@@ -53,6 +57,7 @@ import { liveObjectCache } from './idb'
 import ComputedObjectCacheClass from './ComputedObjectCacheClass'
 import { getAllActiveStoreIds } from './storeMethods'
 import { BOOLEAN_AS_NUMBER } from './utils'
+import { LRUCache } from 'lru-cache'
 
 export default class ObjectCache {
   allCategories: Category[] | undefined
@@ -85,11 +90,16 @@ export default class ObjectCache {
   firstVariantByPart: Map<string, ItemVariant>
   invItemsByExternalPartColor: Map<string, InvItem[]>
   invItems: Map<string, InvItem>
+  homePageNumColors: number | undefined
+  conditionsMapMap: Map<number, Map<string, number>>
+  searchActiveStoreIds: Map<number, string[]>
   db: IDBPDatabase
   // computedCache: ComputedObjectCacheClass
   constructor(db: IDBPDatabase) {
     this.db = db
+    this.conditionsMapMap = new Map<number, Map<string, number>>()
     this.activeSearchRef = ref()
+    this.homePageNumColors = undefined
     this.partVariantsByPartColor = new Map<string, ItemVariant[]>()
     this.cheapestPrices = new Map<string, number>()
     this.partVariantByPartColor = new Map<string, ItemVariant>()
@@ -115,6 +125,7 @@ export default class ObjectCache {
     this.invItems = new Map<string, InvItem>()
     this.invItemsByStore = new Map<string, InvItem[]>()
     this.stores = new Map<string, Store>()
+    this.searchActiveStoreIds = new Map<number, string[]>()
     this.activeCart = undefined
     // this.computedCache = new ComputedObjectCacheClass(this)
   }
@@ -155,6 +166,22 @@ export default class ObjectCache {
       return
     }
     return ids.length
+  }
+  async getHomePageNumSearches(): Promise<number | undefined> {
+    const num = await count(this.db, STORES.SEARCHES)
+    return num
+  }
+  async getHomePageNumLists(): Promise<number | undefined> {
+    const num = await count(this.db, STORES.LISTS)
+    return num
+  }
+  async getHomePageNumCarts(): Promise<number | undefined> {
+    const num = await count(this.db, STORES.CARTS)
+    return num
+  }
+  async getHomePageNumConditions(): Promise<number | undefined> {
+    const num = await count(this.db, STORES.CONDITIONS)
+    return num
   }
   async getHomePageNumStoreCountries(): Promise<number | undefined> {
     return await count(this.db, STORES.STORE_COUNTRIES)
@@ -198,13 +225,15 @@ export default class ObjectCache {
     return keys.length
   }
   async getHomePageNumColors(): Promise<number | undefined> {
-    const x = this.getHomePageNumObjects(
-      'colors',
-      this.getColor,
-      (color: Color) => color.id,
-      this.getAllColorKeys
-    )
-    return x
+    if (this.homePageNumColors === undefined) {
+      this.homePageNumColors = await this.getHomePageNumObjects(
+        'colors',
+        this.getColor,
+        (color: Color) => color.id,
+        this.getAllColorKeys
+      )
+    }
+    return this.homePageNumColors
   }
   async getHomePageNumParts(): Promise<number | undefined> {
     const x = await this.getHomePageNumObjects(
@@ -667,6 +696,42 @@ export default class ObjectCache {
     this.variantsByPart.set(id, variants)
     return variants
   }
+  async getConditionPriceAdjustments(
+    searchId: number
+  ): Promise<ConditionPriceAdjustment[] | undefined> {
+    return await getAllFromIndex<ConditionPriceAdjustment>(
+      this.db,
+      indices.SEARCH_CONDITION_PRICE_ADJUSTMENTS_BY_SEARCH,
+      searchId
+    )
+  }
+  async getConditionsMap(searchId: number): Promise<Map<string, number>> {
+    const storedValue = this.conditionsMapMap.get(searchId)
+    if (storedValue) {
+      return storedValue
+    }
+    const map = new Map()
+    const adjustments = await this.getConditionPriceAdjustments(searchId)
+    if (adjustments) {
+      adjustments.forEach((a) => {
+        map.set(a.condition, a.adjustment)
+      })
+    }
+    this.conditionsMapMap.set(searchId, map)
+    return map
+  }
+  async getAllActiveStoreIds(searchId: number): Promise<string[] | undefined> {
+    const storedValue = this.searchActiveStoreIds.get(searchId)
+    if (storedValue) {
+      return storedValue
+    }
+    const storeIds = await getAllActiveStoreIds(this.db, searchId)
+    if (!storeIds) {
+      return
+    }
+    this.searchActiveStoreIds.set(searchId, storeIds)
+    return storeIds
+  }
   async getInvItemsByExternalPart(
     externalItemId: string,
     type: 'Lego' | 'BrickLink' | 'Rebrickable'
@@ -679,19 +744,8 @@ export default class ObjectCache {
     if (!search) {
       return
     }
-    const adjustments = await getAllFromIndex<ConditionPriceAdjustment>(
-      this.db,
-      indices.SEARCH_CONDITION_PRICE_ADJUSTMENTS_BY_SEARCH,
-      search.id
-    )
-    if (!adjustments) {
-      return
-    }
-    const conditionsMap = new Map()
-    adjustments.forEach((a) => {
-      conditionsMap.set(a.condition, a.adjustment)
-    })
-    const storeIds = await getAllActiveStoreIds(this.db, search.id)
+    const conditionsMap = await this.getConditionsMap(search.id)
+    const storeIds = await this.getAllActiveStoreIds(search.id)
     if (!storeIds) {
       return
     }
@@ -802,39 +856,20 @@ export default class ObjectCache {
   async getExternalCategoryPageExternalParts(
     type: 'Lego' | 'BrickLink' | 'Rebrickable',
     categoryId: string
-  ): Promise<ExternalCategoryPageExternalPart[] | undefined> {
+  ): Promise<ExternalItem[] | undefined> {
     const parts: ExternalItem[] | undefined =
       await this.getExternalPartsInExternalCategory(type, categoryId)
     if (!parts || parts.length === 0) {
       return
     }
-    const ecpeps: ExternalCategoryPageExternalPart[] = []
     for (let i = 0; i < parts.length; i++) {
       const part = parts[i]
-      const numInvItems: number | undefined = await this.getNumInvItemsByPart(
-        part.externalItemId,
-        type
-      )
-      if (numInvItems === undefined || numInvItems === 0) {
-        continue
-      }
-      const numVariants: number | undefined = await this.getNumVariantsByPart(
-        part.externalItemId,
-        type
-      )
-      if (numVariants === undefined) {
-        continue
-      }
-      const firstVariant = await this.getFirstVariantByPart(part.externalItemId)
+      loadExternalPartImage(part.type, part.externalItemId)
+      loadExternalPartNumVariants(part.type, part.externalItemId)
       loadExternalPartPrice(part.type, part.itemId)
-      ecpeps.push({
-        ...part,
-        numInvItems,
-        numVariants,
-        image: firstVariant?.image,
-      })
+      loadExternalPartNumInvItems(part.type, part.externalItemId)
     }
-    return ecpeps
+    return parts
   }
   async getExternalItemsInExternalCategory(
     type: string,
@@ -882,9 +917,11 @@ export default class ObjectCache {
     if (!externalItems) {
       return
     }
+    startTimer('getExternalPartsInExternalCategory')
     const externalItemsWithStoreItems: ExternalItem[] = []
     for (let i = 0; i < externalItems.length; i++) {
       const item = externalItems[i]
+      startTimer(item.externalItemId)
       const storeItems = await liveObjectCache.getInvItemsByExternalPart(
         item.externalItemId,
         item.type
@@ -893,7 +930,9 @@ export default class ObjectCache {
         continue
       }
       externalItemsWithStoreItems.push(item)
+      reportTime(item.externalItemId)
     }
+    reportTime('getExternalPartsInExternalCategory')
     this.externalPartsByExternalCategory.set(id, externalItemsWithStoreItems)
     return externalItemsWithStoreItems
   }

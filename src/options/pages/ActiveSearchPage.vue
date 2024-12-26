@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import HomeButton from "../components/HomeButton.vue";
 import { getSearchPageSearch, setPriceScoreQuantity } from "../idb/searches";
-import { ConditionPriceAdjustment, SearchPageSearch } from "../types";
+import { ConditionPriceAdjustment, SearchFilter, SearchPageSearch } from "../types";
 const search = ref<SearchPageSearch | undefined>(undefined);
 const priceScoreQuantity = ref<number>(100);
 const route = useRoute();
@@ -39,9 +39,20 @@ onMounted(async () => {
 import NameIdLabel from "../components/NameIdLabel.vue";
 import { liveObjectCache } from "../idb/idb";
 import stores from "../idb/stores";
-import { put } from "../idb/db";
+import { dbDelete, put } from "../idb/db";
 function setConditionAdjustment(adjustment: ConditionPriceAdjustment) {
   put(liveObjectCache.db, stores.SEARCH_CONDITION_PRICE_ADJUSTMENTS, adjustment);
+}
+async function removeFilter(filter: SearchFilter, index: number) {
+  await dbDelete(liveObjectCache.db, stores.SEARCH_FILTERS, [
+    filter.searchId,
+    filter.type,
+    filter.objectId,
+  ]);
+  if (!search.value) {
+    return;
+  }
+  search.value.filters?.splice(index, 1);
 }
 </script>
 
@@ -67,18 +78,21 @@ function setConditionAdjustment(adjustment: ConditionPriceAdjustment) {
     <table v-if="search.filters">
       <thead>
         <tr>
-          <th>Excluded</th>
+          <th>Status</th>
           <th>Type</th>
           <th>Object</th>
           <th>Actions</th>
         </tr>
       </thead>
       <tbody>
-        <tr v-for="filter in search.filters" :key="filter.type + filter.objectId">
-          <td>{{ filter.isExcluded ? "Yes" : "No" }}</td>
+        <tr
+          v-for="(filter, index) in search.filters"
+          :key="filter.type + filter.objectId"
+        >
+          <td>{{ filter.isExcluded ? "Exclude" : "Include" }}</td>
           <td>{{ filter.type }}</td>
           <td>{{ filter.objectId }}</td>
-          <td><button>Remove</button></td>
+          <td><button @click="removeFilter(filter, index)">Remove</button></td>
         </tr>
       </tbody>
     </table>

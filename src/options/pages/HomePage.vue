@@ -11,6 +11,10 @@ const storeCountries = ref<number | undefined>();
 const colors = ref<number | undefined>();
 const categories = ref<number | undefined>();
 const parts = ref<number | undefined>();
+const searches = ref<number | undefined>();
+const conditions = ref<number | undefined>();
+const lists = ref<number | undefined>();
+const carts = ref<number | undefined>();
 onMounted(async () => {
   startTimer("HomePage");
   colors.value = await liveObjectCache.getHomePageNumColors();
@@ -18,6 +22,10 @@ onMounted(async () => {
   storeCountries.value = await liveObjectCache.getHomePageNumStoreCountries();
   categories.value = await liveObjectCache.getHomePageNumCategories();
   parts.value = await liveObjectCache.getHomePageNumParts();
+  searches.value = await liveObjectCache.getHomePageNumSearches();
+  conditions.value = await liveObjectCache.getHomePageNumConditions();
+  lists.value = await liveObjectCache.getHomePageNumLists();
+  carts.value = await liveObjectCache.getHomePageNumCarts();
 });
 const loaded = computed(() => {
   return (
@@ -56,10 +64,14 @@ watch(loaded, () => {
         :href="Crumbs.categories.href"
       />
       <CardComponent name="Parts" :count="parts" :href="Crumbs.parts.href" />
-      <!-- <CardComponent name="Searches" :count="homeData.searches" :href="Crumbs.searches.href" />
-      <CardComponent name="Conditions" :count="homeData.conditions" :href="Crumbs.conditions.href" />
-      <CardComponent name="Lists" :count="homeData.lists" :href="Crumbs.lists.href" />
-      <CardComponent name="Carts" :count="homeData.carts" :href="Crumbs.carts.href" /> -->
+      <CardComponent name="Searches" :count="searches" :href="Crumbs.searches.href" />
+      <CardComponent
+        name="Conditions"
+        :count="conditions"
+        :href="Crumbs.conditions.href"
+      />
+      <CardComponent name="Lists" :count="lists" :href="Crumbs.lists.href" />
+      <CardComponent name="Carts" :count="carts" :href="Crumbs.carts.href" />
     </div>
   </div>
 </template>
