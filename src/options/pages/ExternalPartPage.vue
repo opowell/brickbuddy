@@ -10,7 +10,7 @@ import type {
   PartPageVariantInvItem,
 } from "../types";
 import ActiveSearchButton from "../components/ActiveSearchButton.vue";
-import { formatInteger } from "../utils";
+import { formatInteger, reportTime, startTimer } from "../utils";
 import ActiveCartButton from "../components/ActiveCartButton.vue";
 import StoreItemsTable from "../components/StoreItemsTable.vue";
 interface VariantWithPriceQuantity extends PartPageVariant {
@@ -22,14 +22,19 @@ import { useRoute } from "vue-router";
 import ColorButton from "../components/ColorButton.vue";
 import { liveObjectCache } from "../idb/idb";
 import ExternalCategoryButton from "../components/ExternalCategoryButton.vue";
+startTimer("ExternalPartPage");
 const route = useRoute();
 
 const item = ref<ExternalPartPageExternalPart | undefined>();
+const conditionsMap = ref();
 onMounted(async () => {
   item.value = await liveObjectCache.getExternalPartPageExternalPart(
     route.params.type,
     route.params.id
   );
+  const search = await liveObjectCache.getActiveSearch();
+  conditionsMap.value = await liveObjectCache.getConditionsMap(search.id);
+  reportTime("ExternalPartPage");
 });
 const maxPrice = ref<number | undefined>(Number.POSITIVE_INFINITY);
 const minQuantity = ref(0);
@@ -93,8 +98,13 @@ const invItems = computed<PartPageVariantInvItem[] | undefined>(() => {
     return itemValue.invItems
       .filter((ii) => ii.colorId === variant.colorId)
       .map((invItem) => {
+        let adjustment = 1;
+        if (conditionsMap.value) {
+          adjustment = conditionsMap.value.get(invItem.condition);
+        }
         return {
           ...invItem,
+          price: Number.parseFloat(invItem.price) * adjustment,
           variant,
         };
       });
