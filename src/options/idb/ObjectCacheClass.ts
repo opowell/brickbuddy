@@ -811,21 +811,17 @@ export default class ObjectCache {
     const ecpeps: ExternalCategoryPageExternalPart[] = []
     for (let i = 0; i < parts.length; i++) {
       const part = parts[i]
-      startTimer('getNumInvItemsByPart')
       const numInvItems: number | undefined = await this.getNumInvItemsByPart(
         part.externalItemId,
         type
       )
-      reportTime('getNumInvItemsByPart')
       if (numInvItems === undefined || numInvItems === 0) {
         continue
       }
-      startTimer('getNumVariantsByPart')
       const numVariants: number | undefined = await this.getNumVariantsByPart(
         part.externalItemId,
         type
       )
-      reportTime('getNumVariantsByPart')
       if (numVariants === undefined) {
         continue
       }

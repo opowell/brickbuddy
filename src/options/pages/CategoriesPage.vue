@@ -29,9 +29,6 @@ function countUnique(iterable: Iterable) {
   return new Set(iterable).size;
 }
 const categories = ref<CategoriesPageCategory[] | undefined>(undefined);
-const computedCategories = computed<CategoriesPageCategory[] | undefined>(() => {
-  return categories.value;
-});
 const categoryImageMap = computed(() => {
   return new Map();
   // if (!liveObjectCache.computedCache.linked) {
@@ -52,11 +49,11 @@ onMounted(async () => {
   categories.value = await objectCache.getCategoriesPageCategories2();
 });
 const uniqueExternalCategories = computed<CategoriesPageUniqueCategory[]>(() => {
-  if (!computedCategories.value) {
+  if (!categories.value) {
     return [];
   }
   const out: CategoriesPageUniqueCategory[] = [];
-  computedCategories.value.forEach((category) => {
+  categories.value.forEach((category) => {
     const types = category.externalCategories.map((ec) => ec.type);
     if (countUnique(types) < types.length) {
       // add each ec individually
@@ -97,13 +94,17 @@ const uniqueExternalCategories = computed<CategoriesPageUniqueCategory[]>(() => 
   });
   return out;
 });
-async function exclude(category: Category) {
-  return await filterCategory(category, true);
+async function exclude(externalCategory: CategoriesPageUniqueCategory) {
+  return await filterCategory(externalCategory, true);
 }
-async function include(category: Category) {
-  return await filterCategory(category, false);
+async function include(externalCategory: CategoriesPageUniqueCategory) {
+  return await filterCategory(externalCategory, false);
 }
-async function filterCategory(category: Category, isExcluded: boolean) {
+async function filterCategory(
+  externalCategory: CategoriesPageUniqueCategory,
+  isExcluded: boolean
+) {
+  console.log("filterCategory", externalCategory, isExcluded);
   const search = await getActiveSearch();
   if (!search) {
     return;
@@ -112,21 +113,26 @@ async function filterCategory(category: Category, isExcluded: boolean) {
     searchId: search.id,
     type: "category",
     isExcluded,
-    objectId: category.id,
+    objectId: externalCategory.id,
   };
   put(liveObjectCache.db, stores.SEARCH_FILTERS, filter);
-  category.excluded = isExcluded;
-  put(liveObjectCache.db, stores.CATEGORIES, category);
-  const categories = await getExternalCategoriesByCategoryId(
-    category.id,
-    liveObjectCache
-  );
-  if (!categories) {
-    return;
-  }
-  for (let i = 0; i < categories.length; i++) {
-    await putSearchCategory(liveObjectCache.db, search.id, categories[i].id, isExcluded);
-  }
+  externalCategory.excluded = isExcluded;
+  externalCategory.included = !isExcluded;
+  put(liveObjectCache.db, stores.EXTERNAL_CATEGORIES, {
+    id: externalCategory.id,
+    excluded: externalCategory.excluded,
+    included: externalCategory.included,
+  });
+  // const categories = await getExternalCategoriesByCategoryId(
+  //   category.id,
+  //   liveObjectCache
+  // );
+  // if (!categories) {
+  //   return;
+  // }
+  // for (let i = 0; i < categories.length; i++) {
+  //   await putSearchCategory(liveObjectCache.db, search.id, categories[i].id, isExcluded);
+  // }
 }
 import CategoryButton from "../components/CategoryButton.vue";
 import HomeButton from "../components/HomeButton.vue";

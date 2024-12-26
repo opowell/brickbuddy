@@ -501,7 +501,7 @@ export interface SearchPageSearch extends ActiveSearch {
 
 export interface ConditionPriceAdjustment {
   searchId: number
-  condition: string
+  condition: 'New' | 'Used'
   adjustment: number
 }
 
@@ -588,6 +588,8 @@ export interface CategoryButtonCategory {
 }
 
 export interface ExternalCategory {
+  included?: boolean
+  excluded?: boolean
   id: string
   name: string
   categoryId: number

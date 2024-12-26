@@ -14,7 +14,7 @@ import { liveObjectCache, putSearchStore } from "../idb/idb";
 import STORES from "../idb/stores";
 import { dbDelete, getAllFromIndex, put } from "../idb/db";
 import indices from "../idb/indices";
-
+import FilterButtons from "../components/FilterButtons.vue";
 function include(country: StoreCountriesPageStoreCountry) {
   return filter(country, false);
 }
