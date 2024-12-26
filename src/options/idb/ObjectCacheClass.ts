@@ -1,6 +1,7 @@
 import { IDBPDatabase } from 'idb'
 import {
   ActiveSearch,
+  AdjustedInvItem,
   CartItem,
   CartWithItems,
   CategoriesPageCategory,
@@ -744,7 +745,7 @@ export default class ObjectCache {
     if (!search) {
       return
     }
-    const conditionsMap = await this.getConditionsMap(search.id)
+    // const conditionsMap = await this.getConditionsMap(search.id)
     const storeIds = await this.getAllActiveStoreIds(search.id)
     if (!storeIds) {
       return
@@ -760,13 +761,14 @@ export default class ObjectCache {
       if (!storeItems) {
         continue
       }
-      storeItems.forEach((storeItem) => {
-        const adjustment = conditionsMap.get(storeItem.condition)
-        if (!adjustment) {
-          return
-        }
-        storeItem.price = Number.parseFloat(storeItem.price) * adjustment + ''
-      })
+      // storeItems.forEach((storeItem) => {
+      //   const adjustment = conditionsMap.get(storeItem.condition)
+      //   if (!adjustment) {
+      //     return
+      //   }
+      //   storeItem.adjustedPrice =
+      //     Number.parseFloat(storeItem.price) * adjustment + ''
+      // })
       invItems.push(...storeItems)
     }
     this.invItemsByPart.set(id, invItems)
@@ -922,13 +924,13 @@ export default class ObjectCache {
     for (let i = 0; i < externalItems.length; i++) {
       const item = externalItems[i]
       startTimer(item.externalItemId)
-      const storeItems = await liveObjectCache.getInvItemsByExternalPart(
-        item.externalItemId,
-        item.type
-      )
-      if (!storeItems || storeItems.length === 0) {
-        continue
-      }
+      // const storeItems = await liveObjectCache.getInvItemsByExternalPart(
+      //   item.externalItemId,
+      //   item.type
+      // )
+      // if (!storeItems || storeItems.length === 0) {
+      //   continue
+      // }
       externalItemsWithStoreItems.push(item)
       reportTime(item.externalItemId)
     }

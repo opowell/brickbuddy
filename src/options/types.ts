@@ -279,6 +279,9 @@ export interface InvItem {
   condition_Used: number
   type: 'Lego' | 'BrickLink' | 'Rebrickable'
 }
+export interface AdjustedInvItem extends InvItem {
+  adjustedPrice: string
+}
 
 export interface UiInvItem extends InvItem {
   item: UiItem
