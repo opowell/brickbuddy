@@ -426,14 +426,19 @@ export async function getStorePageStore(
   id: string,
   type: 'BrickLink' | 'Lego' | 'Rebrickable'
 ): Promise<StorePageStore | undefined> {
-  console.log(id, type)
   const store = await liveObjectCache.getStore(id)
   if (!store) {
     return
   }
   const invItems = await getStorePageInvItems(id)
+  if (!invItems) {
+    return
+  }
+  invItems.forEach((invItem) => {
+    liveObjectCache.loadStorePageInvItem(invItem)
+  })
   return {
     ...store,
-    items: invItems || [],
+    items: invItems,
   }
 }

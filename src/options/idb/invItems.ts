@@ -289,7 +289,6 @@ export async function getStorePageInvItem(
 export async function getStorePageInvItems(
   id: string
 ): Promise<InvItem[] | undefined> {
-  console.log(id)
   return await liveObjectCache.getInvItemsByStore(id)
 }
 

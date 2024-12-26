@@ -23,14 +23,18 @@ let fetchPricesInterval: NodeJS.Timeout
 let fetchStoresInterval: NodeJS.Timeout
 
 async function getPrices() {
-  const db = await getDbConnection()
-  const blStore = await getBrickLinkFetchStore(db)
-  if (blStore) {
-    getBrickLinkPrices(db, blStore)
-  }
-  const legoStore = await getLegoFetchStore(db)
-  if (legoStore) {
-    getLegoPrices(db, legoStore)
+  try {
+    const db = await getDbConnection()
+    const blStore = await getBrickLinkFetchStore(db)
+    if (blStore) {
+      getBrickLinkPrices(db, blStore)
+    }
+    const legoStore = await getLegoFetchStore(db)
+    if (legoStore) {
+      getLegoPrices(db, legoStore)
+    }
+  } catch (e) {
+    console.log(e)
   }
 }
 

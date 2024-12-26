@@ -618,7 +618,7 @@ export default class ObjectCache {
     return this.getObject<StorePageInvItemItem | undefined>(
       this.storePageExternalParts,
       invItem.itemId,
-      async () => await getStorePageExternalPart(invItem, type, this)
+      async () => await getStorePageExternalPart(invItem, type)
     )
   }
   async getExternalPart(
@@ -632,8 +632,12 @@ export default class ObjectCache {
         await get(this.db, STORES.EXTERNAL_PARTS, [type, externalItemId])
     )
   }
+  async loadStorePageInvItem(invItem: InvItem) {
+    // @ts-ignore
+    this.getStorePageExternalPart(invItem, invItem.type)
+    this.getPartVariantByPartColor(invItem.itemId, invItem.colorId)
+  }
   async getInvItemsByStore(storeId: string): Promise<InvItem[] | undefined> {
-    console.log('get', storeId)
     return this.getObject<InvItem[] | undefined>(
       this.invItemsByStore,
       storeId,

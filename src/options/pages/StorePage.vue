@@ -21,7 +21,6 @@ import { externalPartPriceMap } from "../idb/categories";
 const route = useRoute();
 const store = ref<StorePageStore | undefined>();
 const search = ref<ActiveSearch | undefined>();
-const invItems = ref<StorePageInvItem[]>([]);
 const mounted = ref(false);
 onMounted(async () => {
   search.value = await liveObjectCache.getActiveSearch();
@@ -29,20 +28,17 @@ onMounted(async () => {
   if (!store.value) {
     return;
   }
-  for (let i = 0; i < store.value.items.length; i++) {
-    const storePageInvItem = await getStorePageInvItem(
-      store.value.items[i],
-      store.value.type === StoreType.BrickLink ? "BrickLink" : "Lego"
-    );
-    if (!storePageInvItem) {
-      continue;
-    }
-    invItems.value.push(storePageInvItem);
-  }
+  // for (let i = 0; i < store.value.items.length; i++) {
+  // const storePageInvItem = await getStorePageInvItem(
+  //   store.value.items[i],
+  //   store.value.type === StoreType.BrickLink ? "BrickLink" : "Lego"
+  // );
+  // if (!storePageInvItem) {
+  //   continue;
+  // }
+  // invItems.value.push(storePageInvItem);
+  // }
   mounted.value = true;
-});
-const first100Items = computed(() => {
-  return invItems.value.slice(0, 100);
 });
 
 // URL for shipping terms:
@@ -96,7 +92,7 @@ const cartButton = ref<typeof ActiveCartButton | undefined>(undefined);
     <div>
       Link: <a target="_blank" :href="url">{{ url }}</a>
     </div>
-    <h4>Inventory ({{ invItems.length }} / {{ store.items.length }})</h4>
+    <h4>Inventory ({{ store.items.length }})</h4>
     <table>
       <thead>
         <tr>
@@ -112,14 +108,35 @@ const cartButton = ref<typeof ActiveCartButton | undefined>(undefined);
         </tr>
       </thead>
       <tbody>
-        <tr v-for="invItem in first100Items" :key="invItem.invId">
+        <tr v-for="invItem in store.items" :key="invItem.invId">
           <td>
-            <PartVariantButton :part="invItem.item" :variant="invItem.variant">
-              <img v-if="invItem.variant" :src="invItem.variant.image" />
+            <PartVariantButton
+              :part="liveObjectCache.storePageExternalParts.get(invItem.itemId)"
+              :variant="
+                liveObjectCache.partVariantByPartColor.get(
+                  invItem.itemId + invItem.colorId
+                )
+              "
+            >
+              <img
+                v-if="
+                  liveObjectCache.partVariantByPartColor.get(
+                    invItem.itemId + invItem.colorId
+                  )
+                "
+                :src="
+                  liveObjectCache.partVariantByPartColor.get(
+                    invItem.itemId + invItem.colorId
+                  )?.image
+                "
+              />
             </PartVariantButton>
           </td>
           <td>
-            <ExternalPartButton :part="invItem.item" />
+            <ExternalPartButton
+              v-if="liveObjectCache.storePageExternalParts.get(invItem.itemId)"
+              :part="liveObjectCache.storePageExternalParts.get(invItem.itemId)"
+            />
           </td>
           <td v-if="search && search.conditions.excluded.length < 1">
             <ConditionButton :condition="invItem.condition" />

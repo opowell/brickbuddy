@@ -191,7 +191,6 @@ function setCartQuantity({
         </tr>
       </tbody>
     </table>
-    <h4>Inventory items ({{ invItems?.length }})</h4>
     <StoreItemsTable
       v-if="invItems"
       :items="invItems"

@@ -19,6 +19,10 @@ const setButtonDisabled: ComputedRef<boolean> = computed(() => {
     newQ.value === current || newQ.value > max || newQ.value === "" || newQ.value < 0
   );
 });
+function setNewQ(x: number) {
+  newQ.value = x;
+}
+defineExpose({ newQ, setNewQ });
 </script>
 
 <template>
