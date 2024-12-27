@@ -10,7 +10,7 @@ import ActiveSearchButton from "../components/ActiveSearchButton.vue";
 import ActiveCartButton from "../components/ActiveCartButton.vue";
 import { getStoreCountriesPageStoreCountries } from "../idb/storeCountries";
 import { getActiveSearch } from "../idb/searches";
-import { liveObjectCache, putSearchStore } from "../idb/idb";
+import { liveObjectCache } from "../idb/idb";
 import STORES from "../idb/stores";
 import { dbDelete, getAllFromIndex, put } from "../idb/db";
 import indices from "../idb/indices";
@@ -38,12 +38,6 @@ async function clear(country: StoreCountriesPageStoreCountry) {
     indices.STORES_BY_COUNTRY,
     country.id
   );
-  if (!stores) {
-    return;
-  }
-  for (let i = 0; i < stores.length; i++) {
-    await dbDelete(liveObjectCache.db, STORES.SEARCH_STORES, [search.id, stores[i].id]);
-  }
 }
 async function filter(country: StoreCountriesPageStoreCountry, isExcluded: boolean) {
   const search = await getActiveSearch();
@@ -64,12 +58,6 @@ async function filter(country: StoreCountriesPageStoreCountry, isExcluded: boole
     indices.STORES_BY_COUNTRY,
     country.id
   );
-  if (!stores) {
-    return;
-  }
-  for (let i = 0; i < stores.length; i++) {
-    await putSearchStore(liveObjectCache.db, search.id, stores[i].id, isExcluded);
-  }
 }
 </script>
 

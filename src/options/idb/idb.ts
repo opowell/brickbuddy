@@ -344,11 +344,6 @@ async function importBrickLinkStore(
     StoreType.BrickLink,
     countryId
   )
-  const search = await liveObjectCache.getActiveSearch()
-  if (search) {
-    const isExcluded = await isCountryExcluded(db, search.id, countryId)
-    await putSearchStore(db, search.id, id, isExcluded)
-  }
   return !!result
 }
 
@@ -366,19 +361,6 @@ async function isCountryExcluded(
     return false
   }
   return result.isExcluded
-}
-
-export async function putSearchStore(
-  db: IDBPDatabase,
-  searchId: number,
-  storeId: string,
-  isExcluded: boolean
-) {
-  put(db, STORES.SEARCH_STORES, {
-    searchId,
-    storeId,
-    isExcluded: isExcluded ? BOOLEAN_AS_NUMBER.TRUE : BOOLEAN_AS_NUMBER.FALSE,
-  })
 }
 
 export async function putSearchCategory(
@@ -548,7 +530,7 @@ export async function getDbConnection(): Promise<IDBPDatabase> {
     return dbConnection
   }
   let createData = false
-  const db = await openDB(DB_NAME, 5, {
+  const db = await openDB(DB_NAME, 6, {
     async upgrade(db, oldVersion, newVersion, transaction) {
       Object.keys(STORES).forEach((key) => {
         try {

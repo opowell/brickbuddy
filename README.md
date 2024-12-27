@@ -12,6 +12,9 @@
 - add global quantity minimum.
 - combine similar lots.
 - scrape more often on first initialization.
+- lego parts missing from external part page.
+- exclude stores from stores page.
+- store query results in IDB Store?
 
 ### v3
 - keyboard controls.

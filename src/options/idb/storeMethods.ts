@@ -12,6 +12,7 @@ import {
   CachedItemVariant,
   CachedInvItem,
   SearchStore,
+  SearchFilter,
 } from '../types'
 import { getDbConnection, liveObjectCache } from './idb'
 import { countInvItems, getStorePageInvItems } from './invItems'
@@ -342,13 +343,18 @@ export async function getAllActiveStoreIds(
   searchId: number
 ): Promise<string[] | undefined> {
   let storeIds: string[] = []
-  const included = await getAllFromIndex<SearchStore>(
+  const countryFilters = await getAllFromIndex<SearchFilter>(
     db,
-    indices.SEARCH_STORES_EXCLUDED,
-    [searchId, BOOLEAN_AS_NUMBER.FALSE]
+    indices.SEARCH_FILTERS_BY_SEARCH_TYPE,
+    [searchId, 'storeCountry']
   )
-  if (included && included.length > 0) {
-    storeIds = included.map((ss) => ss.storeId)
+  if (!countryFilters) {
+    return
+  }
+  const includedCountries = countryFilters
+    .filter((f) => !f.isExcluded)
+    .map((f) => f.objectId)
+  if (includedCountries.length) {
     const legoIds = await getAllKeysFromIndex(
       liveObjectCache.db,
       indices.STORES_BY_TYPE,
@@ -358,18 +364,29 @@ export async function getAllActiveStoreIds(
       // @ts-ignore
       storeIds.push(...legoIds)
     }
+  }
+  if (includedCountries.length > 0) {
+    for (let i = 0; i < includedCountries.length; i++) {
+      const countryStoreIds = await getAllKeysFromIndex(
+        db,
+        indices.STORES_BY_COUNTRY,
+        includedCountries[i]
+      )
+      if (!countryStoreIds) {
+        continue
+      }
+      // @ts-ignore
+      storeIds.push(...countryStoreIds)
+    }
   } else {
     // @ts-ignore
     storeIds = await db.getAllKeys(STORES.STORES.name)
   }
-  const excluded = await getAllFromIndex<SearchStore>(
-    db,
-    indices.SEARCH_STORES_EXCLUDED,
-    [searchId, BOOLEAN_AS_NUMBER.TRUE]
-  )
+  const excludedIds = countryFilters
+    .filter((f) => f.isExcluded)
+    .map((f) => f.objectId)
 
-  if (excluded) {
-    const excludedIds = excluded.map((ss) => ss.storeId)
+  if (excludedIds.length > 0) {
     storeIds = storeIds.filter((storeId) => !excludedIds.includes(storeId))
   }
   return storeIds

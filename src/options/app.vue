@@ -15,7 +15,7 @@ onMounted(async () => {
   const db = await getDbConnection();
   await loadLiveObjectCache(db);
   await createActiveSearchIfNecessary(liveObjectCache);
-  startFetchingStores();
+  // startFetchingStores();
   startFetching();
   loaded.value = true;
   // reportTime("app.vue");

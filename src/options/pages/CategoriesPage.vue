@@ -6,12 +6,7 @@ import {
   ExternalCategory,
   SearchFilter,
 } from "../types";
-import {
-  getDbConnection,
-  liveObjectCache,
-  putSearchCategory,
-  putSearchStore,
-} from "../idb/idb";
+import { getDbConnection, liveObjectCache } from "../idb/idb";
 import ObjectCache from "../idb/ObjectCacheClass";
 import FilterButtons from "../components/FilterButtons.vue";
 interface CategoriesPageUniqueCategory {
