@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { StoreType, type StoresPageStore } from '../types';
+import { SearchFilter, StoreType, type StoresPageStore } from '../types';
 import StoreButton from '../components/StoreButton.vue';
 import { getStoresPageStores } from '../idb/storeMethods'
 import FilterButtons from '../components/FilterButtons.vue';
@@ -38,6 +38,8 @@ import ActiveSearchButton from '../components/ActiveSearchButton.vue';
 import ActiveCartButton from '../components/ActiveCartButton.vue';
 import { importBrickLinkStores, liveObjectCache } from '../idb/idb'
 import { formatAmount, formatInteger } from '../utils';
+import { put } from '../idb/db';
+import STORES from '../idb/stores';
 
 async function importStores() {
   return await importBrickLinkStores(liveObjectCache.db)
@@ -94,6 +96,28 @@ const totalItems = computed(() => {
   })
   return formatInteger(sum)
 })
+
+async function includeAll() {
+  return await filterAll(false)
+}
+async function excludeAll() {
+  return await filterAll(true)
+}
+async function filterAll(isExcluded: boolean) {
+  const search = await liveObjectCache.getActiveSearch()
+  filteredStores.value.forEach(s => {
+    const filter: SearchFilter = {
+      searchId: search.id,
+      type: "store",
+      isExcluded,
+      objectId: s.id,
+    };
+    put(liveObjectCache.db, STORES.SEARCH_FILTERS, filter);
+  })
+}
+
+const includedMap = ref(new Map<string, boolean>())
+const excludedMap = ref(new Map<string, boolean>())
 </script>
 
 <template>
@@ -142,11 +166,12 @@ const totalItems = computed(() => {
           <td></td>
           <td></td>
           <td></td>
+          <td></td>
           <td>{{ totalItems }}</td>
           <td>{{ totalCurrentFetchIndex }} / {{ totalMaxFetchIndex }}</td>
           <td>{{ avgFetchPercent }}</td>
           <td></td>
-          <td><FilterButtons /></td>
+          <td><FilterButtons @include="includeAll" @exclude="excludeAll" /></td>
         </tr>
         <tr v-for="store in filteredStores" :key="store.id">
           <td>
@@ -168,7 +193,10 @@ const totalItems = computed(() => {
             {{ store.lastScraped.toISOString() }}
           </td>
           <td>
-            <FilterButtons />
+            <FilterButtons
+              :excluded="excludedMap.get(store.id)"
+              :included="includedMap.get(store.id)"
+            />
           </td>
         </tr>
       </tbody>

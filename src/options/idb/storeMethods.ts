@@ -342,7 +342,7 @@ export async function getAllActiveStoreIds(
   db: IDBPDatabase,
   searchId: number
 ): Promise<string[] | undefined> {
-  let storeIds: string[] = []
+  const storeIds = new Map<string, boolean>()
   const countryFilters = await getAllFromIndex<SearchFilter>(
     db,
     indices.SEARCH_FILTERS_BY_SEARCH_TYPE,
@@ -354,7 +354,36 @@ export async function getAllActiveStoreIds(
   const includedCountries = countryFilters
     .filter((f) => !f.isExcluded)
     .map((f) => f.objectId)
-  if (includedCountries.length) {
+  for (let i = 0; i < includedCountries.length; i++) {
+    const countryStoreIds = await getAllKeysFromIndex(
+      db,
+      indices.STORES_BY_COUNTRY,
+      includedCountries[i]
+    )
+    if (!countryStoreIds) {
+      continue
+    }
+    // @ts-ignore
+    countryStoreIds.forEach((id) => storeIds.set(id, true))
+  }
+
+  const storeFilters = await getAllFromIndex<SearchFilter>(
+    db,
+    indices.SEARCH_FILTERS_BY_SEARCH_TYPE,
+    [searchId, 'store']
+  )
+  if (!storeFilters) {
+    return
+  }
+  const includedStores = storeFilters
+    .filter((f) => !f.isExcluded)
+    .map((f) => f.objectId)
+  // @ts-ignore
+  includedStores.forEach((id) => storeIds.set(id, true))
+  if (includedCountries.length === 0 && includedStores.length === 0) {
+    // @ts-ignore
+    storeIds = await db.getAllKeys(STORES.STORES.name)
+  } else {
     const legoIds = await getAllKeysFromIndex(
       liveObjectCache.db,
       indices.STORES_BY_TYPE,
@@ -362,34 +391,25 @@ export async function getAllActiveStoreIds(
     )
     if (legoIds) {
       // @ts-ignore
-      storeIds.push(...legoIds)
+      legoIds.forEach((id) => storeIds.set(id, true))
     }
   }
-  if (includedCountries.length > 0) {
-    for (let i = 0; i < includedCountries.length; i++) {
-      const countryStoreIds = await getAllKeysFromIndex(
-        db,
-        indices.STORES_BY_COUNTRY,
-        includedCountries[i]
-      )
-      if (!countryStoreIds) {
-        continue
-      }
-      // @ts-ignore
-      storeIds.push(...countryStoreIds)
-    }
-  } else {
-    // @ts-ignore
-    storeIds = await db.getAllKeys(STORES.STORES.name)
-  }
-  const excludedIds = countryFilters
+  // @ts-ignore
+  const excludedIds: string[] = countryFilters
     .filter((f) => f.isExcluded)
     .map((f) => f.objectId)
 
   if (excludedIds.length > 0) {
-    storeIds = storeIds.filter((storeId) => !excludedIds.includes(storeId))
+    excludedIds.forEach((id) => storeIds.delete(id))
   }
-  return storeIds
+  const excludedStores = storeFilters
+    .filter((f) => !f.isExcluded)
+    .map((f) => f.objectId)
+  for (let i = 0; i < excludedStores.length; i++) {
+    // @ts-ignore
+    storeIds.delete(excludedStores[i])
+  }
+  return Array.from(storeIds.keys())
 }
 
 export async function getAllVariants(
