@@ -3,6 +3,7 @@ import type { UiShopList } from "../types";
 import HomeButton from "../components/HomeButton.vue";
 const newListName = ref("");
 const lists = ref([]);
+onMounted(() => {});
 function open(list: UiShopList) {}
 function add(name: string) {}
 </script>

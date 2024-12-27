@@ -197,8 +197,8 @@ export async function getAllParts(
 
 export async function getAllExternalParts(
   db: IDBPDatabase
-): Promise<CachedExternalItem[] | undefined> {
-  return await getAll<CachedExternalItem>(db, STORES.EXTERNAL_PARTS)
+): Promise<ExternalItem[] | undefined> {
+  return await getAll<ExternalItem>(db, STORES.EXTERNAL_PARTS)
 }
 
 export async function getPart(
@@ -208,13 +208,20 @@ export async function getPart(
   return await get<Item>(db, STORES.PARTS, partId)
 }
 
-export async function getParts(): Promise<CachedItem[]> {
+export async function getParts(): Promise<ExternalItem[]> {
   const search = await getActiveSearch()
   // const parts = computed(() => filteredParts.value)
   const parts = await getAllExternalParts(liveObjectCache.db)
   if (!parts) {
     return []
   }
+  const uniqueExternalCategories = new Map<ExternalItem, boolean>()
+  parts.forEach((part) => {
+    uniqueExternalCategories.set(part, true)
+  })
+  uniqueExternalCategories.keys().forEach((part) => {
+    liveObjectCache.loadExternalCategory(part.externalCategoryId, part.type)
+  })
   return parts
   // const fps: CachedItem[] = []
   // for (let i = 0; i < parts.value.length; i++) {

@@ -279,31 +279,45 @@ export async function getAllActiveCategoryIds(
   db: IDBPDatabase,
   searchId: number
 ): Promise<number[] | undefined> {
-  let categoryIds: number[] = []
-  const included = await getAllFromIndex<SearchCategory>(
-    db,
-    indices.SEARCH_CATEGORIES_EXCLUDED,
-    [searchId, BOOLEAN_AS_NUMBER.FALSE]
-  )
-  if (included && included.length > 0) {
-    categoryIds = included.map((ss) => ss.categoryId)
-  } else {
-    // @ts-ignore
-    categoryIds = await db.getAllKeys(STORES.CATEGORIES.name)
-  }
-  const excluded = await getAllFromIndex<SearchCategory>(
-    db,
-    indices.SEARCH_CATEGORIES_EXCLUDED,
-    [searchId, BOOLEAN_AS_NUMBER.TRUE]
-  )
+  const categoryIds = new Map<number, boolean>()
 
-  if (excluded) {
-    const excludedIds = excluded.map((ss) => ss.categoryId)
-    categoryIds = categoryIds.filter(
-      (categoryId) => !excludedIds.includes(categoryId)
-    )
+  const filters = await getAllFromIndex<SearchFilter>(
+    db,
+    indices.SEARCH_FILTERS_BY_SEARCH_TYPE,
+    [searchId, 'category']
+  )
+  if (!filters) {
+    return
   }
-  return categoryIds
+  const includedObjects = filters
+    .filter((f) => !f.isExcluded)
+    .map((f) => f.objectId)
+  // @ts-ignore
+  includedObjects.forEach((id) => categoryIds.set(id, true))
+  if (includedObjects.length === 0) {
+    // @ts-ignore
+    const keys = await db.getAllKeys(STORES.CATEGORIES.name)
+    keys.forEach((key) => {
+      // @ts-ignore
+      categoryIds.set(key, true)
+    })
+  }
+  // @ts-ignore
+  const excludedIds: number[] = filters
+    .filter((f) => f.isExcluded)
+    .map((f) => f.objectId)
+
+  if (excludedIds.length > 0) {
+    excludedIds.forEach((id) => categoryIds.delete(id))
+  }
+  const excludedObjects = filters
+    .filter((f) => !f.isExcluded)
+    .map((f) => f.objectId)
+  for (let i = 0; i < excludedObjects.length; i++) {
+    // @ts-ignore
+    storeIds.delete(excludedObjects[i])
+  }
+  return Array.from(categoryIds.keys())
 }
 
 export async function getCategoriesPageCategories2(
@@ -430,30 +444,30 @@ export async function getExternalCategory<T extends ExternalCategory>(
   db: IDBPDatabase,
   id: string,
   type: 'BrickLink' | 'Lego' | 'Rebrickable'
-): Promise<T> {
-  return await get(db, STORES.EXTERNAL_CATEGORIES, [type, id])
+): Promise<T | undefined> {
+  return await get<T>(db, STORES.EXTERNAL_CATEGORIES, [type, id])
 }
 export async function getBrickLinkCategory(
   db: IDBPDatabase,
   id: string
-): Promise<BrickLinkCategory> {
+): Promise<BrickLinkCategory | undefined> {
   return await getExternalCategory<BrickLinkCategory>(db, id, 'BrickLink')
 }
 export async function getRebrickableCategory(
   db: IDBPDatabase,
   id: string
-): Promise<RebrickableCategory> {
+): Promise<RebrickableCategory | undefined> {
   return await getExternalCategory<RebrickableCategory>(db, id, 'Rebrickable')
 }
 export async function getLegoCategory(
   db: IDBPDatabase,
   id: string
-): Promise<LegoCategory> {
+): Promise<LegoCategory | undefined> {
   return await getExternalCategory<LegoCategory>(db, id, 'Lego')
 }
 export async function getPartPageCategory(
   db: IDBPDatabase,
   id: string
-): Promise<PartPageCategory> {
+): Promise<PartPageCategory | undefined> {
   return await get(db, STORES.CATEGORIES, id)
 }

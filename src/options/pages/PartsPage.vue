@@ -22,13 +22,19 @@ const filteredParts = computed(() => {
     return itemName.includes(search.value);
   });
 });
+const externalCategories = computed(() => {
+  if (!liveObjectCache) {
+    return new Map();
+  }
+  return liveObjectCache.externalCategories;
+});
+
 import HomeButton from "../components/HomeButton.vue";
 import CategoryButton from "../components/CategoryButton.vue";
 import ActiveSearchButton from "../components/ActiveSearchButton.vue";
-import NameIdLabel from "../components/NameIdLabel.vue";
 import QuantityInput from "../components/QuantityInput.vue";
 import ActiveCartButton from "../components/ActiveCartButton.vue";
-import { cacheLoaded } from "../idb/idb";
+import { cacheLoaded, liveObjectCache } from "../idb/idb";
 </script>
 
 <template>
@@ -45,6 +51,7 @@ import { cacheLoaded } from "../idb/idb";
           <th>Image</th>
           <th>Name</th>
           <th>Category</th>
+          <th>Type</th>
           <th>Colors</th>
           <th title="Price, in Euro cents">Price</th>
           <th>List</th>
@@ -53,14 +60,20 @@ import { cacheLoaded } from "../idb/idb";
       <tbody>
         <tr v-for="item in filteredParts" :key="item.itemId">
           <!-- <td><img v-if="item.image" :src="item.image"></td> -->
+          <td></td>
           <td>{{ item.name }}</td>
-          <td>{{ item.externalCategoryId }}</td>
+          <td>
+            <CategoryButton
+              v-if="externalCategories.get(item.externalCategoryId)"
+              :category="externalCategories.get(item.externalCategoryId)"
+            />
+          </td>
           <td>{{ item.type }}</td>
+          <td></td>
+          <td></td>
           <!-- <td>
             <PartButton :part="item" />
           </td> -->
-          <!-- <td><CategoryButton :category="item.category" /></td> -->
-          <!-- <td>CategoryButton :category="item.category"</td> -->
           <!-- <td>{{ item.variants.length }}</td>
           <td>{{ item.priceRange }}</td> -->
           <td><QuantityInput :current="0" :max="1000" /></td>

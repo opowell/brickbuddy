@@ -18,6 +18,7 @@ import CartPage from './pages/CartPage.vue'
 import ConditionsPage from './pages/ConditionsPage.vue'
 import CartsPage from './pages/CartsPage.vue'
 import ExternalCategoryPage from './pages/ExternalCategoryPage.vue'
+import CountryPage from './pages/CountryPage.vue'
 
 export default [
   {
@@ -49,6 +50,11 @@ export default [
     name: 'colors',
     path: '/colors',
     component: ColorsPage,
+  },
+  {
+    name: 'country',
+    path: '/' + LINKS.COUNTRY + '/:id',
+    component: CountryPage,
   },
   {
     name: 'part',

@@ -15,6 +15,7 @@ import STORES from "../idb/stores";
 import { dbDelete, getAllFromIndex, put } from "../idb/db";
 import indices from "../idb/indices";
 import FilterButtons from "../components/FilterButtons.vue";
+import CountryButton from "../components/CountryButton.vue";
 function include(country: StoreCountriesPageStoreCountry) {
   return filter(country, false);
 }
@@ -79,7 +80,9 @@ async function filter(country: StoreCountriesPageStoreCountry, isExcluded: boole
       <tbody>
         <tr v-for="country in storeCountries" :key="country.id">
           <td>{{ country.id }}</td>
-          <td>{{ country.name }}</td>
+          <td>
+            <CountryButton :country="country" />
+          </td>
           <td>
             <button>{{ country.numStores }}</button>
           </td>

@@ -439,6 +439,21 @@ export default class ObjectCache {
     }
     return Array.from(map.values())
   }
+  async loadObject<T>(
+    map: Map<string | number, T>,
+    id: string | number,
+    getter: Function
+  ): Promise<T | undefined> {
+    const exists = map.has(id)
+    if (exists) {
+      return
+    }
+    const object = await getter()
+    if (!object) {
+      return
+    }
+    map.set(id, object)
+  }
   async getObject<T>(
     map: Map<string | number, T>,
     id: string | number,
@@ -569,7 +584,17 @@ export default class ObjectCache {
   ): Promise<ExternalCategory | undefined> {
     return this.getObject<ExternalCategory | undefined>(
       this.externalCategories,
-      categoryId,
+      type + categoryId,
+      async () => await getExternalCategory(this.db, categoryId, type)
+    )
+  }
+  async loadExternalCategory(
+    categoryId: string,
+    type: 'BrickLink' | 'Lego' | 'Rebrickable'
+  ): Promise<ExternalCategory | undefined> {
+    return this.loadObject<ExternalCategory | undefined>(
+      this.externalCategories,
+      type + categoryId,
       async () => await getExternalCategory(this.db, categoryId, type)
     )
   }

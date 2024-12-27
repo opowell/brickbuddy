@@ -20,6 +20,7 @@ export const PAGES = {
 }
 
 export const LINKS = {
+  COUNTRY: 'country',
   PART: 'part',
   EXTERNAL_PART: 'externalPart',
   PART_VARIANT: 'partVariant',
@@ -89,6 +90,9 @@ export const Routes = {
   search(id: number) {
     return '/' + LINKS.SEARCH + '/' + encodeURIComponent(id)
   },
+  country(id: string) {
+    return '/' + LINKS.COUNTRY + '/' + encodeURIComponent(id)
+  },
 }
 
 export const Hrefs = {
@@ -131,6 +135,9 @@ export const Hrefs = {
   },
   search(id: number) {
     return Routes.search(id)
+  },
+  country(id: string) {
+    return Routes.country(id)
   },
   store(type: StoreType, id: string) {
     return Routes.store(type, id)
@@ -181,6 +188,12 @@ export const Crumbs = {
   lists: {
     title: 'Shopping Lists',
     href: Hrefs.lists,
+  },
+  country(id: string) {
+    return {
+      title: 'Country',
+      href: Hrefs.country(id),
+    }
   },
   search(id: number) {
     return {

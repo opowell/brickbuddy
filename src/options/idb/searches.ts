@@ -80,9 +80,9 @@ export async function getActiveSearchButtonActiveSearch(): Promise<
     },
     stores: {
       excluded: search.stores.excluded,
-      excludedNames: [],
+      excludedNames: search.stores.excluded,
       included: search.stores.included,
-      includedNames: [],
+      includedNames: search.stores.included,
     },
     parts: {
       excluded: search.parts.excluded,

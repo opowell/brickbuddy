@@ -29,7 +29,7 @@ const text = computed(() => {
   if (search.priceScoreIgnoreColor) {
     texts.push("ignore color");
   }
-  const fields = ["categories", "colors", "parts", "conditions", "countries"];
+  const fields = ["categories", "colors", "parts", "conditions", "countries", "stores"];
   fields.forEach((field) => {
     const searchField: { includedNames: string[]; excludedNames: string[] } =
       // @ts-ignore

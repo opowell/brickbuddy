@@ -99,7 +99,6 @@ async function filterCategory(
   externalCategory: CategoriesPageUniqueCategory,
   isExcluded: boolean
 ) {
-  console.log("filterCategory", externalCategory, isExcluded);
   const search = await getActiveSearch();
   if (!search) {
     return;
@@ -113,21 +112,6 @@ async function filterCategory(
   put(liveObjectCache.db, stores.SEARCH_FILTERS, filter);
   externalCategory.excluded = isExcluded;
   externalCategory.included = !isExcluded;
-  put(liveObjectCache.db, stores.EXTERNAL_CATEGORIES, {
-    id: externalCategory.id,
-    excluded: externalCategory.excluded,
-    included: externalCategory.included,
-  });
-  // const categories = await getExternalCategoriesByCategoryId(
-  //   category.id,
-  //   liveObjectCache
-  // );
-  // if (!categories) {
-  //   return;
-  // }
-  // for (let i = 0; i < categories.length; i++) {
-  //   await putSearchCategory(liveObjectCache.db, search.id, categories[i].id, isExcluded);
-  // }
 }
 import CategoryButton from "../components/CategoryButton.vue";
 import HomeButton from "../components/HomeButton.vue";
@@ -138,9 +122,8 @@ import { dbDelete, getAllFromIndex, put } from "../idb/db";
 import stores from "../idb/stores";
 import { reportTime, startTimer } from "../utils";
 import indices from "../idb/indices";
-import { getExternalCategoriesByCategoryId } from "../idb/categories";
 
-async function clear(category: Category) {
+async function clear(category: CategoriesPageUniqueCategory) {
   const search = await getActiveSearch();
   if (!search) {
     return;
@@ -182,6 +165,7 @@ async function clear(category: Category) {
       <thead>
         <tr>
           <th>Image</th>
+          <th>Types</th>
           <th>Names</th>
           <th>Parts</th>
           <th>Actions</th>
@@ -190,6 +174,11 @@ async function clear(category: Category) {
       <tbody>
         <tr v-for="(externalCategory, index) in uniqueExternalCategories" :key="index">
           <td><img v-if="externalCategory.image" :src="externalCategory.image" /></td>
+          <td>
+            <span v-for="ec in externalCategory.externalCategories">
+              <button>{{ ec.type }}</button>
+            </span>
+          </td>
           <td>
             <ExternalCategoryButton
               v-if="externalCategory.isExternal"

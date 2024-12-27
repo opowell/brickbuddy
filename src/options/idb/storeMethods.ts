@@ -68,6 +68,7 @@ export async function updateStore(db: IDBPDatabase, store: Store | UiStore) {
       fetchPageIndex: store.fetchPageIndex,
       fetchMaxPageIndex: store.fetchMaxPageIndex,
       lastScraped: store.lastScraped,
+      fullyFetched: store.fullyFetched,
       priceAdjustment: store.priceAdjustment,
       shippingCosts: store.shippingCosts,
       slug: store.slug,
@@ -382,7 +383,11 @@ export async function getAllActiveStoreIds(
   includedStores.forEach((id) => storeIds.set(id, true))
   if (includedCountries.length === 0 && includedStores.length === 0) {
     // @ts-ignore
-    storeIds = await db.getAllKeys(STORES.STORES.name)
+    const keys = await db.getAllKeys(STORES.STORES.name)
+    keys.forEach((key) => {
+      // @ts-ignore
+      storeIds.set(key, true)
+    })
   } else {
     const legoIds = await getAllKeysFromIndex(
       liveObjectCache.db,
@@ -424,6 +429,49 @@ export async function getAllInvItems(
   return await db.getAll(STORES.INVENTORY_ITEMS.name)
 }
 
+export async function getCountryPageStores(): Promise<
+  StoresPageStore[] | undefined
+> {
+  const search = await getFirstActiveSearch(liveObjectCache)
+  if (!search) {
+    return
+  }
+  const stores = await getAllActiveStores(liveObjectCache.db, search.id)
+  if (!stores) {
+    return
+  }
+  const uiStores: StoresPageStore[] = []
+  for (let i = 0; i < stores.length; i++) {
+    const store = stores[i]
+    const numInvItems = await countInvItems(
+      liveObjectCache.db,
+      store.id,
+      search
+    )
+    let fetchPercent =
+      (100 * numInvItems) /
+      (store.fetchMaxPageIndex *
+        (store.type === StoreType.BrickLink ? 100 : 400))
+
+    if (store.type === StoreType.BrickLink) {
+      if (numInvItems > store.fetchPageIndex * 100) {
+        store.fullyFetched = true
+        updateStore(liveObjectCache.db, store)
+      }
+    }
+
+    if (store.fullyFetched) {
+      fetchPercent = 100
+    }
+    uiStores.push({
+      ...store,
+      numInvItems,
+      fetchPercent,
+    })
+  }
+  return uiStores
+}
+
 export async function getStoresPageStores(): Promise<
   StoresPageStore[] | undefined
 > {
@@ -447,6 +495,14 @@ export async function getStoresPageStores(): Promise<
       (100 * numInvItems) /
       (store.fetchMaxPageIndex *
         (store.type === StoreType.BrickLink ? 100 : 400))
+
+    if (store.type === StoreType.BrickLink) {
+      if (numInvItems > store.fetchPageIndex * 100) {
+        store.fullyFetched = true
+        updateStore(liveObjectCache.db, store)
+      }
+    }
+
     if (store.fullyFetched) {
       fetchPercent = 100
     }

@@ -47,7 +47,7 @@ async function importStores() {
 
 const filteredStores = computed(() => {
   if (!stores.value) {
-    return []
+    return
   }
   const minItems = numMinItems.value
   const minFetchPages = numMinFetchPagesTotal.value
@@ -67,29 +67,38 @@ const filteredStores = computed(() => {
 })
 
 const avgFetchPercent = computed(() => {
-  let sum = 0
-  let count = 0
-  filteredStores.value.forEach(store => {
-    sum += store.fetchPercent
-    count ++
-  })
-  return formatAmount(sum / count)
+  if (!totalCurrentFetchIndex.value) {
+    return
+  }
+  if (!totalMaxFetchIndex.value) {
+    return
+  }
+  return formatAmount(100 * totalCurrentFetchIndex.value / totalMaxFetchIndex.value)
 })
 const totalCurrentFetchIndex = computed(() => {
   let sum = 0
+  if (!filteredStores.value) {
+    return 0
+  }
   filteredStores.value.forEach(store => {
     sum += store.fetchPageIndex
   })
-  return formatInteger(sum)
+  return sum
 })
 const totalMaxFetchIndex = computed(() => {
   let sum = 0
+  if (!filteredStores.value) {
+    return 1
+  }
   filteredStores.value.forEach(store => {
     sum += store.fetchMaxPageIndex
   })
-  return formatInteger(sum)
+  return sum
 })
 const totalItems = computed(() => {
+  if (!filteredStores.value) {
+    return 0
+  }
   let sum = 0
   filteredStores.value.forEach(store => {
     sum += store.numInvItems
@@ -105,6 +114,9 @@ async function excludeAll() {
 }
 async function filterAll(isExcluded: boolean) {
   const search = await liveObjectCache.getActiveSearch()
+  if (!filteredStores.value) {
+    return
+  }
   filteredStores.value.forEach(s => {
     const filter: SearchFilter = {
       searchId: search.id,
@@ -125,7 +137,9 @@ const excludedMap = ref(new Map<string, boolean>())
     <HomeButton />
     <ActiveCartButton />
     <ActiveSearchButton />
-    <h4 v-if="stores">Stores ({{ filteredStores.length }} / {{ stores.length }})</h4>
+    <h4 v-if="filteredStores && stores">
+      Stores ({{ filteredStores.length }} / {{ stores.length }})
+    </h4>
     <h4>Scraping:</h4>
     <div><button @click="importStores">Import from BrickLink</button></div>
     <div>
@@ -147,7 +161,7 @@ const excludedMap = ref(new Map<string, boolean>())
       <input v-model="numMinFetchPagesTotal" type="number" /> -
       <input v-model="numMaxFetchPagesTotal" type="number" />
     </div>
-    <table>
+    <table v-if="filteredStores">
       <thead>
         <tr>
           <th>Country</th>
@@ -163,12 +177,15 @@ const excludedMap = ref(new Map<string, boolean>())
       </thead>
       <tbody>
         <tr>
-          <td></td>
-          <td></td>
-          <td></td>
-          <td></td>
+          <td>-----</td>
+          <td>-----</td>
+          <td>-----</td>
+          <td>TOTAL</td>
           <td>{{ totalItems }}</td>
-          <td>{{ totalCurrentFetchIndex }} / {{ totalMaxFetchIndex }}</td>
+          <td>
+            {{ formatInteger(totalCurrentFetchIndex) }} /
+            {{ formatInteger(totalMaxFetchIndex) }}
+          </td>
           <td>{{ avgFetchPercent }}</td>
           <td></td>
           <td><FilterButtons @include="includeAll" @exclude="excludeAll" /></td>
