@@ -73,6 +73,20 @@ const avgFetchPercent = computed(() => {
   })
   return formatAmount(sum / count)
 })
+const totalCurrentFetchIndex = computed(() => {
+  let sum = 0
+  filteredStores.value.forEach(store => {
+    sum += store.fetchPageIndex
+  })
+  return formatInteger(sum)
+})
+const totalMaxFetchIndex = computed(() => {
+  let sum = 0
+  filteredStores.value.forEach(store => {
+    sum += store.fetchMaxPageIndex
+  })
+  return formatInteger(sum)
+})
 const totalItems = computed(() => {
   let sum = 0
   filteredStores.value.forEach(store => {
@@ -106,13 +120,14 @@ const totalItems = computed(() => {
     <div>Inventory (min.):<input v-model="numMinItems" type="number" /></div>
     <div>
       Fetch pages total:
-      <input v-model="numMinFetchPagesTotal" type="number" />
+      <input v-model="numMinFetchPagesTotal" type="number" /> -
       <input v-model="numMaxFetchPagesTotal" type="number" />
     </div>
     <table>
       <thead>
         <tr>
           <th>Country</th>
+          <th>Id</th>
           <th>Type</th>
           <th>Name</th>
           <th>Inventory</th>
@@ -128,7 +143,7 @@ const totalItems = computed(() => {
           <td></td>
           <td></td>
           <td>{{ totalItems }}</td>
-          <td></td>
+          <td>{{ totalCurrentFetchIndex }} / {{ totalMaxFetchIndex }}</td>
           <td>{{ avgFetchPercent }}</td>
           <td></td>
           <td><FilterButtons /></td>
@@ -137,12 +152,13 @@ const totalItems = computed(() => {
           <td>
             <button>{{ store.countryId }}</button>
           </td>
+          <td>{{ store.id }}</td>
           <td>{{ store.type === StoreType.BrickLink ? "BrickLink" : "Lego" }}</td>
           <td>
             <StoreButton :store="store" />
           </td>
           <td>
-            {{ store.numInvItems }}
+            {{ formatInteger(store.numInvItems) }}
           </td>
           <td>{{ store.fetchPageIndex }} / {{ store.fetchMaxPageIndex }}</td>
           <td>
