@@ -148,7 +148,6 @@ export interface Item {
 }
 export interface PartPageCategory extends Category {}
 export interface PartButtonPart extends Item {
-  itemId: number
   externalParts: ExternalItem[]
 }
 export interface RebrickableItem extends ExternalItem {
@@ -335,22 +334,14 @@ export interface ShopList {
   name: string
 }
 
-export interface CachedList extends ShopList {
-  listItems: CachedListItem[]
-}
 export interface ShopListItem {
-  id?: number
   listId: number
-  itemId: string
-  condition: string
+  itemId: string | number
+  condition?: string
   minQuantity: number
-  maxQuantity: number
-  maxPrice: number
+  maxQuantity?: number
+  maxPrice?: number
   colors: string[]
-}
-export interface CachedListItem extends ShopListItem {
-  item: CachedItem
-  list: CachedList
 }
 
 export interface CachedItem extends Item {

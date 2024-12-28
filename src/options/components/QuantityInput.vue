@@ -12,12 +12,16 @@ watch(
   }
 );
 const setButtonDisabled: ComputedRef<boolean> = computed(() => {
-  if (newQ.value === undefined || max === undefined) {
+  if (newQ.value === undefined) {
     return true;
   }
-  return (
-    newQ.value === current || newQ.value > max || newQ.value === "" || newQ.value < 0
-  );
+  if (newQ.value === current) {
+    return true;
+  }
+  if (max === undefined) {
+    return false;
+  }
+  return newQ.value > max || newQ.value === "" || newQ.value < 0;
 });
 function setNewQ(x: number) {
   newQ.value = x;

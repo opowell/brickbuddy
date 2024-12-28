@@ -19,6 +19,7 @@ import {
   PartPageCategory,
   Search,
   ShopList,
+  ShopListItem,
   Store,
   StoreCountry,
   StorePageInvItemItem,
@@ -55,8 +56,33 @@ import { cheapestPrice, reportTime, startTimer } from '../utils'
 import { getAllActiveStoreIds } from './storeMethods'
 
 export default class ObjectCache {
+  async loadListItemQuantity(listId: number, itemId: number) {
+    return await this.loadObject<number | undefined>(
+      this.listItemQuantityMap.value,
+      listId + '-' + itemId,
+      async () => {
+        const listItem = await get<ShopListItem>(this.db, STORES.LIST_ITEMS, [
+          listId,
+          itemId,
+          [],
+        ])
+        if (!listItem) {
+          return 0
+        }
+        console.log('got', listId + '-' + itemId, listItem.minQuantity)
+        return listItem.minQuantity
+      }
+    )
+  }
   updateList(list: ShopList) {
     put(this.db, STORES.LISTS, list)
+  }
+  async getListItems(id: number): Promise<ShopListItem[] | undefined> {
+    return await getAllFromIndex<ShopListItem>(
+      this.db,
+      indices.SHOP_LIST_ITEMS_BY_SHOP_LIST,
+      id
+    )
   }
   async getList(id: number): Promise<ShopList | undefined> {
     return await get(this.db, STORES.LISTS, id)
@@ -101,7 +127,7 @@ export default class ObjectCache {
   homePageNumColors: number | undefined
   conditionsMapMap: Map<number, Map<string, number>>
   searchActiveStoreIds: Map<number, string[]>
-  listItemQuantityMap: Map<string, number>
+  listItemQuantityMap: Ref<Map<string, number>>
   listsMap: Map<number, ShopList>
   db: IDBPDatabase
   // computedCache: ComputedObjectCacheClass
@@ -109,7 +135,7 @@ export default class ObjectCache {
     this.db = db
     this.listsMap = new Map<number, ShopList>()
     this.listsNumItemsMap = new Map<number, number>()
-    this.listItemQuantityMap = new Map<string, number>()
+    this.listItemQuantityMap = ref(new Map<string, number>())
     this.conditionsMapMap = new Map<number, Map<string, number>>()
     this.activeSearchRef = ref()
     this.homePageNumColors = undefined

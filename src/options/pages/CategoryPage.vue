@@ -5,7 +5,13 @@ import HomeButton from "../components/HomeButton.vue";
 
 import { useRoute } from "vue-router";
 import { getCategoryPageCategory } from "../idb/categories";
-import { CategoryPageCategory, Item, Search } from "../types";
+import {
+  CategoryPageCategory,
+  CategoryPagePart,
+  Item,
+  Search,
+  ShopListItem,
+} from "../types";
 import IncludeCategoryButton from "../components/IncludeCategoryButton.vue";
 import ExcludeCategoryButton from "../components/ExcludeCategoryButton.vue";
 const route = useRoute();
@@ -16,7 +22,7 @@ const router = useRouter();
 const category = ref<CategoryPageCategory | undefined>();
 onMounted(async () => {
   category.value = await getCategoryPageCategory(route.params.id - 0);
-  listItemQuantityMap.value = liveObjectCache.listItemQuantityMap;
+  listItemQuantityMap = liveObjectCache.listItemQuantityMap;
 });
 const parts = computed(() => {
   if (!category.value) {
@@ -25,16 +31,56 @@ const parts = computed(() => {
   return category.value.parts;
 });
 import ExternalCategoryButton from "../components/ExternalCategoryButton.vue";
-import { reportTime, startTimer } from "../utils";
 import QuantityInput from "../components/QuantityInput.vue";
 import { liveObjectCache } from "../idb/idb";
-const listItemQuantityMap = ref<Map<string, number> | undefined>();
-function updateListQuantity(item: Item, quantity: number) {}
+let listItemQuantityMap = ref<Map<string, number>>();
+function updateListQuantity(item: CategoryPagePart, quantity: number) {
+  const listItem: ShopListItem = {
+    listId: listId.value,
+    itemId: item.itemId,
+    colors: [],
+    minQuantity: quantity,
+  };
+  put(liveObjectCache.db, stores.LIST_ITEMS, listItem);
+}
 import ListSelect from "./ListSelect.vue";
+import stores from "../idb/stores";
+import { put } from "../idb/db";
 const listId = ref();
 function selectList(id: string) {
   listId.value = id;
 }
+const loadPartsTrigger = computed(() => {
+  if (!listId.value) {
+    return;
+  }
+  if (!parts.value) {
+    return;
+  }
+  return listId.value + "-" + parts.value.map((p) => p.itemId).join(",");
+});
+watch(
+  listItemQuantityMap,
+  () => {
+    console.log(
+      "change",
+      listItemQuantityMap.value?.keys(),
+      listItemQuantityMap.value?.values()
+    );
+  },
+  {
+    deep: true,
+    immediate: true,
+  }
+);
+watch(loadPartsTrigger, () => {
+  parts.value.forEach((part) => {
+    liveObjectCache.loadListItemQuantity(listId.value, part.itemId);
+  });
+}),
+  {
+    immediate: true,
+  };
 </script>
 
 <template>
@@ -42,7 +88,7 @@ function selectList(id: string) {
     <HomeButton />
     <CategoriesButton />
     <ActiveSearchButton />
-    <h4>{{ category.id }}</h4>
+    <h4>Category {{ category.id }}</h4>
     <IncludeCategoryButton
       :category="category"
       @include="router.push(Crumbs.categories.href)"

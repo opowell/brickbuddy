@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ShopList, UiListItem } from "../types";
+import { ExternalItem, ShopListItem, type ShopList, type UiListItem } from "../types";
 const emits = defineEmits(["open", "addItem", "goItem", "goShopLists"]);
 const newListItemItemId = ref("");
 const newListItemCondition = ref("");
@@ -12,11 +12,13 @@ import { useRoute } from "vue-router";
 const route = useRoute();
 import { liveObjectCache } from "../idb/idb";
 const list = ref<ShopList | undefined>();
+const listItems = ref<ShopListItem[] | undefined>()
 onMounted(async () => {
   list.value = await liveObjectCache.getList(route.params.id - 0);
   if (!list.value) {
     return;
   }
+  listItems.value = await liveObjectCache.getListItems(list.value.id)
 });
 
 function getColorNames(item: UiListItem) {
@@ -44,8 +46,19 @@ const filteredParts = computed(() => {
     );
   });
 });
-const partsView = ref("images");
-const items = computed(() => []);
+const items = computed(() => {
+  if (!listItems.value) {
+    return
+  }
+  return listItems.value.map(li => {
+    const item = liveObjectCache.parts.get(li.itemId)
+    return {
+      ...li,
+      itemName: item.name || '',
+      variants: []
+    }
+  })
+});
 function setName(x: string) {
   if (!list.value) {
     return;
@@ -64,7 +77,7 @@ import HomeButton from "../components/HomeButton.vue";
     <h4>List {{ list.name }}</h4>
     <div>Id: {{ list.id }}</div>
     <div>Name: <TextInput :value="list.name" @set="setName" /></div>
-    <h4>Parts ({{ items.length }})</h4>
+    <h4 v-if="items">Parts ({{ items.length }})</h4>
     <table>
       <thead>
         <tr>
@@ -82,10 +95,10 @@ import HomeButton from "../components/HomeButton.vue";
           v-for="item in items"
           :key="`${item.itemId}-${item.condition}-${item.colors}`"
         >
-          <td>{{ item.itemId }}</td>
+          <td></td>
           <td>
             <button @click="$emit('goItem', item.item)">
-              {{ item.item?.itemName }}
+              {{ item.itemName }} ({{ item.itemId }})
             </button>
           </td>
           <td>{{ item.condition }}</td>
@@ -96,16 +109,7 @@ import HomeButton from "../components/HomeButton.vue";
         </tr>
       </tbody>
     </table>
-    <h4>Add</h4>
-    <div>
-      View parts:
-      <button @click="partsView = 'images'" :disabled="partsView === 'images'">
-        Images
-      </button>
-      <button @click="partsView = 'table'" :disabled="partsView === 'table'">
-        Table
-      </button>
-    </div>
+    <h4>Filter</h4>
     <div>Item name:<input v-model="filterString" /></div>
     <div>Item Id:<input v-model="newListItemItemId" type="text" /></div>
     <div>
@@ -119,33 +123,7 @@ import HomeButton from "../components/HomeButton.vue";
     <div>Max quantity:<input v-model="newListItemMaxQuantity" type="number" /></div>
     <div>Max price:<input v-model="newListItemMaxPrice" type="number" /></div>
     <div>Colors:<input v-model="newListItemColors" type="number" /></div>
-    <div v-if="partsView === 'images'" class="parts">
-      <template v-if="filteredParts.length === 1">
-        <div
-          v-for="variant in filteredParts[0].variants"
-          :key="variant.colorId"
-          class="part"
-        >
-          <img
-            @click="newListItemColors = variant.colorId"
-            :src="variant.image"
-            :title="variant.color.name + ' (' + variant.colorId + ')'"
-          />
-          <span>{{ variant.colorId }}</span>
-        </div>
-      </template>
-      <div v-else v-for="item in filteredParts" :key="item.itemId" class="part">
-        <img
-          @click="newListItemItemId = item.itemId"
-          v-if="item.variants.length"
-          :src="item.variants[0].image"
-          :title="item.itemName + ' (' + item.itemId + ')'"
-        />
-        <span>{{ item.itemId }}</span>
-        <span>{{ item.itemName }}</span>
-      </div>
-    </div>
-    <table v-if="partsView === 'table'">
+    <table>
       <thead>
         <tr>
           <th>Image</th>
