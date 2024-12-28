@@ -28,6 +28,7 @@ export const LINKS = {
   SEARCH: 'search',
   COLOR: 'color',
   CART: 'cart',
+  LIST: 'list',
   EXTERNAL_CATEGORY: 'externalCategory',
   CATEGORY: 'category',
   CONDITION: 'condition',
@@ -57,6 +58,9 @@ export const Routes = {
   },
   cart(id: number) {
     return '/' + LINKS.CART + '/' + id
+  },
+  list(id: number) {
+    return '/' + LINKS.LIST + '/' + id
   },
   condition(id: string) {
     return '/' + LINKS.CONDITION + '/' + encodeURIComponent(id)
@@ -111,6 +115,9 @@ export const Hrefs = {
   lists: Routes.lists,
   cart(id: number) {
     return Routes.cart(id)
+  },
+  list(id: number) {
+    return Routes.list(id)
   },
   category(id: number) {
     return Routes.category(id)
@@ -193,6 +200,12 @@ export const Crumbs = {
     return {
       title: 'Country',
       href: Hrefs.country(id),
+    }
+  },
+  list(id: number) {
+    return {
+      title: 'List',
+      href: Hrefs.list(id),
     }
   },
   search(id: number) {

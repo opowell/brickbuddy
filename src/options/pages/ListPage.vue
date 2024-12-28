@@ -1,65 +1,70 @@
 <script setup lang="ts">
-import type { UiItem, UiListItem } from '../types'
-const { list, parts } = defineProps({
-  list: Object,
-  parts: Array<UiItem>
-})
-const emits = defineEmits(['goHome', 'open', 'addItem', 'goItem', 'goShopLists'])
-const newListItemItemId = ref('')
-const newListItemCondition = ref('')
-const newListItemMinQuantity = ref<number>(0)
-const newListItemMaxQuantity = ref<number>(0)
-const newListItemMaxPrice = ref<number>(0)
-const newListItemColors = ref<number | null>(null)
+import type { ShopList, UiListItem } from "../types";
+const emits = defineEmits(["open", "addItem", "goItem", "goShopLists"]);
+const newListItemItemId = ref("");
+const newListItemCondition = ref("");
+const newListItemMinQuantity = ref<number>(0);
+const newListItemMaxQuantity = ref<number>(0);
+const newListItemMaxPrice = ref<number>(0);
+const newListItemColors = ref<number | null>(null);
 
-function addNewListItem() {
-  if (!list) {
-    return
+import { useRoute } from "vue-router";
+const route = useRoute();
+import { liveObjectCache } from "../idb/idb";
+const list = ref<ShopList | undefined>();
+onMounted(async () => {
+  list.value = await liveObjectCache.getList(route.params.id - 0);
+  if (!list.value) {
+    return;
   }
-  emits('addItem', {
-    listId: list.id,
-    itemId: newListItemItemId.value,
-    condition: newListItemCondition.value,
-    minQ: newListItemMinQuantity.value,
-    maxQ: newListItemMaxQuantity.value,
-    maxP: newListItemMaxPrice.value,
-    colors: newListItemColors.value,
-  })
-}
+});
+
 function getColorNames(item: UiListItem) {
   if (!item || !item.colorNames) {
-    return item.colors
+    return item.colors;
   }
-  return item.colorNames.map(colorObj => colorObj.name).join(',')
+  return item.colorNames.map((colorObj) => colorObj.name).join(",");
 }
 const sortedParts = computed(() => {
-  if (!parts) {
-    return []
+  if (!items.value) {
+    return [];
   }
-  return parts.sort((a, b) => {
-    return a.itemName > b.itemName ? 1 : -1
-  })
-})
-const filterString = ref('')
+  return items.value.sort((a, b) => {
+    return a.itemName > b.itemName ? 1 : -1;
+  });
+});
+const filterString = ref("");
 const filteredParts = computed(() => {
-  const lowCaseFilter = filterString.value.toLowerCase()
-  const lowCaseIdFilter = String(newListItemItemId.value).toLowerCase()
-  return sortedParts.value.filter(a => {
+  const lowCaseFilter = filterString.value.toLowerCase();
+  const lowCaseIdFilter = String(newListItemItemId.value).toLowerCase();
+  return sortedParts.value.filter((a) => {
     return (
-      a.itemName.toLowerCase().includes(lowCaseFilter)
-      && String(a.itemId).toLowerCase().includes(lowCaseIdFilter)
-    )
-  })
-})
-const partsView = ref('images')
+      a.itemName.toLowerCase().includes(lowCaseFilter) &&
+      String(a.itemId).toLowerCase().includes(lowCaseIdFilter)
+    );
+  });
+});
+const partsView = ref("images");
+const items = computed(() => []);
+function setName(x: string) {
+  if (!list.value) {
+    return;
+  }
+  list.value.name = x;
+  liveObjectCache.updateList(list.value);
+}
+import TextInput from "./TextInput.vue";
+import HomeButton from "../components/HomeButton.vue";
 </script>
 
 <template>
   <div v-if="list">
-    <button @click="$emit('goHome')">Home</button>
-    <button @click="$emit('goShopLists')">Shopping Lists</button>
-    <h4>{{ list.name }}</h4>
-    <h4>Parts ({{ list.items.length }})</h4>
+    <HomeButton />
+    <button @click="$emit('goShopLists')">Lists</button>
+    <h4>List {{ list.name }}</h4>
+    <div>Id: {{ list.id }}</div>
+    <div>Name: <TextInput :value="list.name" @set="setName" /></div>
+    <h4>Parts ({{ items.length }})</h4>
     <table>
       <thead>
         <tr>
@@ -74,7 +79,7 @@ const partsView = ref('images')
       </thead>
       <tbody>
         <tr
-          v-for="item in list.items"
+          v-for="item in items"
           :key="`${item.itemId}-${item.condition}-${item.colors}`"
         >
           <td>{{ item.itemId }}</td>
@@ -114,7 +119,6 @@ const partsView = ref('images')
     <div>Max quantity:<input v-model="newListItemMaxQuantity" type="number" /></div>
     <div>Max price:<input v-model="newListItemMaxPrice" type="number" /></div>
     <div>Colors:<input v-model="newListItemColors" type="number" /></div>
-    <button @click="addNewListItem">Add</button>
     <div v-if="partsView === 'images'" class="parts">
       <template v-if="filteredParts.length === 1">
         <div
@@ -167,15 +171,3 @@ const partsView = ref('images')
     </table>
   </div>
 </template>
-<style lang="css">
-.parts {
-  display: flex;
-  flex-wrap: wrap;
-}
-.part {
-  display: flex;
-  flex-direction: column;
-  flex: 0 0 100px;
-  font-size: 0px;
-}
-</style>

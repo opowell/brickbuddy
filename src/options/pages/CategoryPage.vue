@@ -14,12 +14,9 @@ import ActiveSearchButton from "../components/ActiveSearchButton.vue";
 import PartButton from "../components/PartButton.vue";
 const router = useRouter();
 const category = ref<CategoryPageCategory | undefined>();
-startTimer("CategoryPage");
 onMounted(async () => {
   category.value = await getCategoryPageCategory(route.params.id - 0);
-  reportTime("CategoryPage");
   listItemQuantityMap.value = liveObjectCache.listItemQuantityMap;
-  search.value = await liveObjectCache.getActiveSearch();
 });
 const parts = computed(() => {
   if (!category.value) {
@@ -32,9 +29,12 @@ import { reportTime, startTimer } from "../utils";
 import QuantityInput from "../components/QuantityInput.vue";
 import { liveObjectCache } from "../idb/idb";
 const listItemQuantityMap = ref<Map<string, number> | undefined>();
-const search = ref<Search | undefined>();
 function updateListQuantity(item: Item, quantity: number) {}
 import ListSelect from "./ListSelect.vue";
+const listId = ref();
+function selectList(id: string) {
+  listId.value = id;
+}
 </script>
 
 <template>
@@ -63,7 +63,7 @@ import ListSelect from "./ListSelect.vue";
           <th>Name</th>
           <th>Colors</th>
           <th>Inv. items</th>
-          <th>List <ListSelect /></th>
+          <th>List <ListSelect @select="selectList" /></th>
         </tr>
       </thead>
       <tbody>
@@ -76,8 +76,8 @@ import ListSelect from "./ListSelect.vue";
           <td>{{ part.numInvItems }}</td>
           <td>
             <QuantityInput
-              v-if="search && listItemQuantityMap"
-              :current="listItemQuantityMap.get(search.id + '-' + part.itemId)"
+              v-if="listId && listItemQuantityMap"
+              :current="listItemQuantityMap.get(listId + '-' + part.itemId)"
               @update-quantity="updateListQuantity(part, $event)"
             />
           </td>

@@ -4,6 +4,7 @@ import HomeButton from "../components/HomeButton.vue";
 import { liveObjectCache } from "../idb/idb";
 import { dbDelete, put } from "../idb/db";
 import stores from "../idb/stores";
+import ListButton from "../components/ListButton.vue";
 const lists = ref<ShopList[] | undefined>();
 const numItemsMap = ref<Map<number, number>>();
 onMounted(async () => {
@@ -48,9 +49,7 @@ function deleteList(list: ShopList, index: number) {
         <tr v-for="(list, index) in lists" :key="list.id">
           <td>{{ list.id }}</td>
           <td>
-            <button @click="open(list)">
-              {{ list.name }}
-            </button>
+            <ListButton :list="list" />
           </td>
           <td v-if="list.id && numItemsMap">
             {{ numItemsMap.get(list.id) }}

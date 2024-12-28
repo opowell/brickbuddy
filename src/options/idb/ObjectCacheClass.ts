@@ -48,12 +48,19 @@ import {
   getAll,
   getAllFromIndex,
   getFromIndex,
+  put,
 } from './db'
 import indices from './indices'
 import { cheapestPrice, reportTime, startTimer } from '../utils'
 import { getAllActiveStoreIds } from './storeMethods'
 
 export default class ObjectCache {
+  updateList(list: ShopList) {
+    put(this.db, STORES.LISTS, list)
+  }
+  async getList(id: number): Promise<ShopList | undefined> {
+    return await get(this.db, STORES.LISTS, id)
+  }
   async getAllLists(): Promise<ShopList[] | undefined> {
     return await this.getAllObjects<ShopList>(
       this.listsMap,
@@ -970,11 +977,9 @@ export default class ObjectCache {
     if (!externalItems) {
       return
     }
-    startTimer('getExternalPartsInExternalCategory')
     const externalItemsWithStoreItems: ExternalItem[] = []
     for (let i = 0; i < externalItems.length; i++) {
       const item = externalItems[i]
-      startTimer(item.externalItemId)
       // const storeItems = await liveObjectCache.getInvItemsByExternalPart(
       //   item.externalItemId,
       //   item.type
@@ -983,14 +988,9 @@ export default class ObjectCache {
       //   continue
       // }
       externalItemsWithStoreItems.push(item)
-      reportTime(item.externalItemId)
     }
-    reportTime('getExternalPartsInExternalCategory')
     this.externalPartsByExternalCategory.set(id, externalItemsWithStoreItems)
     return externalItemsWithStoreItems
-  }
-  getComputedHomeData(): Ref<HomeData> {
-    return this.computedCache.homeData
   }
   async getHomeData(): Promise<HomeData | undefined> {
     const stores = (await this.db.getAllKeys(STORES.STORES.name)).length

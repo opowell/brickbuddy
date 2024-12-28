@@ -19,6 +19,7 @@ import ConditionsPage from './pages/ConditionsPage.vue'
 import CartsPage from './pages/CartsPage.vue'
 import ExternalCategoryPage from './pages/ExternalCategoryPage.vue'
 import CountryPage from './pages/CountryPage.vue'
+import ListPage from './pages/ListPage.vue'
 
 export default [
   {
@@ -120,5 +121,10 @@ export default [
     name: 'cart',
     path: '/' + LINKS.CART + '/:id',
     component: CartPage,
+  },
+  {
+    name: 'list',
+    path: '/' + LINKS.LIST + '/:id',
+    component: ListPage,
   },
 ]

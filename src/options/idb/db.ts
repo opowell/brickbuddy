@@ -48,6 +48,9 @@ export async function put(
   storeDef: StoreDefinition,
   value: any
 ) {
+  if (isProxy(value)) {
+    value = toRaw(value)
+  }
   try {
     return await db.put(storeDef.name, value)
   } catch (e) {
