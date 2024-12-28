@@ -34,12 +34,8 @@ const numMinItems: Ref<number | undefined> = ref(100)
 const numMinFetchPagesTotal: Ref<number | undefined> = ref()
 const numMaxFetchPagesTotal: Ref<number | undefined> = ref()
 import HomeButton from '../components/HomeButton.vue';
-import ActiveSearchButton from '../components/ActiveSearchButton.vue';
-import ActiveCartButton from '../components/ActiveCartButton.vue';
 import { importBrickLinkStores, liveObjectCache } from '../idb/idb'
 import { formatAmount, formatInteger } from '../utils';
-import { dbDelete, put } from '../idb/db';
-import STORES from '../idb/stores';
 
 async function importStores() {
   return await importBrickLinkStores(liveObjectCache.db)
@@ -148,44 +144,15 @@ async function filterAll(isExcluded: boolean) {
     await filter(store, isExcluded)
   }
 }
-async function include(store: Store) {
-  return await filter(store, false)
-}
-async function exclude(store: Store) {
-  return await filter(store, true)
-}
-async function filter(store: Store, isExcluded: boolean) {
-  const search = await liveObjectCache.getActiveSearch()
-  const filter: SearchFilter = {
-    searchId: search.id,
-    type: "store",
-    isExcluded,
-    objectId: store.id,
-  };
-  includedMap.value.set(store.id, !isExcluded)
-  excludedMap.value.set(store.id, isExcluded)
-  await put(liveObjectCache.db, STORES.SEARCH_FILTERS, filter);
-}
-async function clear(store: Store) {
-  const search = await liveObjectCache.getActiveSearch()
-  dbDelete(liveObjectCache.db, STORES.SEARCH_FILTERS, [
-    search.id,
-    "store",
-    store.id,
-  ]);
-  includedMap.value.delete(store.id)
-  excludedMap.value.delete(store.id)
-}
-
+import { useFilterStore } from '@/composables/filterStore';
 const includedMap = ref(new Map<string, boolean>())
 const excludedMap = ref(new Map<string, boolean>())
+const { include, exclude, filter, clear } = useFilterStore(includedMap.value, excludedMap.value)
 </script>
 
 <template>
   <div>
     <HomeButton />
-    <ActiveCartButton />
-    <ActiveSearchButton />
     <h4 v-if="filteredStores && stores">
       Stores ({{ filteredStores.length }} / {{ stores.length }})
     </h4>

@@ -23,6 +23,7 @@ import {
   externalPartImagesMap,
   getExternalCategoryPageExternalCategory,
 } from "../idb/categories";
+import ActiveCartButton from "../components/ActiveCartButton.vue";
 startTimer("ExternalCategoryPage");
 const router = useRouter();
 const category = ref<ExternalCategoryPageExternalCategory>();
@@ -58,6 +59,7 @@ const sortedParts = computed<ExternalCategoryPageExternalPart[]>(() => {
     <HomeButton />
     <CategoriesButton />
     <ActiveSearchButton />
+    <ActiveCartButton />
     <div v-if="!category">Loading...</div>
     <div v-else>
       <h4>

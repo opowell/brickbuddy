@@ -161,6 +161,7 @@ export async function getAllActiveStoreIds(
     // @ts-ignore
     countryStoreIds.forEach((id) => storeIds.set(id, true))
   }
+  console.log(Array.from(storeIds.keys()))
 
   const storeFilters = await getAllFromIndex<SearchFilter>(
     db,
@@ -180,6 +181,7 @@ export async function getAllActiveStoreIds(
     .filter((f) => !f.isExcluded)
     .map((f) => f.objectId)
   // @ts-ignore
+  console.log('included', includedStores)
   includedStores.forEach((id) => storeIds.set(id, true))
   if (includedCountries.length === 0 && includedStores.length === 0) {
     // @ts-ignore
@@ -204,9 +206,9 @@ export async function getAllActiveStoreIds(
     .filter((f) => f.isExcluded)
     .map((f) => f.objectId)
 
-  if (excludedIds.length > 0) {
-    excludedIds.forEach((id) => storeIds.delete(id))
-  }
+  console.log(Array.from(storeIds.keys()))
+  excludedIds.forEach((id) => storeIds.delete(id))
+  console.log(Array.from(storeIds.keys()))
   return Array.from(storeIds.keys())
 }
 

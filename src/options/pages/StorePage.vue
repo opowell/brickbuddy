@@ -93,7 +93,6 @@ const sortedItems = computed(() => {
 <template>
   <HomeButton />
   <StoresButton />
-  <ActiveSearchButton />
   <ActiveCartButton ref="cartButton" />
   <div v-if="store">
     <h4>{{ store.name }}</h4>

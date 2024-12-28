@@ -142,10 +142,7 @@ function setCartQuantity({
 <template>
   <div v-if="!item">Loading...</div>
   <div v-else>
-    <p>
-      <ActiveSearchButton />
-      <ActiveCartButton ref="cartButton" />
-    </p>
+    <ActiveCartButton ref="cartButton" />
     <HomeButton />
     <PartsButton />
     <h4>External Item {{ item.name }}</h4>

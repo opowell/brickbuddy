@@ -41,8 +41,6 @@ import { cacheLoaded, liveObjectCache } from "../idb/idb";
   <div v-if="!items || !cacheLoaded">Loading...</div>
   <div v-else>
     <HomeButton />
-    <ActiveSearchButton />
-    <ActiveCartButton />
     <h4>Parts ({{ filteredParts.length }} / {{ items.length }})</h4>
     <div>Search: <input v-model="search" /></div>
     <table>

@@ -65,7 +65,6 @@ function refreshCartButton() {
     <HomeButton />
     <PartsButton />
     <PartButton :part="variant.item" />
-    <ActiveSearchButton />
     <ActiveCartButton ref="cartButton" />
     <h4>{{ variant.item.itemName }}, {{ variant.color.name }}</h4>
     <img :src="variant.image" />

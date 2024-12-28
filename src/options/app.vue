@@ -55,7 +55,13 @@ window.getUsage = async function () {
   console.log(`Usage %: ${percentageUsed}`);
   console.log(`Remaining: ${remaining} GB`);
 };
+import ActiveCartButton from "./components/ActiveCartButton.vue";
+import ActiveSearchButton from "./components/ActiveSearchButton.vue";
 </script>
 <template>
+  <p v-if="loaded">
+    <ActiveSearchButton />
+    <ActiveCartButton />
+  </p>
   <router-view v-if="loaded" />
 </template>

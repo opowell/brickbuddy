@@ -65,8 +65,6 @@ async function filter(country: StoreCountriesPageStoreCountry, isExcluded: boole
 <template>
   <div>
     <HomeButton />
-    <ActiveCartButton />
-    <ActiveSearchButton />
     <h4 v-if="storeCountries">Store Countries ({{ storeCountries.length }})</h4>
     <table>
       <thead>

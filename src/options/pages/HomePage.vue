@@ -45,10 +45,6 @@ watch(loaded, () => {
 <template>
   <div>
     <h4>Brick Buddy</h4>
-    <p>
-      <ActiveSearchButton />
-      <ActiveCartButton />
-    </p>
     <div v-if="!loaded">Loading...</div>
     <div v-else class="cards">
       <CardComponent

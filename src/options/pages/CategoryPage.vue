@@ -86,8 +86,6 @@ watch(loadPartsTrigger, () => {
 <template>
   <div v-if="category">
     <HomeButton />
-    <CategoriesButton />
-    <ActiveSearchButton />
     <h4>Category {{ category.id }}</h4>
     <IncludeCategoryButton
       :category="category"

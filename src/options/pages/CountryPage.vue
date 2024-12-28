@@ -119,30 +119,24 @@ async function excludeAll() {
   return await filterAll(true)
 }
 async function filterAll(isExcluded: boolean) {
-  const search = await liveObjectCache.getActiveSearch()
   if (!filteredStores.value) {
     return
   }
-  filteredStores.value.forEach(s => {
-    const filter: SearchFilter = {
-      searchId: search.id,
-      type: "store",
-      isExcluded,
-      objectId: s.id,
-    };
-    put(liveObjectCache.db, STORES.SEARCH_FILTERS, filter);
-  })
+  for (let i=0; i<filteredStores.value.length; i++) {
+    const store = filteredStores.value[i]
+    await filter(store, isExcluded)
+  }
 }
 
+import { useFilterStore } from '@/composables/filterStore';
 const includedMap = ref(new Map<string, boolean>())
 const excludedMap = ref(new Map<string, boolean>())
+const { include, exclude, filter, clear } = useFilterStore(includedMap.value, excludedMap.value)
 </script>
 
 <template>
   <div>
     <HomeButton />
-    <ActiveCartButton />
-    <ActiveSearchButton />
     <h3>Country: {{ id }}</h3>
     <h4 v-if="filteredStores && stores">
       Stores ({{ filteredStores.length }} / {{ stores.length }})
@@ -215,6 +209,9 @@ const excludedMap = ref(new Map<string, boolean>())
             <FilterButtons
               :excluded="excludedMap.get(store.id)"
               :included="includedMap.get(store.id)"
+              @exclude="exclude(store)"
+              @include="include(store)"
+              @clear="clear(store)"
             />
           </td>
         </tr>
