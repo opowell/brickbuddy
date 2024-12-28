@@ -1,39 +1,66 @@
 <script setup lang="ts">
-import type { UiShopList } from "../types";
+import type { ShopList, UiShopList } from "../types";
 import HomeButton from "../components/HomeButton.vue";
-const newListName = ref("");
-const lists = ref([]);
-onMounted(() => {});
-function open(list: UiShopList) {}
-function add(name: string) {}
+import { liveObjectCache } from "../idb/idb";
+import { dbDelete, put } from "../idb/db";
+import stores from "../idb/stores";
+const lists = ref<ShopList[] | undefined>();
+const numItemsMap = ref<Map<number, number>>();
+onMounted(async () => {
+  lists.value = await liveObjectCache.getAllLists();
+  numItemsMap.value = liveObjectCache.listsNumItemsMap;
+  if (!lists.value) {
+    return;
+  }
+  lists.value.forEach((list) => {
+    liveObjectCache.loadNumListItems(list.id);
+  });
+});
+function open(list: ShopList) {}
+function add() {
+  const db = liveObjectCache.db;
+  put(db, stores.LISTS, {
+    name: new Date().toISOString(),
+  });
+}
+function deleteList(list: ShopList, index: number) {
+  if (!list.id) {
+    return;
+  }
+  dbDelete(liveObjectCache.db, stores.LISTS, list.id);
+}
 </script>
 
 <template>
   <div>
     <HomeButton />
-    <h4>Shopping Lists</h4>
-    <table>
+    <h4 v-if="lists">Lists ({{ lists.length }})</h4>
+    <table v-if="lists">
       <thead>
         <tr>
+          <th>Id</th>
           <th>Name</th>
           <th>Items</th>
+          <th>Actions</th>
         </tr>
       </thead>
       <tbody>
-        <tr v-for="list in lists" :key="list.id">
+        <tr v-for="(list, index) in lists" :key="list.id">
+          <td>{{ list.id }}</td>
           <td>
             <button @click="open(list)">
               {{ list.name }}
             </button>
           </td>
+          <td v-if="list.id && numItemsMap">
+            {{ numItemsMap.get(list.id) }}
+          </td>
           <td>
-            {{ list.items.length }}
+            <button @click="deleteList(list, index)">Delete</button>
           </td>
         </tr>
       </tbody>
     </table>
-    <h4>Add</h4>
-    <div>Name:<input v-model="newListName" type="text" /></div>
-    <button @click="add(newListName)">Add</button>
+    <button @click="add">Add</button>
   </div>
 </template>

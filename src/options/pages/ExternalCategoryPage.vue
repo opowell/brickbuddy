@@ -81,6 +81,7 @@ const sortedParts = computed<ExternalCategoryPageExternalPart[]>(() => {
             <th>Colors</th>
             <th>Inv. items</th>
             <th>Price</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -109,6 +110,7 @@ const sortedParts = computed<ExternalCategoryPageExternalPart[]>(() => {
               }}
             </td>
             <td>{{ formatAmount(externalPartPriceMap.get(part.type + part.itemId)) }}</td>
+            <td><button>Add to list</button></td>
           </tr>
         </tbody>
       </table>

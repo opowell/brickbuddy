@@ -5,7 +5,7 @@ import HomeButton from "../components/HomeButton.vue";
 
 import { useRoute } from "vue-router";
 import { getCategoryPageCategory } from "../idb/categories";
-import { CategoryPageCategory } from "../types";
+import { CategoryPageCategory, Item, Search } from "../types";
 import IncludeCategoryButton from "../components/IncludeCategoryButton.vue";
 import ExcludeCategoryButton from "../components/ExcludeCategoryButton.vue";
 const route = useRoute();
@@ -18,6 +18,8 @@ startTimer("CategoryPage");
 onMounted(async () => {
   category.value = await getCategoryPageCategory(route.params.id - 0);
   reportTime("CategoryPage");
+  listItemQuantityMap.value = liveObjectCache.listItemQuantityMap;
+  search.value = await liveObjectCache.getActiveSearch();
 });
 const parts = computed(() => {
   if (!category.value) {
@@ -27,6 +29,12 @@ const parts = computed(() => {
 });
 import ExternalCategoryButton from "../components/ExternalCategoryButton.vue";
 import { reportTime, startTimer } from "../utils";
+import QuantityInput from "../components/QuantityInput.vue";
+import { liveObjectCache } from "../idb/idb";
+const listItemQuantityMap = ref<Map<string, number> | undefined>();
+const search = ref<Search | undefined>();
+function updateListQuantity(item: Item, quantity: number) {}
+import ListSelect from "./ListSelect.vue";
 </script>
 
 <template>
@@ -55,6 +63,7 @@ import { reportTime, startTimer } from "../utils";
           <th>Name</th>
           <th>Colors</th>
           <th>Inv. items</th>
+          <th>List <ListSelect /></th>
         </tr>
       </thead>
       <tbody>
@@ -65,6 +74,13 @@ import { reportTime, startTimer } from "../utils";
           </td>
           <td>{{ part.numVariants }}</td>
           <td>{{ part.numInvItems }}</td>
+          <td>
+            <QuantityInput
+              v-if="search && listItemQuantityMap"
+              :current="listItemQuantityMap.get(search.id + '-' + part.itemId)"
+              @update-quantity="updateListQuantity(part, $event)"
+            />
+          </td>
         </tr>
       </tbody>
     </table>

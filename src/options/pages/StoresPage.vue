@@ -63,8 +63,31 @@ const filteredStores = computed(() => {
       return false
     }
     return true
+  }).sort((a, b) => {
+    switch (sortColumn.value) {
+      case 'inventory':
+        return b.numInvItems - a.numInvItems
+      case 'lastScraped':
+        return a.lastScraped.getTime() - b.lastScraped.getTime()
+      case 'fetchPercent':
+        return b.fetchPercent - a.fetchPercent
+      default:
+        return 1
+    }
+
   })
 })
+
+const sortColumn = ref<'inventory' | 'lastScraped' | 'fetchPercent' | undefined>()
+function sortByInventory() {
+  sortColumn.value = 'inventory'
+}
+function sortByLastScraped() {
+  sortColumn.value = 'lastScraped'
+}
+function sortByFetchPercent() {
+  sortColumn.value = 'fetchPercent'
+}
 
 const avgFetchPercent = computed(() => {
   if (!totalCurrentFetchIndex.value) {
@@ -194,10 +217,10 @@ const excludedMap = ref(new Map<string, boolean>())
           <th>Id</th>
           <th>Type</th>
           <th>Name</th>
-          <th>Inventory</th>
+          <th><button @click="sortByInventory">Inventory</button></th>
           <th>Fetch Index</th>
-          <th>Fetch %</th>
-          <th>Last Scraped</th>
+          <th><button @click="sortByFetchPercent">Fetch %</button></th>
+          <th><button @click="sortByLastScraped">Last Scraped</button></th>
           <th>Actions</th>
         </tr>
       </thead>

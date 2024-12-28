@@ -1,7 +1,6 @@
 import { IDBPDatabase } from 'idb'
 import {
   ActiveSearch,
-  AdjustedInvItem,
   CartItem,
   CartWithItems,
   CategoriesPageCategory,
@@ -9,7 +8,6 @@ import {
   Color,
   ConditionPriceAdjustment,
   ExternalCategory,
-  ExternalCategoryPageExternalPart,
   ExternalItem,
   ExternalPartPageExternalPart,
   ExternalPartPageInvItem,
@@ -20,7 +18,7 @@ import {
   ItemVariant,
   PartPageCategory,
   Search,
-  SearchFilter,
+  ShopList,
   Store,
   StoreCountry,
   StorePageInvItemItem,
@@ -42,25 +40,27 @@ import {
 } from './categories'
 import { getInvItemFromId } from './invItems'
 import { getPart, getStorePageExternalPart, getStorePagePart } from './parts'
-import { getFirstActiveSearch, getSearchFilters } from './searches'
+import { getFirstActiveSearch } from './searches'
 import {
   count,
   countFromIndex,
   get,
   getAll,
   getAllFromIndex,
-  getAllKeys,
   getFromIndex,
 } from './db'
 import indices from './indices'
 import { cheapestPrice, reportTime, startTimer } from '../utils'
-import { liveObjectCache } from './idb'
-import ComputedObjectCacheClass from './ComputedObjectCacheClass'
 import { getAllActiveStoreIds } from './storeMethods'
-import { BOOLEAN_AS_NUMBER } from './utils'
-import { LRUCache } from 'lru-cache'
 
 export default class ObjectCache {
+  async getAllLists(): Promise<ShopList[] | undefined> {
+    return await this.getAllObjects<ShopList>(
+      this.listsMap,
+      this.getLists.bind(this)
+    )
+  }
+  listsNumItemsMap: Map<number, number>
   allCategories: Category[] | undefined
   allStoreCountries: StoreCountry[] | undefined
   colors: Map<string, UiColor>
@@ -94,10 +94,15 @@ export default class ObjectCache {
   homePageNumColors: number | undefined
   conditionsMapMap: Map<number, Map<string, number>>
   searchActiveStoreIds: Map<number, string[]>
+  listItemQuantityMap: Map<string, number>
+  listsMap: Map<number, ShopList>
   db: IDBPDatabase
   // computedCache: ComputedObjectCacheClass
   constructor(db: IDBPDatabase) {
     this.db = db
+    this.listsMap = new Map<number, ShopList>()
+    this.listsNumItemsMap = new Map<number, number>()
+    this.listItemQuantityMap = new Map<string, number>()
     this.conditionsMapMap = new Map<number, Map<string, number>>()
     this.activeSearchRef = ref()
     this.homePageNumColors = undefined
@@ -749,6 +754,23 @@ export default class ObjectCache {
     }
     this.conditionsMapMap.set(searchId, map)
     return map
+  }
+  async loadNumListItems(id: number) {
+    if (this.listsNumItemsMap.has(id)) {
+      return
+    }
+    const numItems = await countFromIndex(
+      this.db,
+      indices.SHOP_LIST_ITEMS_BY_SHOP_LIST,
+      id
+    )
+    if (numItems === undefined) {
+      return
+    }
+    this.listsNumItemsMap.set(id, numItems)
+  }
+  async getLists(): Promise<ShopList[] | undefined> {
+    return await getAll<ShopList>(this.db, STORES.LISTS)
   }
   async getAllActiveStoreIds(searchId: number): Promise<string[] | undefined> {
     const storedValue = this.searchActiveStoreIds.get(searchId)

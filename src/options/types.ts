@@ -331,7 +331,7 @@ export interface StorePageStore extends Store {
   items: InvItem[]
 }
 export interface ShopList {
-  id?: number
+  id: number
   name: string
 }
 

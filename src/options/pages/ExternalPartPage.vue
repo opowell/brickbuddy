@@ -172,6 +172,7 @@ function setCartQuantity({
           <th>Price</th>
           <th>Quantity</th>
           <th>Inv. Items</th>
+          <th>Lists</th>
         </tr>
       </thead>
       <tbody>
@@ -188,6 +189,7 @@ function setCartQuantity({
           <td v-else>{{ variant.price }}&nbsp;-&nbsp;{{ variant.maxPrice }}</td>
           <td>{{ formatInteger(variant.quantity) }}</td>
           <td>{{ formatInteger(variant.invItems.length) }}</td>
+          <td>Set quantity</td>
         </tr>
       </tbody>
     </table>

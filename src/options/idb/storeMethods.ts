@@ -174,7 +174,6 @@ export async function getAllActiveStoreIds(
     .filter((f) => !f.isExcluded)
     .map((f) => f.objectId)
   // @ts-ignore
-  console.log('excludedCountries', excludedCountries)
   // TODO:
   // excludedStores.forEach((id) => storeIds.set(id, true))
   const includedStores = storeFilters
