@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { SearchFilter, StoreType, type StoresPageStore } from '../types';
+import { SearchFilter, Store, StoreType, type StoresPageStore } from '../types';
 import StoreButton from '../components/StoreButton.vue';
 import { getStoresPageStores } from '../idb/storeMethods'
 import FilterButtons from '../components/FilterButtons.vue';
@@ -38,7 +38,7 @@ import ActiveSearchButton from '../components/ActiveSearchButton.vue';
 import ActiveCartButton from '../components/ActiveCartButton.vue';
 import { importBrickLinkStores, liveObjectCache } from '../idb/idb'
 import { formatAmount, formatInteger } from '../utils';
-import { put } from '../idb/db';
+import { dbDelete, put } from '../idb/db';
 import STORES from '../idb/stores';
 
 async function importStores() {
@@ -81,7 +81,11 @@ const totalCurrentFetchIndex = computed(() => {
     return 0
   }
   filteredStores.value.forEach(store => {
-    sum += store.fetchPageIndex
+    if (store.fullyFetched) {
+      sum += store.fetchMaxPageIndex
+    } else {
+      sum += store.fetchPageIndex
+    }
   })
   return sum
 })
@@ -113,19 +117,41 @@ async function excludeAll() {
   return await filterAll(true)
 }
 async function filterAll(isExcluded: boolean) {
-  const search = await liveObjectCache.getActiveSearch()
   if (!filteredStores.value) {
     return
   }
-  filteredStores.value.forEach(s => {
-    const filter: SearchFilter = {
-      searchId: search.id,
-      type: "store",
-      isExcluded,
-      objectId: s.id,
-    };
-    put(liveObjectCache.db, STORES.SEARCH_FILTERS, filter);
-  })
+  for (let i=0; i<filteredStores.value.length; i++) {
+    const store = filteredStores.value[i]
+    await filter(store, isExcluded)
+  }
+}
+async function include(store: Store) {
+  return await filter(store, false)
+}
+async function exclude(store: Store) {
+  return await filter(store, true)
+}
+async function filter(store: Store, isExcluded: boolean) {
+  const search = await liveObjectCache.getActiveSearch()
+  const filter: SearchFilter = {
+    searchId: search.id,
+    type: "store",
+    isExcluded,
+    objectId: store.id,
+  };
+  includedMap.value.set(store.id, !isExcluded)
+  excludedMap.value.set(store.id, isExcluded)
+  await put(liveObjectCache.db, STORES.SEARCH_FILTERS, filter);
+}
+async function clear(store: Store) {
+  const search = await liveObjectCache.getActiveSearch()
+  dbDelete(liveObjectCache.db, STORES.SEARCH_FILTERS, [
+    search.id,
+    "store",
+    store.id,
+  ]);
+  includedMap.value.delete(store.id)
+  excludedMap.value.delete(store.id)
 }
 
 const includedMap = ref(new Map<string, boolean>())
@@ -213,6 +239,9 @@ const excludedMap = ref(new Map<string, boolean>())
             <FilterButtons
               :excluded="excludedMap.get(store.id)"
               :included="includedMap.get(store.id)"
+              @exclude="exclude(store)"
+              @include="include(store)"
+              @clear="clear(store)"
             />
           </td>
         </tr>

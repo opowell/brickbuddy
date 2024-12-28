@@ -40,6 +40,7 @@ import NameIdLabel from "../components/NameIdLabel.vue";
 import { liveObjectCache } from "../idb/idb";
 import stores from "../idb/stores";
 import { dbDelete, put } from "../idb/db";
+import FilterButtons from "../components/FilterButtons.vue";
 function setConditionAdjustment(adjustment: ConditionPriceAdjustment) {
   put(liveObjectCache.db, stores.SEARCH_CONDITION_PRICE_ADJUSTMENTS, adjustment);
 }
@@ -53,6 +54,19 @@ async function removeFilter(filter: SearchFilter, index: number) {
     return;
   }
   search.value.filters?.splice(index, 1);
+}
+async function removeAllFilters() {
+  if (!search.value) {
+    return;
+  }
+  if (!search.value.filters) {
+    return;
+  }
+  const numFilters = search.value.filters.length;
+  for (let i = 0; i < numFilters; i++) {
+    // @ts-ignore
+    await removeFilter(search.value.filters[0], 0);
+  }
 }
 </script>
 
@@ -85,6 +99,17 @@ async function removeFilter(filter: SearchFilter, index: number) {
         </tr>
       </thead>
       <tbody>
+        <tr>
+          <td></td>
+          <td></td>
+          <td>ALL</td>
+          <td>
+            <FilterButtons @clear="removeAllFilters" allow-clear />
+          </td>
+        </tr>
+        <tr>
+          <td colspan="4"><hr /></td>
+        </tr>
         <tr
           v-for="(filter, index) in search.filters"
           :key="filter.type + filter.objectId"
@@ -92,7 +117,13 @@ async function removeFilter(filter: SearchFilter, index: number) {
           <td>{{ filter.isExcluded ? "Exclude" : "Include" }}</td>
           <td>{{ filter.type }}</td>
           <td>{{ filter.objectId }}</td>
-          <td><button @click="removeFilter(filter, index)">Remove</button></td>
+          <td>
+            <FilterButtons
+              :included="!filter.isExcluded"
+              :excluded="filter.isExcluded"
+              @clear="removeFilter(filter, index)"
+            />
+          </td>
         </tr>
       </tbody>
     </table>

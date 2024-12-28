@@ -2,6 +2,7 @@
 defineProps({
   included: Boolean,
   excluded: Boolean,
+  allowClear: Boolean,
 });
 </script>
 
@@ -9,6 +10,8 @@ defineProps({
   <div>
     <button :disabled="included" @click="$emit('include')">Include</button>
     <button :disabled="excluded" @click="$emit('exclude')">Exclude</button>
-    <button :disabled="!excluded && !included" @click="$emit('clear')">Clear</button>
+    <button :disabled="!excluded && !included && !allowClear" @click="$emit('clear')">
+      Clear
+    </button>
   </div>
 </template>
