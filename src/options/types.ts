@@ -342,6 +342,7 @@ export interface ShopListItem {
   maxQuantity?: number
   maxPrice?: number
   colors: string[]
+  type: 'item' | 'externalItem'
 }
 
 export interface CachedItem extends Item {

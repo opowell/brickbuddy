@@ -38,6 +38,7 @@ function updateListQuantity(item: CategoryPagePart, quantity: number) {
   const listItem: ShopListItem = {
     listId: listId.value,
     itemId: item.itemId,
+    type: "item",
     colors: [],
     minQuantity: quantity,
   };
@@ -59,20 +60,6 @@ const loadPartsTrigger = computed(() => {
   }
   return listId.value + "-" + parts.value.map((p) => p.itemId).join(",");
 });
-watch(
-  listItemQuantityMap,
-  () => {
-    console.log(
-      "change",
-      listItemQuantityMap.value?.keys(),
-      listItemQuantityMap.value?.values()
-    );
-  },
-  {
-    deep: true,
-    immediate: true,
-  }
-);
 watch(loadPartsTrigger, () => {
   parts.value.forEach((part) => {
     liveObjectCache.loadListItemQuantity(listId.value, part.itemId);

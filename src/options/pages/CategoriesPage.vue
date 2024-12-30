@@ -89,6 +89,13 @@ const uniqueExternalCategories = computed<CategoriesPageUniqueCategory[]>(() => 
   });
   return out;
 });
+import CategoryButton from "../components/CategoryButton.vue";
+import HomeButton from "../components/HomeButton.vue";
+import ExternalCategoryButton from "../components/ExternalCategoryButton.vue";
+import { getActiveSearch } from "../idb/searches";
+import { dbDelete, put } from "../idb/db";
+import stores from "../idb/stores";
+
 async function exclude(externalCategory: CategoriesPageUniqueCategory) {
   return await filterCategory(externalCategory, true);
 }
@@ -113,16 +120,6 @@ async function filterCategory(
   externalCategory.excluded = isExcluded;
   externalCategory.included = !isExcluded;
 }
-import CategoryButton from "../components/CategoryButton.vue";
-import HomeButton from "../components/HomeButton.vue";
-import ActiveSearchButton from "../components/ActiveSearchButton.vue";
-import ExternalCategoryButton from "../components/ExternalCategoryButton.vue";
-import { getActiveSearch } from "../idb/searches";
-import { dbDelete, getAllFromIndex, put } from "../idb/db";
-import stores from "../idb/stores";
-import { reportTime, startTimer } from "../utils";
-import indices from "../idb/indices";
-
 async function clear(category: CategoriesPageUniqueCategory) {
   const search = await getActiveSearch();
   if (!search) {
@@ -135,20 +132,6 @@ async function clear(category: CategoriesPageUniqueCategory) {
   ]);
   category.excluded = false;
   category.included = false;
-  const categories = await getAllFromIndex<ExternalCategory>(
-    liveObjectCache.db,
-    indices.EXTERNAL_CATEGORIES_BY_CATEGORY,
-    category.id
-  );
-  if (!categories) {
-    return;
-  }
-  for (let i = 0; i < categories.length; i++) {
-    await dbDelete(liveObjectCache.db, stores.SEARCH_CATEGORIES, [
-      search.id,
-      categories[i].id,
-    ]);
-  }
 }
 </script>
 

@@ -18,7 +18,6 @@ const stores: {
   PART_VARIANTS: StoreDefinition
   PARTS: StoreDefinition
   SEARCHES: StoreDefinition
-  SEARCH_CATEGORIES: StoreDefinition
   SEARCH_FILTERS: StoreDefinition
   SEARCH_CONDITION_PRICE_ADJUSTMENTS: StoreDefinition
   STORE_COUNTRIES: StoreDefinition
@@ -99,10 +98,6 @@ const stores: {
   SEARCH_FILTERS: {
     name: 'searchFilters',
     keyPath: ['searchId', 'type', 'objectId'],
-  },
-  SEARCH_CATEGORIES: {
-    name: 'searchCategories',
-    keyPath: ['searchId', 'categoryId'],
   },
   SEARCH_CONDITION_PRICE_ADJUSTMENTS: {
     name: 'searchConditionPriceAdjustments',

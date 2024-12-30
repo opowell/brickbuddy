@@ -6,6 +6,7 @@ const searches = ref<SearchesPageSearch[] | undefined>(undefined);
 onMounted(async () => {
   searches.value = await getSearchesPagesSearches();
 });
+import SearchButton from "../components/SearchButton.vue";
 </script>
 
 <template>
@@ -21,9 +22,7 @@ onMounted(async () => {
       <tbody>
         <tr v-for="search in searches" :key="search.id">
           <td>
-            <button @click="$emit('goSearch', search)">
-              {{ search.name }}
-            </button>
+            <SearchButton :search="search" />
           </td>
         </tr>
       </tbody>

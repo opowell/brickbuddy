@@ -137,6 +137,14 @@ function setCartQuantity({
   }
   originalItem.cartQuantity = newQuantity;
 }
+enum SORTINGS {
+  InvItems,
+  Colors,
+}
+const sorting = ref();
+function sortByInvItems() {
+  sorting.value = SORTINGS.InvItems;
+}
 </script>
 
 <template>
@@ -168,7 +176,7 @@ function setCartQuantity({
           <th>Color</th>
           <th>Price</th>
           <th>Quantity</th>
-          <th>Inv. Items</th>
+          <th><button @click="sortByInvItems">Store Items</button></th>
           <th>Lists</th>
         </tr>
       </thead>

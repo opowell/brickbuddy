@@ -363,19 +363,6 @@ async function isCountryExcluded(
   return result.isExcluded
 }
 
-export async function putSearchCategory(
-  db: IDBPDatabase,
-  searchId: number,
-  categoryId: string,
-  isExcluded: boolean
-) {
-  put(db, STORES.SEARCH_CATEGORIES, {
-    searchId,
-    categoryId,
-    isExcluded: isExcluded ? BOOLEAN_AS_NUMBER.TRUE : BOOLEAN_AS_NUMBER.FALSE,
-  })
-}
-
 function extractValue(
   str: string,
   start: string,

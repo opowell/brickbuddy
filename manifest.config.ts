@@ -44,14 +44,14 @@ export default {
   // host_permissions: [],
   permissions: ['storage', 'tabs', 'background', 'alarms'],
   // web_accessible_resources: [
-    // {
-    //   matches: ['*://*/*'],
-    //   resources: ['src/content-script/index.ts'],
-    // },
-    // {
-    //   matches: ['*://*/*'],
-    //   resources: ['src/content-script/iframe/index.html'],
-    // },
+  // {
+  //   matches: ['*://*/*'],
+  //   resources: ['src/content-script/index.ts'],
+  // },
+  // {
+  //   matches: ['*://*/*'],
+  //   resources: ['src/content-script/iframe/index.html'],
+  // },
   // ],
   icons: {
     16: 'src/assets/logo.png',

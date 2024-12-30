@@ -126,11 +126,6 @@ const indices: {
     name: 'searchTypeObject',
     keyPath: ['searchId', 'type', 'objectId'],
   },
-  SEARCH_CATEGORIES_EXCLUDED: {
-    store: stores.SEARCH_CATEGORIES,
-    name: 'searchCategoriesExcluded',
-    keyPath: ['searchId', 'isExcluded'],
-  },
   INV_ITEMS_BY_STORE: {
     store: stores.INVENTORY_ITEMS,
     name: 'store',

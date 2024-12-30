@@ -7,7 +7,7 @@ import CardComponent from "../components/CardComponent.vue";
 import { reportTime, startTimer } from "../utils";
 
 const stores = ref<number | undefined>();
-const storeCountries = ref<number | undefined>();
+const countries = ref<number | undefined>();
 const colors = ref<number | undefined>();
 const categories = ref<number | undefined>();
 const parts = ref<number | undefined>();
@@ -19,7 +19,7 @@ onMounted(async () => {
   startTimer("HomePage");
   colors.value = await liveObjectCache.getHomePageNumColors();
   stores.value = await liveObjectCache.getHomePageNumStores();
-  storeCountries.value = await liveObjectCache.getHomePageNumStoreCountries();
+  countries.value = await liveObjectCache.getHomePageNumCountries();
   categories.value = await liveObjectCache.getHomePageNumCategories();
   parts.value = await liveObjectCache.getHomePageNumParts();
   searches.value = await liveObjectCache.getHomePageNumSearches();
@@ -30,7 +30,7 @@ onMounted(async () => {
 const loaded = computed(() => {
   return (
     stores.value !== undefined &&
-    storeCountries.value !== undefined &&
+    countries.value !== undefined &&
     colors.value !== undefined &&
     categories.value !== undefined
   );
@@ -49,7 +49,7 @@ watch(loaded, () => {
     <div v-else class="cards">
       <CardComponent
         name="Countries"
-        :count="storeCountries"
+        :count="countries"
         :href="Crumbs.storeCountries.href"
       />
       <CardComponent name="Stores" :count="stores" :href="Crumbs.stores.href" />

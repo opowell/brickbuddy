@@ -298,6 +298,7 @@
     "useId": true,
     "useModel": true,
     "useTemplateRef": true,
-    "useFilterStore": true
+    "useFilterStore": true,
+    "useFilterCategory": true
   }
 }

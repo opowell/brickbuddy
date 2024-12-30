@@ -49,6 +49,7 @@ import {
   get,
   getAll,
   getAllFromIndex,
+  getAllKeys,
   getFromIndex,
   put,
 } from './db'
@@ -70,7 +71,6 @@ export default class ObjectCache {
         if (!listItem) {
           return 0
         }
-        console.log('got', listId + '-' + itemId, listItem.minQuantity)
         return listItem.minQuantity
       }
     )
@@ -223,11 +223,29 @@ export default class ObjectCache {
     const num = await count(this.db, STORES.CONDITIONS)
     return num
   }
-  async getHomePageNumStoreCountries(): Promise<number | undefined> {
-    return await count(this.db, STORES.STORE_COUNTRIES)
+  async getHomePageNumCountries(): Promise<number | undefined> {
+    const search = await this.getActiveSearch()
+    if (!search) {
+      return
+    }
+    let keys = await getAllKeys(this.db, STORES.STORE_COUNTRIES)
+    if (!keys) {
+      return
+    }
+    if (search.countries.included.length > 0) {
+      keys = keys.filter((key: string) =>
+        search.countries.included.includes(key)
+      )
+    }
+    if (search.countries.excluded.length > 0) {
+      keys = keys.filter(
+        (key: string) => !search.countries.excluded.includes(key)
+      )
+    }
+    return keys.length
   }
   async getHomePageNumObjects(
-    filterKey: 'colors' | 'categories' | 'stores' | 'parts',
+    filterKey: 'colors' | 'categories' | 'stores' | 'parts' | 'countries',
     getObject: Function,
     getObjectKey: Function,
     getAllKeys: Function,
@@ -280,22 +298,22 @@ export default class ObjectCache {
       'parts',
       this.getPart,
       (part: Item) => part.itemId,
-      this.getAllPartKeys,
-      async (key) => {
-        const externalParts = await this.getExternalPartsByPart(key)
-        if (!externalParts) {
-          return false
-        }
-        for (let i = 0; i < externalParts.length; i++) {
-          const externalPart = externalParts[i]
-          const externalCategory = await this.getExternalCategory(
-            externalPart.externalCategoryId,
-            externalPart.type
-          )
-          //
-        }
-        return true
-      }
+      this.getAllPartKeys
+      // async (key) => {
+      //   const externalParts = await this.getExternalPartsByPart(key)
+      //   if (!externalParts) {
+      //     return false
+      //   }
+      //   for (let i = 0; i < externalParts.length; i++) {
+      //     const externalPart = externalParts[i]
+      //     const externalCategory = await this.getExternalCategory(
+      //       externalPart.externalCategoryId,
+      //       externalPart.type
+      //     )
+      //     //
+      //   }
+      //   return true
+      // }
     )
     return x
   }
@@ -790,6 +808,7 @@ export default class ObjectCache {
     return map
   }
   async loadNumListItems(id: number) {
+    console.log('loadNumListItems', id)
     if (this.listsNumItemsMap.has(id)) {
       return
     }

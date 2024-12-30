@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ExternalItem, ShopListItem, type ShopList, type UiListItem } from "../types";
-const emits = defineEmits(["open", "addItem", "goItem", "goShopLists"]);
+const emits = defineEmits(["open", "addItem", "goItem"]);
 const newListItemItemId = ref("");
 const newListItemCondition = ref("");
 const newListItemMinQuantity = ref<number>(0);
@@ -52,9 +52,12 @@ const items = computed(() => {
   }
   return listItems.value.map(li => {
     const item = liveObjectCache.parts.get(li.itemId)
+    if (!item) {
+      return
+    }
     return {
       ...li,
-      itemName: item.name || '',
+      itemName: item.itemId || '',
       variants: []
     }
   })
@@ -68,12 +71,13 @@ function setName(x: string) {
 }
 import TextInput from "./TextInput.vue";
 import HomeButton from "../components/HomeButton.vue";
+import ListsButton from "../components/ListsButton.vue";
 </script>
 
 <template>
   <div v-if="list">
     <HomeButton />
-    <button @click="$emit('goShopLists')">Lists</button>
+    <ListsButton />
     <h4>List {{ list.name }}</h4>
     <div>Id: {{ list.id }}</div>
     <div>Name: <TextInput :value="list.name" @set="setName" /></div>

@@ -16,8 +16,6 @@ chrome.runtime.onInstalled.addListener(async (opt) => {
   }
 })
 
-console.log('hello world from background')
-
 self.onerror = function (message, source, lineno, colno, error) {
   console.info(
     `Error: ${message}\nSource: ${source}\nLine: ${lineno}\nColumn: ${colno}\nError object: ${error}`
@@ -33,8 +31,9 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name === SCRAPE_ALARM_NAME) {
     const db = await getDbConnection()
     await loadLiveObjectCache(db)
-    console.log('fire alarm', alarm, db, liveObjectCache)
-    getPrices()
+    await getPrices()
+    await getPrices()
+    await getPrices()
   }
 })
 
@@ -52,8 +51,6 @@ const SCRAPE_ALARM_NAME = 'scrapePrices'
 async function checkAlarmState() {
   await chrome.alarms.clear(SCRAPE_ALARM_NAME)
   await chrome.alarms.create(SCRAPE_ALARM_NAME, { periodInMinutes: 0.5 })
-  const alarm = await chrome.alarms.get(SCRAPE_ALARM_NAME)
-  console.log(alarm)
 }
 
 checkAlarmState()

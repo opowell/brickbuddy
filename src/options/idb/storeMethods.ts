@@ -17,7 +17,7 @@ import {
 import { getDbConnection, liveObjectCache } from './idb'
 import { countInvItems, getStorePageInvItems } from './invItems'
 import { getFirstActiveSearch } from './searches'
-import { get, getAllFromIndex, getAllKeysFromIndex } from './db'
+import { get, getAllFromIndex, getAllKeysFromIndex, put } from './db'
 import STORES from './stores'
 import indices from './indices'
 import { BOOLEAN_AS_NUMBER } from './utils'
@@ -50,7 +50,7 @@ export async function addStore(
     type: type,
     countryId,
   }
-  db.put(STORES.STORES.name, newStore)
+  put(db, STORES.STORES, newStore)
   const newUiStore: UiStore = {
     ...newStore,
     items: [],
@@ -75,7 +75,7 @@ export async function updateStore(db: IDBPDatabase, store: Store | UiStore) {
       type: store.type,
       countryId: store.countryId,
     }
-    await db.put(STORES.STORES.name, storeObj)
+    await put(db, STORES.STORES, storeObj)
   } catch (e) {
     console.log(store, e)
   }
@@ -183,7 +183,6 @@ export async function getAllActiveStoreIds(
     // @ts-ignore
     countryStoreIds.forEach((id) => storeIds.set(id, true))
   }
-  console.log(storeIds.size)
 
   const storeFilters = await getAllFromIndex<SearchFilter>(
     db,
@@ -203,15 +202,10 @@ export async function getAllActiveStoreIds(
     .filter((f) => !f.isExcluded)
     .map((f) => f.objectId)
   // @ts-ignore
-  console.log('included', includedStores)
-  includedStores.forEach((id) => {
-    console.log('set', id, storeIds.size)
-    storeIds.set(id, true)
-    console.log('set', id, storeIds.size)
-  })
+  includedStores.forEach((id) => storeIds.set(id, true))
   if (includedCountries.length === 0 && includedStores.length === 0) {
     // @ts-ignore
-    const keys = await db.getAllKeys(STORES.STORES.name)
+    const keys = await getAllKeys(db, STORES.STORES)
     keys.forEach((key) => {
       // @ts-ignore
       storeIds.set(key, true)
@@ -232,9 +226,7 @@ export async function getAllActiveStoreIds(
     .filter((f) => f.isExcluded)
     .map((f) => f.objectId)
 
-  console.log(storeIds.size)
   excludedIds.forEach((id) => storeIds.delete(id))
-  console.log(storeIds.size)
   return Array.from(storeIds.keys())
 }
 
@@ -305,18 +297,7 @@ export async function getStoresPageStores(): Promise<
       store.id,
       search
     )
-    let fetchPercent =
-      (100 * numInvItems) /
-      (store.fetchMaxPageIndex *
-        (store.type === StoreType.BrickLink ? 100 : 400))
-
-    if (store.type === StoreType.BrickLink) {
-      if (numInvItems > store.fetchPageIndex * 100) {
-        store.fullyFetched = true
-        updateStore(liveObjectCache.db, store)
-      }
-    }
-
+    let fetchPercent = (100 * store.fetchPageIndex) / store.fetchMaxPageIndex
     if (store.fullyFetched) {
       fetchPercent = 100
     }

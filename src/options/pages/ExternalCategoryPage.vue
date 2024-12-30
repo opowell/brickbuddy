@@ -9,12 +9,9 @@ import {
   ExternalCategoryPageExternalCategory,
   ExternalCategoryPageExternalPart,
 } from "../types";
-import IncludeCategoryButton from "../components/IncludeCategoryButton.vue";
-import ExcludeCategoryButton from "../components/ExcludeCategoryButton.vue";
 const route = useRoute();
 import { useRouter } from "vue-router";
 import { formatAmount, formatInteger, reportTime, startTimer } from "../utils";
-import ActiveSearchButton from "../components/ActiveSearchButton.vue";
 import ExternalPartButton from "../components/ExternalPartButton.vue";
 import {
   externalPartPriceMap,
@@ -23,7 +20,7 @@ import {
   externalPartImagesMap,
   getExternalCategoryPageExternalCategory,
 } from "../idb/categories";
-import ActiveCartButton from "../components/ActiveCartButton.vue";
+import FilterButtons from "../components/FilterButtons.vue";
 startTimer("ExternalCategoryPage");
 const router = useRouter();
 const category = ref<ExternalCategoryPageExternalCategory>();
@@ -39,39 +36,101 @@ const sortedParts = computed<ExternalCategoryPageExternalPart[]>(() => {
     return [];
   }
   const sorted = category.value.externalParts.sort((a, b) => {
-    if (!a.name) {
-      return 1;
+    switch (sorting.value) {
+      case SORTINGS.InvItems: {
+        const qA = externalPartNumInvItemsMap.value.get(a.type + a.externalItemId);
+        const qB = externalPartNumInvItemsMap.value.get(b.type + b.externalItemId);
+        if (qA === undefined && qB === undefined) {
+          return 1;
+        }
+        if (qA === undefined) {
+          return 0;
+        }
+        if (qB === undefined) {
+          return 1;
+        }
+        return qB - qA;
+      }
+      case SORTINGS.Colors: {
+        const qA = externalPartNumVariantsMap.value.get(a.type + a.externalItemId);
+        const qB = externalPartNumVariantsMap.value.get(b.type + b.externalItemId);
+        if (qA === undefined && qB === undefined) {
+          return 1;
+        }
+        if (qA === undefined) {
+          return 0;
+        }
+        if (qB === undefined) {
+          return 1;
+        }
+        return qB - qA;
+      }
+      case SORTINGS.Price: {
+        const qA = externalPartPriceMap.value.get(a.type + a.itemId);
+        const qB = externalPartPriceMap.value.get(b.type + b.itemId);
+        console.log("price", qA, qB);
+        if (qA === undefined && qB === undefined) {
+          return 1;
+        }
+        if (qA === undefined) {
+          return 0;
+        }
+        if (qB === undefined) {
+          return 1;
+        }
+        return qA - qB;
+      }
+      case SORTINGS.Name: {
+        if (!a.name) {
+          return 1;
+        }
+        if (!b.name) {
+          return -1;
+        }
+        return a.name.localeCompare(b.name, undefined, {
+          numeric: true,
+          sensitivity: "base",
+        });
+      }
     }
-    if (!b.name) {
-      return -1;
-    }
-    return a.name.localeCompare(b.name, undefined, {
-      numeric: true,
-      sensitivity: "base",
-    });
   });
   return sorted;
 });
+enum SORTINGS {
+  Name,
+  InvItems,
+  Colors,
+  Price,
+}
+const sorting = ref(SORTINGS.Name);
+function sortByInvItems() {
+  sorting.value = SORTINGS.InvItems;
+}
+function sortByColors() {
+  sorting.value = SORTINGS.Colors;
+}
+function sortByPrice() {
+  sorting.value = SORTINGS.Price;
+}
+import { useFilterCategory } from "@/composables/filterCategory";
+const { include, exclude, clear } = useFilterCategory();
 </script>
 
 <template>
   <div>
     <HomeButton />
     <CategoriesButton />
-    <ActiveSearchButton />
-    <ActiveCartButton />
     <div v-if="!category">Loading...</div>
     <div v-else>
       <h4>
         External category: {{ category.type }} {{ category.name }} ({{ category.id }})
       </h4>
-      <IncludeCategoryButton
-        :category="category"
-        @include="router.push(Crumbs.categories.href)"
-      />
-      <ExcludeCategoryButton
-        :category="category"
-        @exclude="router.push(Crumbs.categories.href)"
+      <FilterButtons
+        :included="category.included"
+        :excluded="category.excluded"
+        @include="include(category)"
+        @exclude="exclude(category)"
+        @clear="clear(category)"
       />
       <div>Category: <CategoryButton :category="category.category" /></div>
       <h4>Parts ({{ category.externalParts.length }})</h4>
@@ -80,9 +139,9 @@ const sortedParts = computed<ExternalCategoryPageExternalPart[]>(() => {
           <tr>
             <th>Image</th>
             <th>Name</th>
-            <th>Colors</th>
-            <th>Inv. items</th>
-            <th>Price</th>
+            <th><button @click="sortByColors">Colors</button></th>
+            <th><button @click="sortByInvItems">Store items</button></th>
+            <th><button @click="sortByPrice">Price</button></th>
             <th>Actions</th>
           </tr>
         </thead>

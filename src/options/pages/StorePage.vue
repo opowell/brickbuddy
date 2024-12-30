@@ -101,7 +101,7 @@ function setFullyFetched(x: boolean) {
   <StoresButton />
   <ActiveCartButton ref="cartButton" />
   <div v-if="store">
-    <h4>{{ store.name }}</h4>
+    <h4>Store {{ store.name }}</h4>
     <div><button @click="getStorePrices(store)">Scrape</button></div>
     <div>Search: <FilterButtons /></div>
     <div>Fetch index: {{ store.fetchPageIndex }} / {{ store.fetchMaxPageIndex }}</div>

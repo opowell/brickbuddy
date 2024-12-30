@@ -53,7 +53,7 @@ export async function startFetching() {
       }
       getPrices()
     },
-    10000 + Math.floor(Math.random() * 5000)
+    20000 + Math.floor(Math.random() * 5000)
   )
 }
 export async function startFetchingStores() {
