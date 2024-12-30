@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { SearchFilter, StoreType, type StoresPageStore } from '../types';
+import { StoreType, type StoresPageStore } from '../types';
 import StoreButton from '../components/StoreButton.vue';
-import { getCountryPageStores, getStoresPageStores } from '../idb/storeMethods'
+import { getCountryPageStores } from '../idb/storeMethods'
 import FilterButtons from '../components/FilterButtons.vue';
 import { stopFetching, startFetching, startFetchingStores, stopFetchingStores, fetchingStoreInventory, fetchingStores } from '../idb/scraping'
 function startScrapingBLStores() {
@@ -31,8 +31,16 @@ const router = useRouter();
 
 const id = ref()
 onMounted(async () => {
+  const search = await liveObjectCache.getActiveSearch()
   id.value = route.params.id
-  stores.value = await getCountryPageStores()
+  stores.value = await getCountryPageStores(id.value)
+  if (!stores.value) {
+    return
+  }
+  stores.value.forEach(async (store) => {
+    includedMap.value.set(store.id, await liveObjectCache.getStoreIncluded(search.id, store.id))
+    excludedMap.value.set(store.id, await liveObjectCache.getStoreExcluded(search.id, store.id))
+  })
 })
 
 const search = ref('')
@@ -40,12 +48,8 @@ const numMinItems: Ref<number | undefined> = ref(100)
 const numMinFetchPagesTotal: Ref<number | undefined> = ref()
 const numMaxFetchPagesTotal: Ref<number | undefined> = ref()
 import HomeButton from '../components/HomeButton.vue';
-import ActiveSearchButton from '../components/ActiveSearchButton.vue';
-import ActiveCartButton from '../components/ActiveCartButton.vue';
 import { importBrickLinkStores, liveObjectCache } from '../idb/idb'
 import { formatAmount, formatInteger } from '../utils';
-import { put } from '../idb/db';
-import STORES from '../idb/stores';
 
 async function importStores() {
   return await importBrickLinkStores(liveObjectCache.db)

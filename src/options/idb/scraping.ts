@@ -22,7 +22,7 @@ export function stopFetchingStores() {
 let fetchPricesInterval: NodeJS.Timeout
 let fetchStoresInterval: NodeJS.Timeout
 
-async function getPrices() {
+export async function getPrices() {
   try {
     const db = await getDbConnection()
     const blStore = await getBrickLinkFetchStore(db)

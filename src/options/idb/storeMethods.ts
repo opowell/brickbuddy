@@ -133,6 +133,28 @@ export async function getAllActiveStores(
   }
   return stores
 }
+export async function getCountryStores(
+  countryId: string
+): Promise<Store[] | undefined> {
+  const ids = await getAllKeysFromIndex(
+    liveObjectCache.db,
+    indices.STORES_BY_COUNTRY,
+    countryId
+  )
+  if (!ids) {
+    return
+  }
+  const stores: Store[] = []
+  for (let i = 0; i < ids.length; i++) {
+    // @ts-ignore
+    const store = await getStore(ids[i])
+    if (!store) {
+      continue
+    }
+    stores.push(store)
+  }
+  return stores
+}
 export async function getAllActiveStoreIds(
   db: IDBPDatabase,
   searchId: number
@@ -161,7 +183,7 @@ export async function getAllActiveStoreIds(
     // @ts-ignore
     countryStoreIds.forEach((id) => storeIds.set(id, true))
   }
-  console.log(Array.from(storeIds.keys()))
+  console.log(storeIds.size)
 
   const storeFilters = await getAllFromIndex<SearchFilter>(
     db,
@@ -182,7 +204,11 @@ export async function getAllActiveStoreIds(
     .map((f) => f.objectId)
   // @ts-ignore
   console.log('included', includedStores)
-  includedStores.forEach((id) => storeIds.set(id, true))
+  includedStores.forEach((id) => {
+    console.log('set', id, storeIds.size)
+    storeIds.set(id, true)
+    console.log('set', id, storeIds.size)
+  })
   if (includedCountries.length === 0 && includedStores.length === 0) {
     // @ts-ignore
     const keys = await db.getAllKeys(STORES.STORES.name)
@@ -206,9 +232,9 @@ export async function getAllActiveStoreIds(
     .filter((f) => f.isExcluded)
     .map((f) => f.objectId)
 
-  console.log(Array.from(storeIds.keys()))
+  console.log(storeIds.size)
   excludedIds.forEach((id) => storeIds.delete(id))
-  console.log(Array.from(storeIds.keys()))
+  console.log(storeIds.size)
   return Array.from(storeIds.keys())
 }
 
@@ -224,14 +250,14 @@ export async function getAllInvItems(
   return await db.getAll(STORES.INVENTORY_ITEMS.name)
 }
 
-export async function getCountryPageStores(): Promise<
-  StoresPageStore[] | undefined
-> {
+export async function getCountryPageStores(
+  countryId: string
+): Promise<StoresPageStore[] | undefined> {
   const search = await getFirstActiveSearch(liveObjectCache)
   if (!search) {
     return
   }
-  const stores = await getAllActiveStores(liveObjectCache.db, search.id)
+  const stores = await getCountryStores(countryId)
   if (!stores) {
     return
   }
@@ -247,13 +273,6 @@ export async function getCountryPageStores(): Promise<
       (100 * numInvItems) /
       (store.fetchMaxPageIndex *
         (store.type === StoreType.BrickLink ? 100 : 400))
-
-    if (store.type === StoreType.BrickLink) {
-      if (numInvItems > store.fetchPageIndex * 100) {
-        store.fullyFetched = true
-        updateStore(liveObjectCache.db, store)
-      }
-    }
 
     if (store.fullyFetched) {
       fetchPercent = 100

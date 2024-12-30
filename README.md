@@ -14,7 +14,7 @@
 - scrape more often on first initialization.
 - lego parts missing from external part page.
 - store query results in IDB Store?
-
+- payment: https://extensionpay.com/home.
 ### v3
 - keyboard controls.
 - price adjustment per condition (by search? globally?)

@@ -4,13 +4,12 @@ import StoresButton from "../components/StoresButton.vue";
 import { ActiveSearch, StorePageInvItem, StorePageStore, StoreType } from "../types";
 import { useRoute } from "vue-router";
 import { getStorePrices } from "../idb/scraping";
-import { getStorePageStore } from "../idb/storeMethods";
+import { getStorePageStore, updateStore } from "../idb/storeMethods";
 import { liveObjectCache } from "../idb/idb";
 import FilterButtons from "../components/FilterButtons.vue";
 import { setCartQuantity } from "../idb/carts";
 import ExternalPartButton from "../components/ExternalPartButton.vue";
 import ColorButton from "../components/ColorButton.vue";
-import ActiveSearchButton from "../components/ActiveSearchButton.vue";
 import ActiveCartButton from "../components/ActiveCartButton.vue";
 import { formatAmount, formatInteger, getScore } from "../utils";
 import ExternalCategoryButton from "../components/ExternalCategoryButton.vue";
@@ -88,6 +87,13 @@ const sortedItems = computed(() => {
     }
   });
 });
+function setFullyFetched(x: boolean) {
+  if (!store.value) {
+    return;
+  }
+  store.value.fullyFetched = x;
+  updateStore(liveObjectCache.db, store.value);
+}
 </script>
 
 <template>
@@ -99,6 +105,11 @@ const sortedItems = computed(() => {
     <div><button @click="getStorePrices(store)">Scrape</button></div>
     <div>Search: <FilterButtons /></div>
     <div>Fetch index: {{ store.fetchPageIndex }} / {{ store.fetchMaxPageIndex }}</div>
+    <div>
+      Fully fetched: {{ store.fullyFetched ? "Yes" : "No" }}
+      <button :disabled="store.fullyFetched" @click="setFullyFetched(true)">Yes</button>
+      <button :disabled="!store.fullyFetched" @click="setFullyFetched(false)">No</button>
+    </div>
     <div>Last scraped: {{ store.lastScraped.toISOString() }}</div>
     <div>Price adjustment: {{ store.priceAdjustment }}%</div>
     <div>Country: {{ store.countryId }}</div>

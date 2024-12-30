@@ -29,8 +29,8 @@ async function startScrapingAlarm() {
   await chrome.alarms.create('scrapePrices', { periodInMinutes: 0.5 })
 }
 
-chrome.alarms.onAlarm.addListener(() => {
-  console.log('fire alarm')
+chrome.alarms.onAlarm.addListener((alarm) => {
+  console.log('fire alarm', alarm)
 })
 
 chrome.runtime.onInstalled.addListener(async ({ reason }) => {

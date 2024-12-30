@@ -18,6 +18,7 @@ import {
   ItemVariant,
   PartPageCategory,
   Search,
+  SearchFilter,
   ShopList,
   ShopListItem,
   Store,
@@ -804,6 +805,28 @@ export default class ObjectCache {
   }
   async getLists(): Promise<ShopList[] | undefined> {
     return await getAll<ShopList>(this.db, STORES.LISTS)
+  }
+  async getStoreIncluded(searchId: number, storeId: string): Promise<boolean> {
+    const entry = await get<SearchFilter>(this.db, STORES.SEARCH_FILTERS, [
+      searchId,
+      'store',
+      storeId,
+    ])
+    if (!entry) {
+      return false
+    }
+    return !entry.isExcluded
+  }
+  async getStoreExcluded(searchId: number, storeId: string): Promise<boolean> {
+    const entry = await get<SearchFilter>(this.db, STORES.SEARCH_FILTERS, [
+      searchId,
+      'store',
+      storeId,
+    ])
+    if (!entry) {
+      return false
+    }
+    return entry.isExcluded
   }
   async getAllActiveStoreIds(searchId: number): Promise<string[] | undefined> {
     const storedValue = this.searchActiveStoreIds.get(searchId)
