@@ -126,7 +126,6 @@ function setCartQuantity({
       <ActiveSearchButton />
       <ActiveCartButton ref="cartButton" />
     </p>
-    <HomeButton />
     <PartsButton />
     <h4>Item {{ item.itemId }}</h4>
     <h4>External parts ({{ item.externalParts.length }})</h4>

@@ -40,7 +40,6 @@ import { cacheLoaded, liveObjectCache } from "../idb/idb";
 <template>
   <div v-if="!items || !cacheLoaded">Loading...</div>
   <div v-else>
-    <HomeButton />
     <h4>Parts ({{ filteredParts.length }} / {{ items.length }})</h4>
     <div>Search: <input v-model="search" /></div>
     <table>

@@ -151,7 +151,6 @@ function sortByInvItems() {
   <div v-if="!item">Loading...</div>
   <div v-else>
     <ActiveCartButton ref="cartButton" />
-    <HomeButton />
     <PartsButton />
     <h4>External Item {{ item.name }}</h4>
     <div>Item: {{ item.itemId }}</div>

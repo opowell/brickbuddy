@@ -24,7 +24,6 @@ async function setActive(cart: CartsPageCart) {
 <template>
   <div v-if="!carts">Loading...</div>
   <div v-else>
-    <HomeButton />
     <h4>Carts ({{ carts.length }})</h4>
     <button @click="add">Add</button>
     <table>

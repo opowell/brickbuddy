@@ -34,7 +34,6 @@ function deleteList(list: ShopList, index: number) {
 
 <template>
   <div>
-    <HomeButton />
     <h4 v-if="lists">Lists ({{ lists.length }})</h4>
     <table v-if="lists">
       <thead>

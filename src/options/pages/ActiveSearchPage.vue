@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import HomeButton from "../components/HomeButton.vue";
 import { getSearchPageSearch, setPriceScoreQuantity } from "../idb/searches";
 import { ConditionPriceAdjustment, SearchFilter, SearchPageSearch } from "../types";
 const search = ref<SearchPageSearch | undefined>(undefined);
@@ -41,6 +40,7 @@ import { liveObjectCache } from "../idb/idb";
 import stores from "../idb/stores";
 import { dbDelete, put } from "../idb/db";
 import FilterButtons from "../components/FilterButtons.vue";
+import SearchResultButton from "../components/SearchResultButton.vue";
 function setConditionAdjustment(adjustment: ConditionPriceAdjustment) {
   put(liveObjectCache.db, stores.SEARCH_CONDITION_PRICE_ADJUSTMENTS, adjustment);
 }
@@ -72,8 +72,8 @@ async function removeAllFilters() {
 
 <template>
   <div v-if="search">
-    <HomeButton />
-    <h4>Search <NameIdLabel :id="search.id" :name="search.name" /></h4>
+    <h4>Search <NameIdLabel is-span :id="search.id" :name="search.name" /></h4>
+    <SearchResultButton :search="search" />
     <div>
       <div>
         Price score quantity: <input v-model="priceScoreQuantity" type="number" />

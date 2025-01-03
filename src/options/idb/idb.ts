@@ -320,7 +320,7 @@ async function importBrickLinkStore(
   if (!countryId) {
     return false
   }
-  const storeCountry = await get(db, STORES.STORE_COUNTRIES, countryId)
+  const storeCountry = await get(db, STORES.COUNTRIES, countryId)
   if (!storeCountry) {
     const countryName = extractValue(storeHtml, "countryName: \t'", "',")
     if (countryName) {
@@ -517,8 +517,9 @@ export async function getDbConnection(): Promise<IDBPDatabase> {
     return dbConnection
   }
   let createData = false
-  const db = await openDB(DB_NAME, 6, {
+  const db = await openDB(DB_NAME, 8, {
     async upgrade(db, oldVersion, newVersion, transaction) {
+      db.deleteObjectStore(STORES.LIST_ITEMS.name)
       Object.keys(STORES).forEach((key) => {
         try {
           // @ts-ignore

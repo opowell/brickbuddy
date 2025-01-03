@@ -6,5 +6,5 @@ const router = useRouter();
 </script>
 
 <template>
-  <button @click="router.push(Crumbs.searches.href)">Searches</button>
+  <button @click="router.push(Crumbs.searches.href)">Saved searches</button>
 </template>

@@ -46,6 +46,7 @@ import {
   setCartQuantity,
 } from "../idb/carts";
 import { getDbConnection } from "../idb/idb";
+import CartsButton from "../components/CartsButton.vue";
 
 interface CartPageStore {
   store: Store;
@@ -183,8 +184,8 @@ async function addToBrickLinkCart(
 
 <template>
   <div v-if="cart">
-    <HomeButton />
-    <h4>Cart</h4>
+    <h4>Cart: {{ cart.name }}</h4>
+    <h4>Id: {{ cart.id }}</h4>
     <h4>Stores ({{ stores.length }})</h4>
     <table>
       <thead>

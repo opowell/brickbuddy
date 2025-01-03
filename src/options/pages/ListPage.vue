@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { ExternalItem, ShopListItem, type ShopList, type UiListItem } from "../types";
-const emits = defineEmits(["open", "addItem", "goItem"]);
+import { ShopListItem, type ShopList, type UiListItem } from "../types";
 const newListItemItemId = ref("");
 const newListItemCondition = ref("");
 const newListItemMinQuantity = ref<number>(0);
@@ -19,6 +18,17 @@ onMounted(async () => {
     return;
   }
   listItems.value = await liveObjectCache.getListItems(list.value.id)
+  if (!listItems.value) {
+    return
+  }
+  listItems.value.forEach(li => {
+    switch (li.type) {
+      case 'externalItem': {
+        // @ts-ignore
+        liveObjectCache.loadExternalPart('BrickLink', li.itemId)
+      }
+    }
+  })
 });
 
 function getColorNames(item: UiListItem) {
@@ -50,17 +60,36 @@ const items = computed(() => {
   if (!listItems.value) {
     return
   }
-  return listItems.value.map(li => {
-    const item = liveObjectCache.parts.get(li.itemId)
-    if (!item) {
-      return
-    }
-    return {
-      ...li,
-      itemName: item.itemId || '',
-      variants: []
+  const out = []
+  listItems.value.forEach(async (li) => {
+    switch (li.type) {
+      case 'item': {
+        // @ts-ignore
+        const item = liveObjectCache.parts.get(li.itemId)
+        if (!item) {
+          return
+        }
+        out.push({
+          ...li,
+          itemName: item.itemId || '',
+          variants: []
+        })
+      }
+      case 'externalItem': {
+        const externalItem = liveObjectCache.externalParts.get('BrickLink' + li.itemId)
+        if (!externalItem) {
+          return
+        }
+        out.push({
+          ...li,
+          itemName: externalItem.name || '',
+          variants: [],
+          externalItem
+        })
+      }
     }
   })
+  return out
 });
 function setName(x: string) {
   if (!list.value) {
@@ -70,13 +99,12 @@ function setName(x: string) {
   liveObjectCache.updateList(list.value);
 }
 import TextInput from "./TextInput.vue";
-import HomeButton from "../components/HomeButton.vue";
 import ListsButton from "../components/ListsButton.vue";
+import ExternalPartButton from "../components/ExternalPartButton.vue";
 </script>
 
 <template>
   <div v-if="list">
-    <HomeButton />
     <ListsButton />
     <h4>List {{ list.name }}</h4>
     <div>Id: {{ list.id }}</div>
@@ -101,9 +129,7 @@ import ListsButton from "../components/ListsButton.vue";
         >
           <td></td>
           <td>
-            <button @click="$emit('goItem', item.item)">
-              {{ item.itemName }} ({{ item.itemId }})
-            </button>
+            <ExternalPartButton :part="item.externalItem" />
           </td>
           <td>{{ item.condition }}</td>
           <td>{{ item.minQuantity }}</td>
@@ -127,29 +153,5 @@ import ListsButton from "../components/ListsButton.vue";
     <div>Max quantity:<input v-model="newListItemMaxQuantity" type="number" /></div>
     <div>Max price:<input v-model="newListItemMaxPrice" type="number" /></div>
     <div>Colors:<input v-model="newListItemColors" type="number" /></div>
-    <table>
-      <thead>
-        <tr>
-          <th>Image</th>
-          <th>Id</th>
-          <th>Name</th>
-          <th>Category</th>
-          <th>Colors</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="item in filteredParts" :key="item.itemId">
-          <td><img v-if="item.variants.length" :src="item.variants[0].image" /></td>
-          <td>{{ item.itemId }}</td>
-          <td>
-            <button @click="$emit('goItem', item)">
-              {{ item.itemName }}
-            </button>
-          </td>
-          <td>{{ item.categoryId }}</td>
-          <td>{{ item.variants.length }}</td>
-        </tr>
-      </tbody>
-    </table>
   </div>
 </template>

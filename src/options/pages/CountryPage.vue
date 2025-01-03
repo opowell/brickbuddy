@@ -140,7 +140,6 @@ const { include, exclude, filter, clear } = useFilterStore(includedMap.value, ex
 
 <template>
   <div>
-    <HomeButton />
     <h3>Country: {{ id }}</h3>
     <h4 v-if="filteredStores && stores">
       Stores ({{ filteredStores.length }} / {{ stores.length }})

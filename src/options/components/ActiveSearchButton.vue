@@ -24,10 +24,10 @@ const text = computed(() => {
     return "";
   }
   const texts: string[] = [
-    "Price score: quantity: " + formatInteger(search.priceScoreQuantity),
+    // "Price score: quantity: " + formatInteger(search.priceScoreQuantity),
   ];
   if (search.priceScoreIgnoreColor) {
-    texts.push("ignore color");
+    // texts.push("ignore color");
   }
   const fields = ["categories", "colors", "parts", "conditions", "countries", "stores"];
   fields.forEach((field) => {
@@ -60,7 +60,7 @@ const text = computed(() => {
       }
     }
   });
-  return "Search: " + texts.join("; ");
+  return "Filters: " + texts.length;
 });
 </script>
 

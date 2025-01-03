@@ -18,6 +18,13 @@ const setButtonDisabled: ComputedRef<boolean> = computed(() => {
   if (newQ.value === current) {
     return true;
   }
+  if (newQ.value === 0 && current === undefined) {
+    return true;
+  }
+  // @ts-ignore
+  if (newQ.value === "" && current === undefined) {
+    return true;
+  }
   if (max === undefined) {
     return false;
   }
@@ -33,7 +40,12 @@ defineExpose({ newQ, setNewQ });
   {{ current }}
   <button :disabled="newQ === 0" @click="newQ = 0">&Lt;</button>
   <input v-model="newQ" type="number" min="0" :max="max" />
-  <button :disabled="newQ === max" @click="newQ = max">&Gt;</button>
+  <button
+    :disabled="max === undefined || (newQ !== undefined && newQ === max)"
+    @click="newQ = max"
+  >
+    &Gt;
+  </button>
   <button :disabled="setButtonDisabled" @click="emits('updateQuantity', newQ)">
     Set
   </button>

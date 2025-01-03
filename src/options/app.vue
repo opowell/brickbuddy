@@ -55,13 +55,35 @@ window.getUsage = async function () {
   console.log(`Usage %: ${percentageUsed}`);
   console.log(`Remaining: ${remaining} GB`);
 };
-import ActiveCartButton from "./components/ActiveCartButton.vue";
 import ActiveSearchButton from "./components/ActiveSearchButton.vue";
+import ActiveCartButton from "./components/ActiveCartButton.vue";
+import HomeButton from "./components/HomeButton.vue";
+import SearchesButton from "./components/SearchesButton.vue";
+import ListsButton from "./components/ListsButton.vue";
+import CartsButton from "./components/CartsButton.vue";
 </script>
 <template>
-  <p v-if="loaded">
+  <p v-if="loaded" class="cartButtonContainer">
+    <HomeButton />
     <ActiveSearchButton />
+    <span class="spacer" />
+    <SearchesButton />
+    <ListsButton />
+    <CartsButton />
+    <span class="spacer" />
     <ActiveCartButton />
   </p>
   <router-view v-if="loaded" />
 </template>
+<style lang="css" scoped>
+.cartButtonContainer {
+  display: flex;
+  gap: 0.3rem;
+}
+.cartButtonContainer > * {
+  flex-grow: 0;
+}
+.spacer {
+  flex-grow: 1;
+}
+</style>

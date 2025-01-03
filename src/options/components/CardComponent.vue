@@ -7,22 +7,22 @@ defineProps({
   name: String,
   count: Number,
   href: String,
+  total: Number,
 });
 </script>
 
 <template>
-  <button @click="router.push(href)">
+  <button @click="router.push(href)" class="main">
+    <div>{{ name }}:</div>
     <div v-if="count !== undefined" class="count">{{ formatInteger(count) }}</div>
-    <div class="name">{{ name }}</div>
+    <div>/ {{ formatInteger(total) }}</div>
   </button>
 </template>
 
 <style lang="css" scoped>
 button {
   width: 140px;
-  height: 100px;
-}
-.name {
+  padding: 0.3rem;
 }
 .count {
   font-size: 3rem;

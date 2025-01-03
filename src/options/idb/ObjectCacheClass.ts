@@ -75,6 +75,24 @@ export default class ObjectCache {
       }
     )
   }
+  async loadListExternalItemQuantity(listId: number, externalItemId: string) {
+    return await this.loadObject<number | undefined>(
+      this.listExternalItemQuantityMap.value,
+      listId + '-' + externalItemId,
+      async () => {
+        const listItem = await get<ShopListItem>(this.db, STORES.LIST_ITEMS, [
+          listId,
+          'externalItem',
+          externalItemId,
+          [],
+        ])
+        if (!listItem) {
+          return 0
+        }
+        return listItem.minQuantity
+      }
+    )
+  }
   updateList(list: ShopList) {
     put(this.db, STORES.LISTS, list)
   }
@@ -129,6 +147,7 @@ export default class ObjectCache {
   conditionsMapMap: Map<number, Map<string, number>>
   searchActiveStoreIds: Map<number, string[]>
   listItemQuantityMap: Ref<Map<string, number>>
+  listExternalItemQuantityMap: Ref<Map<string, number>>
   listsMap: Map<number, ShopList>
   db: IDBPDatabase
   // computedCache: ComputedObjectCacheClass
@@ -137,6 +156,7 @@ export default class ObjectCache {
     this.listsMap = new Map<number, ShopList>()
     this.listsNumItemsMap = new Map<number, number>()
     this.listItemQuantityMap = ref(new Map<string, number>())
+    this.listExternalItemQuantityMap = ref(new Map<string, number>())
     this.conditionsMapMap = new Map<number, Map<string, number>>()
     this.activeSearchRef = ref()
     this.homePageNumColors = undefined
@@ -173,7 +193,7 @@ export default class ObjectCache {
     if (!this.allStoreCountries) {
       this.allStoreCountries = await getAll<StoreCountry>(
         this.db,
-        STORES.STORE_COUNTRIES
+        STORES.COUNTRIES
       )
       if (!this.allStoreCountries) {
         return
@@ -207,6 +227,9 @@ export default class ObjectCache {
     }
     return ids.length
   }
+  async getHomePageNumAllStores(): Promise<number | undefined> {
+    return await count(this.db, STORES.STORES)
+  }
   async getHomePageNumSearches(): Promise<number | undefined> {
     const num = await count(this.db, STORES.SEARCHES)
     return num
@@ -223,12 +246,15 @@ export default class ObjectCache {
     const num = await count(this.db, STORES.CONDITIONS)
     return num
   }
+  async getNumCountries(): Promise<number | undefined> {
+    return await count(this.db, STORES.COUNTRIES)
+  }
   async getHomePageNumCountries(): Promise<number | undefined> {
     const search = await this.getActiveSearch()
     if (!search) {
       return
     }
-    let keys = await getAllKeys(this.db, STORES.STORE_COUNTRIES)
+    let keys = await getAllKeys(this.db, STORES.COUNTRIES)
     if (!keys) {
       return
     }
@@ -282,6 +308,45 @@ export default class ObjectCache {
     }
     return keys.length
   }
+  async getSearchNumObjects(
+    searchId: number,
+    filterKey: 'colors' | 'categories' | 'stores' | 'parts' | 'countries',
+    getObject: Function,
+    getObjectKey: Function,
+    getAllKeys: Function,
+    filter?: Function
+  ): Promise<number | undefined> {
+    const search = await this.getSearch(searchId)
+    if (!search) {
+      return
+    }
+    let keys = []
+    const included = search[filterKey].included
+    if (included && included.length > 0) {
+      for (let i = 0; i < included.length; i++) {
+        const object = await getObject(included[i])
+        if (!object) {
+          continue
+        }
+        keys.push(getObjectKey(object))
+      }
+    } else {
+      // @ts-ignore
+      const excluded: T[] = search[filterKey].excluded
+      keys = await getAllKeys.bind(this)()
+      keys = keys.filter((key: string | number) => !excluded.includes(key))
+    }
+    if (filter) {
+      const filteredKeys = []
+      for (let i = 0; i < keys.length; i++) {
+        const key = keys[i]
+        if (await filter(key)) {
+          filteredKeys.push(key)
+        }
+      }
+    }
+    return keys.length
+  }
   async getHomePageNumColors(): Promise<number | undefined> {
     if (this.homePageNumColors === undefined) {
       this.homePageNumColors = await this.getHomePageNumObjects(
@@ -290,6 +355,25 @@ export default class ObjectCache {
         (color: Color) => color.id,
         this.getAllColorKeys
       )
+    }
+    return this.homePageNumColors
+  }
+  async getNumColors(): Promise<number | undefined> {
+    return count(this.db, STORES.COLORS)
+  }
+  async getNumCategories(): Promise<number | undefined> {
+    return count(this.db, STORES.CATEGORIES)
+  }
+  async getSearchNumColors(searchId: number): Promise<number | undefined> {
+    if (this.searchNumColors.get(id)) {
+      const num = await this.getSearchNumObjects(
+        searchId,
+        'colors',
+        this.getColor,
+        (color: Color) => color.id,
+        this.getAllColorKeys
+      )
+      this.searchNumColors.set(id, num)
     }
     return this.homePageNumColors
   }
@@ -708,6 +792,17 @@ export default class ObjectCache {
     externalItemId: string
   ): Promise<ExternalItem | undefined> {
     return this.getObject<ExternalItem | undefined>(
+      this.externalParts,
+      type + externalItemId,
+      async () =>
+        await get(this.db, STORES.EXTERNAL_PARTS, [type, externalItemId])
+    )
+  }
+  async loadExternalPart(
+    type: 'BrickLink' | 'Lego',
+    externalItemId: string
+  ): Promise<ExternalItem | undefined> {
+    return this.loadObject<ExternalItem | undefined>(
       this.externalParts,
       type + externalItemId,
       async () =>

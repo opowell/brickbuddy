@@ -97,7 +97,6 @@ function setFullyFetched(x: boolean) {
 </script>
 
 <template>
-  <HomeButton />
   <StoresButton />
   <ActiveCartButton ref="cartButton" />
   <div v-if="store">

@@ -62,7 +62,6 @@ function refreshCartButton() {
 
 <template>
   <div v-if="variant && variant.item">
-    <HomeButton />
     <PartsButton />
     <PartButton :part="variant.item" />
     <ActiveCartButton ref="cartButton" />

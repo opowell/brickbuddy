@@ -1,22 +1,14 @@
 <script setup lang="ts">
 import { Crumbs } from "../idb/constants";
-import CategoriesButton from "../components/CategoriesButton.vue";
 import HomeButton from "../components/HomeButton.vue";
 
 import { useRoute } from "vue-router";
 import { getCategoryPageCategory } from "../idb/categories";
-import {
-  CategoryPageCategory,
-  CategoryPagePart,
-  Item,
-  Search,
-  ShopListItem,
-} from "../types";
+import { CategoryPageCategory, CategoryPagePart, ShopListItem } from "../types";
 import IncludeCategoryButton from "../components/IncludeCategoryButton.vue";
 import ExcludeCategoryButton from "../components/ExcludeCategoryButton.vue";
 const route = useRoute();
 import { useRouter } from "vue-router";
-import ActiveSearchButton from "../components/ActiveSearchButton.vue";
 import PartButton from "../components/PartButton.vue";
 const router = useRouter();
 const category = ref<CategoryPageCategory | undefined>();
@@ -64,15 +56,11 @@ watch(loadPartsTrigger, () => {
   parts.value.forEach((part) => {
     liveObjectCache.loadListItemQuantity(listId.value, part.itemId);
   });
-}),
-  {
-    immediate: true,
-  };
+});
 </script>
 
 <template>
   <div v-if="category">
-    <HomeButton />
     <h4>Category {{ category.id }}</h4>
     <IncludeCategoryButton
       :category="category"

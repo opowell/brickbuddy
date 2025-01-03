@@ -138,7 +138,6 @@ async function clear(category: CategoriesPageUniqueCategory) {
 <template>
   <div v-if="!categories">Loading...</div>
   <div v-else>
-    <HomeButton />
     <h4>
       Categories
       {{ uniqueExternalCategories ? "(" + uniqueExternalCategories.length + ")" : "" }}

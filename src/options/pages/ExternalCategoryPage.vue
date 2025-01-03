@@ -8,9 +8,9 @@ import { useRoute } from "vue-router";
 import {
   ExternalCategoryPageExternalCategory,
   ExternalCategoryPageExternalPart,
+  ShopListItem,
 } from "../types";
 const route = useRoute();
-import { useRouter } from "vue-router";
 import { formatAmount, formatInteger, reportTime, startTimer } from "../utils";
 import ExternalPartButton from "../components/ExternalPartButton.vue";
 import {
@@ -21,21 +21,25 @@ import {
   getExternalCategoryPageExternalCategory,
 } from "../idb/categories";
 import FilterButtons from "../components/FilterButtons.vue";
-startTimer("ExternalCategoryPage");
-const router = useRouter();
 const category = ref<ExternalCategoryPageExternalCategory>();
 onMounted(async () => {
   category.value = await getExternalCategoryPageExternalCategory(
     route.params.type,
     route.params.id
   );
-  reportTime("ExternalCategoryPage");
+  listExternalItemQuantityMap = liveObjectCache.listExternalItemQuantityMap;
+});
+const parts = computed(() => {
+  if (!category.value) {
+    return;
+  }
+  return category.value.externalParts;
 });
 const sortedParts = computed<ExternalCategoryPageExternalPart[]>(() => {
-  if (!category.value) {
+  if (!parts.value) {
     return [];
   }
-  const sorted = category.value.externalParts.sort((a, b) => {
+  const sorted = parts.value.sort((a, b) => {
     switch (sorting.value) {
       case SORTINGS.InvItems: {
         const qA = externalPartNumInvItemsMap.value.get(a.type + a.externalItemId);
@@ -68,7 +72,6 @@ const sortedParts = computed<ExternalCategoryPageExternalPart[]>(() => {
       case SORTINGS.Price: {
         const qA = externalPartPriceMap.value.get(a.type + a.itemId);
         const qB = externalPartPriceMap.value.get(b.type + b.itemId);
-        console.log("price", qA, qB);
         if (qA === undefined && qB === undefined) {
           return 1;
         }
@@ -114,11 +117,58 @@ function sortByPrice() {
 }
 import { useFilterCategory } from "@/composables/filterCategory";
 const { include, exclude, clear } = useFilterCategory();
+const listId = ref();
+function selectList(id: string) {
+  listId.value = id;
+}
+import ListSelect from "./ListSelect.vue";
+import QuantityInput from "../components/QuantityInput.vue";
+import { put } from "../idb/db";
+import { liveObjectCache } from "../idb/idb";
+import stores from "../idb/stores";
+let listExternalItemQuantityMap: Ref<Map<string, number>> | undefined;
+async function updateListQuantity(
+  item: ExternalCategoryPageExternalPart,
+  quantity: number
+) {
+  const listItem: ShopListItem = {
+    listId: listId.value,
+    itemId: item.externalItemId,
+    type: "externalItem",
+    colors: [],
+    minQuantity: quantity,
+  };
+  await put(liveObjectCache.db, stores.LIST_ITEMS, listItem);
+  await liveObjectCache.loadListExternalItemQuantity(listId.value, item.externalItemId);
+}
+const loadPartsTrigger = computed(() => {
+  if (!listId.value) {
+    return;
+  }
+  if (!parts.value) {
+    return;
+  }
+  return listId.value + "-" + parts.value.map((p) => p.itemId).join(",");
+});
+watch(
+  loadPartsTrigger,
+  () => {
+    if (!parts.value) {
+      return;
+    }
+    parts.value.forEach((part) => {
+      console.log("load", listId.value, part.externalItemId);
+      liveObjectCache.loadListExternalItemQuantity(listId.value, part.externalItemId);
+    });
+  },
+  {
+    immediate: true,
+  }
+);
 </script>
 
 <template>
   <div>
-    <HomeButton />
     <CategoriesButton />
     <div v-if="!category">Loading...</div>
     <div v-else>
@@ -142,11 +192,11 @@ const { include, exclude, clear } = useFilterCategory();
             <th><button @click="sortByColors">Colors</button></th>
             <th><button @click="sortByInvItems">Store items</button></th>
             <th><button @click="sortByPrice">Price</button></th>
-            <th>Actions</th>
+            <th>List <ListSelect @select="selectList" /></th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="part in sortedParts" :key="part.itemId">
+          <tr v-for="part in sortedParts" :key="part.externalItemId">
             <td>
               <img
                 v-if="externalPartImagesMap.get(part.type + part.externalItemId)"
@@ -171,7 +221,16 @@ const { include, exclude, clear } = useFilterCategory();
               }}
             </td>
             <td>{{ formatAmount(externalPartPriceMap.get(part.type + part.itemId)) }}</td>
-            <td><button>Add to list</button></td>
+            <td>
+              <template v-if="listId && listExternalItemQuantityMap">
+                <QuantityInput
+                  :current="
+                    listExternalItemQuantityMap.get(listId + '-' + part.externalItemId)
+                  "
+                  @update-quantity="updateListQuantity(part, $event)"
+                />
+              </template>
+            </td>
           </tr>
         </tbody>
       </table>

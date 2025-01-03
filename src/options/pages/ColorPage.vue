@@ -24,7 +24,6 @@ function getImageSrc(invItem: ColorPageInvItem) {
 
 <template>
   <div v-if="color">
-    <HomeButton />
     <ColorsButton />
     <h4><NameIdLabel :name="color.name" :id="color.id" /></h4>
     <div>Lego: <NameIdLabel is-span :name="color.legoName" :id="color.legoId" /></div>

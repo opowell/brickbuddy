@@ -36,7 +36,6 @@ import { getConditionsPageConditions } from "../idb/condition";
 
 <template>
   <div>
-    <HomeButton />
     <h4>Conditions {{ "(" + availableConditions.length + ")" }}</h4>
     <table>
       <thead>

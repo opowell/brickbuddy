@@ -5,9 +5,6 @@ onMounted(async () => {
   storeCountries.value = await getStoreCountriesPageStoreCountries();
 });
 
-import HomeButton from "../components/HomeButton.vue";
-import ActiveSearchButton from "../components/ActiveSearchButton.vue";
-import ActiveCartButton from "../components/ActiveCartButton.vue";
 import { getStoreCountriesPageStoreCountries } from "../idb/storeCountries";
 import { getActiveSearch } from "../idb/searches";
 import { liveObjectCache } from "../idb/idb";
@@ -64,8 +61,7 @@ async function filter(country: StoreCountriesPageStoreCountry, isExcluded: boole
 
 <template>
   <div>
-    <HomeButton />
-    <h4 v-if="storeCountries">Store Countries ({{ storeCountries.length }})</h4>
+    <h4 v-if="storeCountries">Countries ({{ storeCountries.length }})</h4>
     <table>
       <thead>
         <tr>

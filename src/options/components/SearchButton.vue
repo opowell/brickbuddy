@@ -5,6 +5,7 @@ import { useRouter } from "vue-router";
 import { PropType } from "vue";
 import NameIdLabel from "./NameIdLabel.vue";
 const { search } = defineProps({
+  label: String,
   search: Object as PropType<Search>,
 });
 const router = useRouter();
@@ -18,6 +19,11 @@ const href = computed(() => {
 
 <template>
   <button v-if="search" @click="router.push(href)">
-    <NameIdLabel :name="search.name" :id="search.id" />
+    <template v-if="label === undefined">
+      <NameIdLabel :name="search.name" :id="search.id" />
+    </template>
+    <template v-else>
+      {{ label }}
+    </template>
   </button>
 </template>

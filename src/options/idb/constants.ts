@@ -94,6 +94,9 @@ export const Routes = {
   search(id: number) {
     return '/' + LINKS.SEARCH + '/' + encodeURIComponent(id)
   },
+  searchResult(id: number) {
+    return '/' + LINKS.SEARCH + '/' + encodeURIComponent(id) + '/result'
+  },
   country(id: string) {
     return '/' + LINKS.COUNTRY + '/' + encodeURIComponent(id)
   },
@@ -142,6 +145,9 @@ export const Hrefs = {
   },
   search(id: number) {
     return Routes.search(id)
+  },
+  searchResult(id: number) {
+    return Routes.searchResult(id)
   },
   country(id: string) {
     return Routes.country(id)
@@ -212,6 +218,12 @@ export const Crumbs = {
     return {
       title: 'Search',
       href: Hrefs.search(id),
+    }
+  },
+  searchResult(id: number) {
+    return {
+      title: 'Search results',
+      href: Hrefs.searchResult(id),
     }
   },
   cart(id: number) {

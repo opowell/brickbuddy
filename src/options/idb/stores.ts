@@ -20,7 +20,7 @@ const stores: {
   SEARCHES: StoreDefinition
   SEARCH_FILTERS: StoreDefinition
   SEARCH_CONDITION_PRICE_ADJUSTMENTS: StoreDefinition
-  STORE_COUNTRIES: StoreDefinition
+  COUNTRIES: StoreDefinition
   LISTS: StoreDefinition
   LIST_ITEMS: StoreDefinition
   STORES: StoreDefinition
@@ -79,7 +79,7 @@ const stores: {
   },
   LIST_ITEMS: {
     name: 'listItems',
-    keyPath: ['listId', 'itemId', 'colors'],
+    keyPath: ['listId', 'type', 'itemId', 'colors'],
   },
   PART_VARIANTS: {
     name: 'partVariants',
@@ -103,7 +103,7 @@ const stores: {
     name: 'searchConditionPriceAdjustments',
     keyPath: ['searchId', 'condition'],
   },
-  STORE_COUNTRIES: {
+  COUNTRIES: {
     name: 'storeCountries',
     keyPath: 'id',
   },

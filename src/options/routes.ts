@@ -20,6 +20,7 @@ import CartsPage from './pages/CartsPage.vue'
 import ExternalCategoryPage from './pages/ExternalCategoryPage.vue'
 import CountryPage from './pages/CountryPage.vue'
 import ListPage from './pages/ListPage.vue'
+import SearchResultPage from './pages/SearchResultPage.vue'
 
 export default [
   {
@@ -116,6 +117,11 @@ export default [
     name: 'search',
     path: '/' + LINKS.SEARCH + '/:id',
     component: ActiveSearchPage,
+  },
+  {
+    name: 'searchResult',
+    path: '/' + LINKS.SEARCH + '/:id/result',
+    component: SearchResultPage,
   },
   {
     name: 'cart',

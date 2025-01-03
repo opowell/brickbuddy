@@ -1,26 +1,31 @@
 <script setup lang="ts">
 import { Crumbs } from "../idb/constants";
-import ActiveSearchButton from "../components/ActiveSearchButton.vue";
-import ActiveCartButton from "../components/ActiveCartButton.vue";
 import { liveObjectCache } from "../idb/idb";
 import CardComponent from "../components/CardComponent.vue";
 import { reportTime, startTimer } from "../utils";
 
 const stores = ref<number | undefined>();
+const allStores = ref<number | undefined>();
 const countries = ref<number | undefined>();
+const allCountries = ref<number | undefined>();
 const colors = ref<number | undefined>();
+const allColors = ref<number | undefined>();
 const categories = ref<number | undefined>();
+const allCategories = ref<number | undefined>();
 const parts = ref<number | undefined>();
 const searches = ref<number | undefined>();
 const conditions = ref<number | undefined>();
 const lists = ref<number | undefined>();
 const carts = ref<number | undefined>();
 onMounted(async () => {
-  startTimer("HomePage");
   colors.value = await liveObjectCache.getHomePageNumColors();
+  allColors.value = await liveObjectCache.getNumColors();
   stores.value = await liveObjectCache.getHomePageNumStores();
+  allStores.value = await liveObjectCache.getHomePageNumAllStores();
   countries.value = await liveObjectCache.getHomePageNumCountries();
+  allCountries.value = await liveObjectCache.getNumCountries();
   categories.value = await liveObjectCache.getHomePageNumCategories();
+  allCategories.value = await liveObjectCache.getNumCategories();
   parts.value = await liveObjectCache.getHomePageNumParts();
   searches.value = await liveObjectCache.getHomePageNumSearches();
   conditions.value = await liveObjectCache.getHomePageNumConditions();
@@ -35,39 +40,61 @@ const loaded = computed(() => {
     categories.value !== undefined
   );
 });
-watch(loaded, () => {
-  if (loaded) {
-    reportTime("HomePage");
-  }
+
+const rows = computed(() => {
+  return [
+    {
+      label: "Stores",
+      count: stores.value,
+      total: allStores.value,
+      link: Crumbs.stores.href,
+    },
+    {
+      label: "Categories",
+      count: categories.value,
+      total: allCategories.value,
+      link: Crumbs.categories.href,
+    },
+    {
+      label: "Colors",
+      count: colors.value,
+      total: allColors.value,
+      link: Crumbs.colors.href,
+    },
+    {
+      label: "Countries",
+      count: countries.value,
+      total: allCountries.value,
+      link: Crumbs.storeCountries.href,
+    },
+    {
+      label: "Conditions",
+      count: conditions.value,
+      total: allStores.value,
+      link: Crumbs.conditions.href,
+    },
+    {
+      label: "Parts",
+      count: parts.value,
+      total: allStores.value,
+      link: Crumbs.parts.href,
+    },
+  ];
 });
 </script>
 
 <template>
   <div>
-    <h4>Brick Buddy</h4>
     <div v-if="!loaded">Loading...</div>
     <div v-else class="cards">
       <CardComponent
-        name="Countries"
-        :count="countries"
-        :href="Crumbs.storeCountries.href"
+        v-for="row in rows"
+        :key="row.label"
+        :name="row.label"
+        :count="row.count"
+        :total="row.total"
+        :href="row.link"
       />
-      <CardComponent name="Stores" :count="stores" :href="Crumbs.stores.href" />
-      <CardComponent name="Colors" :count="colors" :href="Crumbs.colors.href" />
-      <CardComponent
-        name="Categories"
-        :count="categories"
-        :href="Crumbs.categories.href"
-      />
-      <CardComponent name="Parts" :count="parts" :href="Crumbs.parts.href" />
-      <CardComponent name="Searches" :count="searches" :href="Crumbs.searches.href" />
-      <CardComponent
-        name="Conditions"
-        :count="conditions"
-        :href="Crumbs.conditions.href"
-      />
-      <CardComponent name="Lists" :count="lists" :href="Crumbs.lists.href" />
-      <CardComponent name="Carts" :count="carts" :href="Crumbs.carts.href" />
     </div>
   </div>
 </template>

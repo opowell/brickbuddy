@@ -47,5 +47,5 @@ export async function addStoreCountry(
   id: string,
   name: string
 ): Promise<IDBValidKey | undefined> {
-  return await put(db, stores.STORE_COUNTRIES, { id, name })
+  return await put(db, stores.COUNTRIES, { id, name })
 }

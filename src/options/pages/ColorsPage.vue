@@ -14,7 +14,6 @@ import ActiveCartButton from "../components/ActiveCartButton.vue";
 
 <template>
   <div>
-    <HomeButton />
     <h4 v-if="colors">Colors ({{ colors.length }})</h4>
     <table>
       <thead>
