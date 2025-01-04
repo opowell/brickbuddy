@@ -55,7 +55,6 @@ window.getUsage = async function () {
   console.log(`Usage %: ${percentageUsed}`);
   console.log(`Remaining: ${remaining} GB`);
 };
-import ActiveSearchButton from "./components/ActiveSearchButton.vue";
 import ActiveCartButton from "./components/ActiveCartButton.vue";
 import HomeButton from "./components/HomeButton.vue";
 import SearchesButton from "./components/SearchesButton.vue";
@@ -65,7 +64,6 @@ import CartsButton from "./components/CartsButton.vue";
 <template>
   <p v-if="loaded" class="cartButtonContainer">
     <HomeButton />
-    <ActiveSearchButton />
     <span class="spacer" />
     <SearchesButton />
     <ListsButton />

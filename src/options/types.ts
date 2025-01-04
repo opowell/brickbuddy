@@ -323,6 +323,9 @@ export interface StoresPageStore extends Store {
   fetchPercent: number
   numInvItems: number
 }
+export interface ListPageStore extends Store {
+  cost: number
+}
 export interface UiStore extends Store {
   items: UiInvItem[]
 }

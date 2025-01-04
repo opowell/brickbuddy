@@ -13,6 +13,7 @@ import {
   CachedInvItem,
   SearchStore,
   SearchFilter,
+  ListPageStore,
 } from '../types'
 import { getDbConnection, liveObjectCache } from './idb'
 import { countInvItems, getStorePageInvItems } from './invItems'
@@ -308,6 +309,18 @@ export async function getStoresPageStores(): Promise<
     })
   }
   return uiStores
+}
+
+export async function getListPageStores(): Promise<Store[] | undefined> {
+  const search = await getFirstActiveSearch(liveObjectCache)
+  if (!search) {
+    return
+  }
+  const stores = await getAllActiveStores(liveObjectCache.db, search.id)
+  if (!stores) {
+    return
+  }
+  return stores
 }
 
 export async function getStorePageStore(

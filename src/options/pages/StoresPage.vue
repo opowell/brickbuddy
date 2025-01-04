@@ -33,7 +33,6 @@ const search = ref('')
 const numMinItems: Ref<number | undefined> = ref(100)
 const numMinFetchPagesTotal: Ref<number | undefined> = ref()
 const numMaxFetchPagesTotal: Ref<number | undefined> = ref()
-import HomeButton from '../components/HomeButton.vue';
 import { importBrickLinkStores, liveObjectCache } from '../idb/idb'
 import { formatAmount, formatInteger } from '../utils';
 

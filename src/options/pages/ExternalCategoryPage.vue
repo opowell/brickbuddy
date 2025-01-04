@@ -121,7 +121,7 @@ const listId = ref();
 function selectList(id: string) {
   listId.value = id;
 }
-import ListSelect from "./ListSelect.vue";
+import ListSelect from "../components/ListSelect.vue";
 import QuantityInput from "../components/QuantityInput.vue";
 import { put } from "../idb/db";
 import { liveObjectCache } from "../idb/idb";

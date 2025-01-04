@@ -2,7 +2,7 @@
 import { Crumbs } from "../idb/constants";
 import { liveObjectCache } from "../idb/idb";
 import CardComponent from "../components/CardComponent.vue";
-import { reportTime, startTimer } from "../utils";
+import ActiveSearchButton from "../components/ActiveSearchButton.vue";
 
 const stores = ref<number | undefined>();
 const allStores = ref<number | undefined>();
@@ -85,6 +85,7 @@ const rows = computed(() => {
 
 <template>
   <div>
+    <p><ActiveSearchButton /></p>
     <div v-if="!loaded">Loading...</div>
     <div v-else class="cards">
       <CardComponent

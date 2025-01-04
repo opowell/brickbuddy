@@ -148,6 +148,8 @@ export default class ObjectCache {
   searchActiveStoreIds: Map<number, string[]>
   listItemQuantityMap: Ref<Map<string, number>>
   listExternalItemQuantityMap: Ref<Map<string, number>>
+  externalPartsMap: Ref<Map<string, ExternalItem>>
+  listItemStorePriceMap: Ref<Map<string, number>>
   listsMap: Map<number, ShopList>
   db: IDBPDatabase
   // computedCache: ComputedObjectCacheClass
@@ -157,6 +159,8 @@ export default class ObjectCache {
     this.listsNumItemsMap = new Map<number, number>()
     this.listItemQuantityMap = ref(new Map<string, number>())
     this.listExternalItemQuantityMap = ref(new Map<string, number>())
+    this.listItemStorePriceMap = ref(new Map<string, number>())
+    this.externalPartsMap = ref(new Map<string, ExternalItem>())
     this.conditionsMapMap = new Map<number, Map<string, number>>()
     this.activeSearchRef = ref()
     this.homePageNumColors = undefined
@@ -307,6 +311,9 @@ export default class ObjectCache {
       }
     }
     return keys.length
+  }
+  async getSearches() {
+    return await getAll(this.db, STORES.SEARCHES)
   }
   async getSearchNumObjects(
     searchId: number,
@@ -802,11 +809,35 @@ export default class ObjectCache {
     type: 'BrickLink' | 'Lego',
     externalItemId: string
   ): Promise<ExternalItem | undefined> {
-    return this.loadObject<ExternalItem | undefined>(
-      this.externalParts,
+    return await this.loadObject<ExternalItem | undefined>(
+      this.externalPartsMap.value,
       type + externalItemId,
       async () =>
         await get(this.db, STORES.EXTERNAL_PARTS, [type, externalItemId])
+    )
+  }
+  async loadListItemStorePrice(
+    type: 'BrickLink' | 'Lego',
+    externalItemId: string,
+    storeId: string
+  ): Promise<number | undefined> {
+    return await this.loadObject<number | undefined>(
+      this.listItemStorePriceMap.value,
+      type + externalItemId + storeId,
+      async () => {
+        const invItems = await getAllFromIndex<InvItem>(
+          this.db,
+          indices.INV_ITEMS_BY_TYPE_STORE_ITEM,
+          [type, storeId, externalItemId]
+        )
+        if (!invItems || invItems.length === 0) {
+          return
+        }
+        const cheapest = Math.min(
+          ...invItems.map((ii) => Number.parseFloat(ii.price))
+        )
+        return cheapest
+      }
     )
   }
   async loadStorePageInvItem(invItem: InvItem) {

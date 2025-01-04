@@ -36,7 +36,7 @@ function updateListQuantity(item: CategoryPagePart, quantity: number) {
   };
   put(liveObjectCache.db, stores.LIST_ITEMS, listItem);
 }
-import ListSelect from "./ListSelect.vue";
+import ListSelect from "../components/ListSelect.vue";
 import stores from "../idb/stores";
 import { put } from "../idb/db";
 const listId = ref();
