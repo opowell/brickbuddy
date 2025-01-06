@@ -120,7 +120,8 @@ export default class ObjectCache {
   storeCountries: Map<string, StoreCountry>
   categoriesPageCategories: Map<string, CategoriesPageCategory>
   cheapestPrices: Map<string, number>
-  externalCategories: Map<string, ExternalCategory>
+  externalCategories: Ref<Map<string, ExternalCategory>>
+  partImages: Ref<Map<string, string>>
   externalCategoriesByCategoryId: Map<string, ExternalCategory[]>
   externalParts: Map<string, ExternalItem>
   externalPartsByPart: Map<number, ExternalItem[]>
@@ -182,7 +183,8 @@ export default class ObjectCache {
     this.storeCountries = new Map<string, StoreCountry>()
     this.categoriesPageCategories = new Map<string, CategoriesPageCategory>()
     this.externalCategoriesByCategoryId = new Map<string, ExternalCategory[]>()
-    this.externalCategories = new Map<string, ExternalCategory>()
+    this.externalCategories = ref(new Map<string, ExternalCategory>())
+    this.partImages = ref(new Map<string, string>())
     this.partPageCategories = new Map<string, Category>()
     this.parts = new Map<string, Item>()
     this.storePageExternalParts = new Map<string, StorePageInvItemItem>()
@@ -247,6 +249,10 @@ export default class ObjectCache {
     return num
   }
   async getHomePageNumConditions(): Promise<number | undefined> {
+    const num = await count(this.db, STORES.CONDITIONS)
+    return num
+  }
+  async getNumConditions(): Promise<number | undefined> {
     const num = await count(this.db, STORES.CONDITIONS)
     return num
   }
@@ -407,6 +413,9 @@ export default class ObjectCache {
       // }
     )
     return x
+  }
+  async getNumParts(): Promise<number | undefined> {
+    return await count(this.db, STORES.PARTS)
   }
   async getHomePageNumCategories(): Promise<number | undefined> {
     const x = await this.getHomePageNumObjects(
@@ -731,7 +740,7 @@ export default class ObjectCache {
     type: 'BrickLink' | 'Lego' | 'Rebrickable'
   ): Promise<ExternalCategory | undefined> {
     return this.getObject<ExternalCategory | undefined>(
-      this.externalCategories,
+      this.externalCategories.value,
       type + categoryId,
       async () => await getExternalCategory(this.db, categoryId, type)
     )
@@ -741,10 +750,35 @@ export default class ObjectCache {
     type: 'BrickLink' | 'Lego' | 'Rebrickable'
   ): Promise<ExternalCategory | undefined> {
     return this.loadObject<ExternalCategory | undefined>(
-      this.externalCategories,
+      this.externalCategories.value,
       type + categoryId,
       async () => await getExternalCategory(this.db, categoryId, type)
     )
+  }
+  async loadPartImage(
+    type: string,
+    itemId: string
+  ): Promise<string | undefined> {
+    return this.loadObject<string | undefined>(
+      this.partImages.value,
+      type + itemId,
+      async () => await this.getPartImage(this.db, type, itemId)
+    )
+  }
+  async getPartImage(
+    db: IDBPDatabase,
+    type: string,
+    itemId: string
+  ): Promise<string | undefined> {
+    const variant = await getFromIndex<ItemVariant>(
+      this.db,
+      indices.PART_VARIANTS_BY_TYPE_AND_PART,
+      [type, itemId]
+    )
+    if (!variant) {
+      return
+    }
+    return variant.image
   }
   async getPartPageCategory(
     categoryId: string

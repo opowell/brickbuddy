@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { getParts, getPartsPageParts } from "../idb/parts";
-import type { Item, PartsPagePart } from "../types";
+import type { ExternalItem, Item, PartsPagePart } from "../types";
 import PartButton from "../components/PartButton.vue";
 const search = ref("");
 // const items = computed<PartsPagePart[] | undefined>(() => {
@@ -17,24 +17,23 @@ const filteredParts = computed(() => {
   if (!items.value) {
     return [];
   }
-  const itemName = "";
-  return items.value.filter((item: Item) => {
-    return itemName.includes(search.value);
-  });
-});
-const externalCategories = computed(() => {
-  if (!liveObjectCache) {
-    return new Map();
+  const out = [];
+  for (let i = 0; i < items.value.length && out.length < 100; i++) {
+    const item = items.value[i];
+    if (!item.name) {
+      continue;
+    }
+    if (item.name.includes(search.value) || item.externalItemId.includes(search.value)) {
+      out.push(item);
+    }
   }
-  return liveObjectCache.externalCategories;
+  return out;
 });
 
-import HomeButton from "../components/HomeButton.vue";
 import CategoryButton from "../components/CategoryButton.vue";
-import ActiveSearchButton from "../components/ActiveSearchButton.vue";
 import QuantityInput from "../components/QuantityInput.vue";
-import ActiveCartButton from "../components/ActiveCartButton.vue";
 import { cacheLoaded, liveObjectCache } from "../idb/idb";
+import ExternalCategoryButton from "../components/ExternalCategoryButton.vue";
 </script>
 
 <template>
@@ -56,13 +55,26 @@ import { cacheLoaded, liveObjectCache } from "../idb/idb";
       </thead>
       <tbody>
         <tr v-for="item in filteredParts" :key="item.itemId">
-          <!-- <td><img v-if="item.image" :src="item.image"></td> -->
-          <td></td>
-          <td>{{ item.name }}</td>
           <td>
-            <CategoryButton
-              v-if="externalCategories.get(item.externalCategoryId)"
-              :category="externalCategories.get(item.externalCategoryId)"
+            <img
+              v-if="liveObjectCache.partImages.value.get(item.type + item.externalItemId)"
+              :src="liveObjectCache.partImages.value.get(item.type + item.externalItemId)"
+            />
+          </td>
+          <td>{{ item.itemId }}</td>
+          <td>{{ item.name }} ({{ item.itemId }})</td>
+          <td>
+            <ExternalCategoryButton
+              v-if="
+                liveObjectCache.externalCategories.value.get(
+                  item.type + item.externalCategoryId
+                )
+              "
+              :category="
+                liveObjectCache.externalCategories.value.get(
+                  item.type + item.externalCategoryId
+                )
+              "
             />
           </td>
           <td>{{ item.type }}</td>

@@ -20,6 +20,7 @@ import CartsPage from './pages/CartsPage.vue'
 import ExternalCategoryPage from './pages/ExternalCategoryPage.vue'
 import CountryPage from './pages/CountryPage.vue'
 import ListPage from './pages/ListPage.vue'
+import ShopListPage from './pages/ShopListPage.vue'
 import SearchResultPage from './pages/SearchResultPage.vue'
 
 export default [
@@ -132,5 +133,10 @@ export default [
     name: 'list',
     path: '/' + LINKS.LIST + '/:id',
     component: ListPage,
+  },
+  {
+    name: 'shopList',
+    path: '/shop/' + LINKS.LIST + '/:id',
+    component: ShopListPage,
   },
 ]

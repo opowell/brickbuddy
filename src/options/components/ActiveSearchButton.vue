@@ -60,7 +60,7 @@ const text = computed(() => {
       }
     }
   });
-  return "Filters: " + texts.length;
+  return search.name + ", filters: " + texts.length;
 });
 </script>
 

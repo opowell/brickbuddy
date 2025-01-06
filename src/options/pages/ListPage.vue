@@ -102,60 +102,11 @@ import TextInput from "./TextInput.vue";
 import ListsButton from "../components/ListsButton.vue";
 import ExternalPartButton from "../components/ExternalPartButton.vue";
 import { getListPageStores } from "../idb/storeMethods";
-import { formatAmount, formatFloat } from "../utils";
-import SearchSelect from "../components/SearchSelect.vue";
-import StoreButton from "../components/StoreButton.vue";
-const totalCosts = computed(() => {
-  const map = new Map<string, number>()
-  if (!liveObjectCache.listItemStorePriceMap) {
-    return map
-  }
-  if (!stores.value) {
-    return map
-  }
-  const itemValues = items.value
-  if (!itemValues) {
-    return map
-  }
-  stores.value.forEach((store) => {
-    let value = 0
-    itemValues.forEach((item) => {
-      const price = liveObjectCache.listItemStorePriceMap.value.get(item.externalItem.type + item.itemId + store.id)
-      if (!price) {
-        return
-      }
-      value += price * item.minQuantity
-    })
-    map.set(store.id, value)
-  })
-  return map
-})
-const matchedItems = computed(() => {
-  const map = new Map<string, number>()
-  if (!liveObjectCache.listItemStorePriceMap) {
-    return map
-  }
-  if (!stores.value) {
-    return map
-  }
-  const itemValues = items.value
-  if (!itemValues) {
-    return map
-  }
-  stores.value.forEach((store) => {
-    let value = 0
-    itemValues.forEach((item) => {
-      const price = liveObjectCache.listItemStorePriceMap.value.get(item.externalItem.type + item.itemId + store.id)
-      if (!price) {
-        return
-      }
-      value++
-    })
-    map.set(store.id, 100 * value / itemValues.length)
-  })
-  return map
-})
 import QuantityInput from "../components/QuantityInput.vue";
+import ShopListButton from "../components/ShopListButton.vue";
+function updateQuantity(item, quantity: number) {
+  console.log('update', item, quantity)
+}
 </script>
 
 <template>
@@ -166,6 +117,7 @@ import QuantityInput from "../components/QuantityInput.vue";
     </div>
     <div>Id: {{ list.id }}</div>
     <div>Name: <TextInput :value="list.name" @set="setName" /></div>
+    <p><ShopListButton :list="list" /></p>
     <h4 v-if="items">Parts ({{ items.length }})</h4>
     <table>
       <thead>
@@ -194,71 +146,15 @@ import QuantityInput from "../components/QuantityInput.vue";
             <ExternalPartButton :part="item.externalItem" />
           </td>
           <td>{{ item.condition }}</td>
-          <td><QuantityInput :current="item.minQuantity" /></td>
+          <td>
+            <QuantityInput
+              :current="item.minQuantity"
+              @update-quantity="updateQuantity(item, $event)"
+            />
+          </td>
           <td>{{ item.maxQuantity }}</td>
           <td>{{ item.maxPrice }}</td>
           <td>{{ getColorNames(item) }}</td>
-        </tr>
-      </tbody>
-    </table>
-    <h4>Shop</h4>
-    <div>Search: <SearchSelect /></div>
-    <table>
-      <thead>
-        <tr>
-          <th></th>
-          <th></th>
-          <th></th>
-          <th></th>
-          <th
-            v-for="item in items"
-            :key="`${item.itemId}-${item.condition}-${item.colors}`"
-          >
-            <input type="checkbox" />
-          </th>
-        </tr>
-        <tr>
-          <th></th>
-          <th><button>Store</button></th>
-          <th><button>Total cost</button></th>
-          <th><button>Matched items</button></th>
-          <th
-            v-for="item in items"
-            :key="`${item.itemId}-${item.condition}-${item.colors}`"
-          >
-            <img
-              v-if="externalPartImagesMap.get(item.externalItem.type + item.itemId)"
-              :src="externalPartImagesMap.get(item.externalItem.type + item.itemId)"
-            />
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="store in stores" :key="store.id">
-          <td><input type="checkbox" /></td>
-          <td><StoreButton :store="store" /></td>
-          <td>{{ formatAmount(totalCosts.get(store.id)) }}</td>
-          <td>{{ formatFloat(matchedItems.get(store.id)) }}</td>
-          <td v-for="item in items" :key="store.id + '---' + item.itemId">
-            <template
-              v-if="
-                liveObjectCache.listItemStorePriceMap.value.get(
-                  item.externalItem.type + item.itemId + store.id
-                )
-              "
-            >
-              <button>
-                {{
-                  formatAmount(
-                    liveObjectCache.listItemStorePriceMap.value.get(
-                      item.externalItem.type + item.itemId + store.id
-                    )
-                  )
-                }}
-              </button>
-            </template>
-            <template v-else> - </template>
-          </td>
         </tr>
       </tbody>
     </table>

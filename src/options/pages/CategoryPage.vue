@@ -14,7 +14,7 @@ const router = useRouter();
 const category = ref<CategoryPageCategory | undefined>();
 onMounted(async () => {
   category.value = await getCategoryPageCategory(route.params.id - 0);
-  listItemQuantityMap = liveObjectCache.listItemQuantityMap;
+  listItemQuantityMap = liveObjectCache.listExternalItemQuantityMap;
 });
 const parts = computed(() => {
   if (!category.value) {
@@ -29,12 +29,19 @@ let listItemQuantityMap = ref<Map<string, number>>();
 function updateListQuantity(item: CategoryPagePart, quantity: number) {
   const listItem: ShopListItem = {
     listId: listId.value,
-    itemId: item.itemId,
-    type: "item",
+    itemId: item.externalParts[0].externalItemId,
+    type: "externalItem",
     colors: [],
     minQuantity: quantity,
   };
   put(liveObjectCache.db, stores.LIST_ITEMS, listItem);
+  if (!listItemQuantityMap.value) {
+    return;
+  }
+  listItemQuantityMap.value.set(
+    listId.value + "-" + item.externalParts[0].externalItemId,
+    quantity
+  );
 }
 import ListSelect from "../components/ListSelect.vue";
 import stores from "../idb/stores";
@@ -54,7 +61,10 @@ const loadPartsTrigger = computed(() => {
 });
 watch(loadPartsTrigger, () => {
   parts.value.forEach((part) => {
-    liveObjectCache.loadListItemQuantity(listId.value, part.itemId);
+    liveObjectCache.loadListExternalItemQuantity(
+      listId.value,
+      part.externalParts[0].externalItemId
+    );
   });
 });
 </script>
@@ -96,7 +106,11 @@ watch(loadPartsTrigger, () => {
           <td>
             <QuantityInput
               v-if="listId && listItemQuantityMap"
-              :current="listItemQuantityMap.get(listId + '-' + part.itemId)"
+              :current="
+                listItemQuantityMap.get(
+                  listId + '-' + part.externalParts[0].externalItemId
+                )
+              "
               @update-quantity="updateListQuantity(part, $event)"
             />
           </td>

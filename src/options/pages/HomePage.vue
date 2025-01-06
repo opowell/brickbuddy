@@ -13,7 +13,9 @@ const allColors = ref<number | undefined>();
 const categories = ref<number | undefined>();
 const allCategories = ref<number | undefined>();
 const parts = ref<number | undefined>();
+const allParts = ref<number | undefined>();
 const searches = ref<number | undefined>();
+const allConditions = ref<number | undefined>();
 const conditions = ref<number | undefined>();
 const lists = ref<number | undefined>();
 const carts = ref<number | undefined>();
@@ -27,8 +29,10 @@ onMounted(async () => {
   categories.value = await liveObjectCache.getHomePageNumCategories();
   allCategories.value = await liveObjectCache.getNumCategories();
   parts.value = await liveObjectCache.getHomePageNumParts();
+  allParts.value = await liveObjectCache.getNumParts();
   searches.value = await liveObjectCache.getHomePageNumSearches();
   conditions.value = await liveObjectCache.getHomePageNumConditions();
+  allConditions.value = await liveObjectCache.getNumConditions();
   lists.value = await liveObjectCache.getHomePageNumLists();
   carts.value = await liveObjectCache.getHomePageNumCarts();
 });
@@ -70,13 +74,13 @@ const rows = computed(() => {
     {
       label: "Conditions",
       count: conditions.value,
-      total: allStores.value,
+      total: allConditions.value,
       link: Crumbs.conditions.href,
     },
     {
       label: "Parts",
       count: parts.value,
-      total: allStores.value,
+      total: allParts.value,
       link: Crumbs.parts.href,
     },
   ];
@@ -85,7 +89,7 @@ const rows = computed(() => {
 
 <template>
   <div>
-    <p><ActiveSearchButton /></p>
+    <p>Search: <ActiveSearchButton /></p>
     <div v-if="!loaded">Loading...</div>
     <div v-else class="cards">
       <CardComponent

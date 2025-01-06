@@ -62,6 +62,9 @@ export const Routes = {
   list(id: number) {
     return '/' + LINKS.LIST + '/' + id
   },
+  shopList(id: number) {
+    return '/shop/' + LINKS.LIST + '/' + id
+  },
   condition(id: string) {
     return '/' + LINKS.CONDITION + '/' + encodeURIComponent(id)
   },
@@ -121,6 +124,9 @@ export const Hrefs = {
   },
   list(id: number) {
     return Routes.list(id)
+  },
+  shopList(id: number) {
+    return Routes.shopList(id)
   },
   category(id: number) {
     return Routes.category(id)
@@ -212,6 +218,12 @@ export const Crumbs = {
     return {
       title: 'List',
       href: Hrefs.list(id),
+    }
+  },
+  shopList(id: number) {
+    return {
+      title: 'Shop list',
+      href: Hrefs.shopList(id),
     }
   },
   search(id: number) {

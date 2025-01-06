@@ -218,6 +218,7 @@ export async function getParts(): Promise<ExternalItem[]> {
   const uniqueExternalCategories = new Map<ExternalItem, boolean>()
   parts.forEach((part) => {
     uniqueExternalCategories.set(part, true)
+    liveObjectCache.loadPartImage(part.type, part.externalItemId)
   })
   uniqueExternalCategories.keys().forEach((part) => {
     liveObjectCache.loadExternalCategory(part.externalCategoryId, part.type)
@@ -516,7 +517,7 @@ export const getExternalCategory = computed<
   Map<string, CachedExternalCategory>
 >(() => {
   const map = new Map<string, CachedExternalCategory>()
-  liveObjectCache.externalCategories.forEach((ec) => {
+  liveObjectCache.externalCategories.value.forEach((ec) => {
     map.set(ec.type + ec.id, ec)
   })
   return map
