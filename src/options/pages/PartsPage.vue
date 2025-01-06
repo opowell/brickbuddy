@@ -61,7 +61,6 @@ import ExternalCategoryButton from "../components/ExternalCategoryButton.vue";
               :src="liveObjectCache.partImages.value.get(item.type + item.externalItemId)"
             />
           </td>
-          <td>{{ item.itemId }}</td>
           <td>{{ item.name }} ({{ item.itemId }})</td>
           <td>
             <ExternalCategoryButton
