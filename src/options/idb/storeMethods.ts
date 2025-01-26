@@ -335,11 +335,17 @@ export async function getStorePageStore(
   if (!invItems) {
     return
   }
-  invItems.forEach((invItem) => {
-    liveObjectCache.loadStorePageInvItem(invItem)
-  })
+  loadStorePageDetails(invItems)
   return {
     ...store,
     items: invItems,
+  }
+}
+
+async function loadStorePageDetails(invItems: InvItem[]) {
+  for (let i = 0; i < invItems.length; i++) {
+    const invItem = invItems[i]
+    await liveObjectCache.loadStorePageInvItem(invItem)
+    await liveObjectCache.getColor(invItem.colorId)
   }
 }

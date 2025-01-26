@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import HomeButton from "../components/HomeButton.vue";
 import StoresButton from "../components/StoresButton.vue";
 import { ActiveSearch, StorePageInvItem, StorePageStore, StoreType } from "../types";
 import { useRoute } from "vue-router";
@@ -21,6 +20,7 @@ const route = useRoute();
 const store = ref<StorePageStore | undefined>();
 const search = ref<ActiveSearch | undefined>();
 const mounted = ref(false);
+const instance = getCurrentInstance();
 onMounted(async () => {
   search.value = await liveObjectCache.getActiveSearch();
   store.value = await getStorePageStore(route.params.id, route.params.type);
@@ -28,6 +28,9 @@ onMounted(async () => {
     return;
   }
   mounted.value = true;
+  // setTimeout(() => {
+  //   instance?.proxy?.$forceUpdate();
+  // }, 200);
 });
 
 // URL for shipping terms:
@@ -78,14 +81,24 @@ const sortedItems = computed(() => {
   if (!store.value) {
     return;
   }
-  return store.value.items.sort((a, b) => {
-    switch (sorting.value) {
-      case SORTINGS.NONE:
-        return 1;
-      case SORTINGS.PRICE:
-        return Number.parseFloat(a.price) - Number.parseFloat(b.price);
-    }
-  });
+  return store.value.items
+    .sort((a, b) => {
+      switch (sorting.value) {
+        case SORTINGS.NONE:
+          return 1;
+        case SORTINGS.PRICE:
+          return Number.parseFloat(a.price) - Number.parseFloat(b.price);
+      }
+    })
+    .slice(0, 1000)
+    .map((item) => {
+      return {
+        ...item,
+        storePageExternalPart: liveObjectCache.storePageExternalParts.value.get(
+          item.itemId
+        ),
+      };
+    });
 });
 function setFullyFetched(x: boolean) {
   if (!store.value) {
@@ -97,10 +110,9 @@ function setFullyFetched(x: boolean) {
 </script>
 
 <template>
-  <StoresButton />
   <ActiveCartButton ref="cartButton" />
   <div v-if="store">
-    <h4>Store {{ store.name }}</h4>
+    <h4><StoresButton /> {{ store.name }}</h4>
     <div><button @click="getStorePrices(store)">Scrape</button></div>
     <div>Search: <FilterButtons /></div>
     <div>Fetch index: {{ store.fetchPageIndex }} / {{ store.fetchMaxPageIndex }}</div>
@@ -132,10 +144,10 @@ function setFullyFetched(x: boolean) {
           </tr>
         </thead>
         <tbody>
-          <tr v-for="invItem in store.items" :key="invItem.invId">
+          <tr v-for="invItem in sortedItems" :key="invItem.invId">
             <td>
               <PartVariantButton
-                :part="liveObjectCache.storePageExternalParts.get(invItem.itemId)"
+                :part="invItem.storePageExternalPart"
                 :variant="
                   liveObjectCache.partVariantByPartColor.get(
                     invItem.itemId + invItem.colorId
@@ -158,14 +170,19 @@ function setFullyFetched(x: boolean) {
             </td>
             <td>
               <ExternalPartButton
-                v-if="liveObjectCache.storePageExternalParts.get(invItem.itemId)"
-                :part="liveObjectCache.storePageExternalParts.get(invItem.itemId)"
+                v-if="invItem.storePageExternalPart"
+                :part="invItem.storePageExternalPart"
               />
             </td>
             <td v-if="search && search.conditions.excluded.length < 1">
               <ConditionButton :condition="invItem.condition" />
             </td>
-            <td><ColorButton :color="invItem.color" /></td>
+            <td>
+              <ColorButton
+                v-if="liveObjectCache.colors.get(invItem.colorId)"
+                :color="liveObjectCache.colors.get(invItem.colorId)"
+              />
+            </td>
             <td><ExternalCategoryButton :category="invItem.externalCategory" /></td>
             <td>{{ formatInteger(invItem.quantity) }}</td>
             <td>

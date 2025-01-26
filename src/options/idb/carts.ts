@@ -22,7 +22,7 @@ import ObjectCacheClass from './ObjectCacheClass'
 import { getScore } from '../utils'
 import { onlyUnique, sum } from './utils'
 import stores from './stores'
-import { getStorePageExternalPart } from './parts'
+import { getExternalPart } from './parts'
 
 export async function addCart() {
   const db = await getDbConnection()
@@ -128,7 +128,7 @@ export async function getCartPageCartItem(
   if (!store) {
     return
   }
-  const externalPart = await getStorePageExternalPart(invItem, store.type)
+  const externalPart = await getExternalPart(invItem, store.type)
   if (!externalPart) {
     return
   }

@@ -90,7 +90,6 @@ const uniqueExternalCategories = computed<CategoriesPageUniqueCategory[]>(() => 
   return out;
 });
 import CategoryButton from "../components/CategoryButton.vue";
-import HomeButton from "../components/HomeButton.vue";
 import ExternalCategoryButton from "../components/ExternalCategoryButton.vue";
 import { getActiveSearch } from "../idb/searches";
 import { dbDelete, put } from "../idb/db";

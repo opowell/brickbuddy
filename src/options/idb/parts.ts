@@ -445,7 +445,7 @@ export async function getStorePagePart(
   }
 }
 
-export async function getStorePageExternalPart(
+export async function getExternalPart(
   invItem: InvItem,
   type: 'BrickLink' | 'Lego'
 ): Promise<StorePageInvItemItem | undefined> {
@@ -511,6 +511,12 @@ export async function getStorePageExternalPart(
     variants: storePageItemVariants,
     externalParts: storePageExternalParts,
   }
+}
+export async function getStorePageExternalPart(
+  invItem: InvItem,
+  type: 'BrickLink' | 'Lego'
+): Promise<ExternalItem | undefined> {
+  return await liveObjectCache.getExternalPart(type, invItem.itemId)
 }
 
 export const getExternalCategory = computed<

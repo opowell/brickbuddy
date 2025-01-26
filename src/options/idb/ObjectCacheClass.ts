@@ -128,7 +128,7 @@ export default class ObjectCache {
   externalPartsByExternalCategory: Map<string, ExternalItem[]>
   partPageCategories: Map<string, Category>
   parts: Map<string, Item>
-  storePageExternalParts: Map<string, StorePageInvItemItem>
+  storePageExternalParts: Ref<Map<string, StorePageInvItemItem>>
   numInvItemsByPart: Map<string, number>
   cartItemsByCart: Map<number, CartItem[]>
   numVariantsByPart: Map<string, number>
@@ -187,7 +187,7 @@ export default class ObjectCache {
     this.partImages = ref(new Map<string, string>())
     this.partPageCategories = new Map<string, Category>()
     this.parts = new Map<string, Item>()
-    this.storePageExternalParts = new Map<string, StorePageInvItemItem>()
+    this.storePageExternalParts = ref(new Map<string, StorePageInvItemItem>())
     this.invItems = new Map<string, InvItem>()
     this.invItemsByStore = new Map<string, InvItem[]>()
     this.stores = new Map<string, Store>()
@@ -711,10 +711,10 @@ export default class ObjectCache {
     )
   }
   async getColor(colorId: string): Promise<Color | undefined> {
-    const computedColor = this.computedCache?.colorsMap.value.get(colorId)
-    if (computedColor) {
-      return computedColor
-    }
+    // const computedColor = this.computedCache?.colorsMap.value.get(colorId)
+    // if (computedColor) {
+    //   return computedColor
+    // }
     return this.getObject(
       this.colors,
       colorId,
@@ -823,7 +823,7 @@ export default class ObjectCache {
     type: 'BrickLink' | 'Lego'
   ): Promise<StorePageInvItemItem | undefined> {
     return this.getObject<StorePageInvItemItem | undefined>(
-      this.storePageExternalParts,
+      this.storePageExternalParts.value,
       invItem.itemId,
       async () => await getStorePageExternalPart(invItem, type)
     )
@@ -875,6 +875,7 @@ export default class ObjectCache {
     )
   }
   async loadStorePageInvItem(invItem: InvItem) {
+    console.log('loadStorePageInvItem', invItem)
     // @ts-ignore
     this.getStorePageExternalPart(invItem, invItem.type)
     this.getPartVariantByPartColor(invItem.itemId, invItem.colorId)
