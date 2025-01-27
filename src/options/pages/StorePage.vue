@@ -20,7 +20,6 @@ const route = useRoute();
 const store = ref<StorePageStore | undefined>();
 const search = ref<ActiveSearch | undefined>();
 const mounted = ref(false);
-const instance = getCurrentInstance();
 onMounted(async () => {
   search.value = await liveObjectCache.getActiveSearch();
   store.value = await getStorePageStore(route.params.id, route.params.type);
@@ -28,9 +27,6 @@ onMounted(async () => {
     return;
   }
   mounted.value = true;
-  // setTimeout(() => {
-  //   instance?.proxy?.$forceUpdate();
-  // }, 200);
 });
 
 // URL for shipping terms:
