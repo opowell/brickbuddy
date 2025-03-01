@@ -2,9 +2,8 @@
 
 ## TODO
 ### v2
-- typescript.
-- table paging.
-- linting.
+- scrape on search
+  - not just stores, but parts / categories / colors / etc.       
 - table filters
   - "show all parts from multiple categories".
 - "buy" a list
